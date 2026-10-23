@@ -9128,6 +9128,10 @@ function carriageSpr(){ return sprite(96,70,P=>{ const X0=12, Y0=8, BW=72, BH=40
   const ww=(cx,cy)=>{ P.ell(cx,cy,10,10,'#1a1410'); P.ell(cx,cy,8.5,8.5,C.gold[1]); P.ell(cx,cy,7,7,'#2a1e14'); for(let a=0;a<10;a++){ const an=a/10*TAU; P.line(cx,cy,cx+Math.cos(an)*7,cy+Math.sin(an)*7,C.gold[2]); } P.ell(cx,cy,2,2,C.gold[3]); };
   P.rect(4,Y0+BH+1,88,3,'#2a1e14'); P.rect(84,Y0+BH-4,12,3,'#3a2a1c'); ww(24,58); ww(72,58);
   [[24,14],[50,30],[70,18],[34,34],[60,10]].forEach(([x,y])=>{ P.line(x,y,x+7,y-6,'#6a5a48'); P.set(x+7,y-6,'#9a9a9a'); P.set(x+6,y-7,'#c8c8c8'); P.set(x+8,y-5,'#c8c8c8'); }); }); }
+/* Caballos de mapa por código (el cerco del Claro del campamento): pedido de Brian (23/10/2026), fuera hasta que haya sprite bueno.
+   Con MAPA_CABALLOS=false no se dibujan, no chocan, no dejan sombra y se saca el examinable «cam_ex_caballos» que habla de ellos.
+   Para reactivarlos: MAPA_CABALLOS=true (los postes del cerco quedan siempre; la escena «La última guardia» usa uno). */
+const MAPA_CABALLOS=false;
 function horseSpr(f,col){ col=col||['#3a2416','#5a3a22','#7a5230','#9a6c42','#b88a5a']; return sprite(34,30,P=>{ const leg=(x,ph)=>{ const o=Math.round(Math.sin((f+ph)*Math.PI)*1); P.rect(x+o,20,2,9,col[1]); P.rect(x+o,28,3,1,'#1a1410'); };
   leg(7,0); leg(11,1); leg(22,1); leg(26,0);
   P.ell(17,16,12,6,col[2]); P.fn(4,9,26,13,(x,y)=>P.alpha(x,y)?qpal(col,clamp(0.75-(y-10)/12*0.6-(x-4)/26*0.15,0,1),x,y):null);
@@ -10049,7 +10053,7 @@ let DARK=null; function darkness(c,col,a,holes){ if(!DARK){ DARK=zcv(W,H); } con
 
 /* ---------- animaciones de objetos (frames cacheados) ---------- */
 function animSheep(B,x,y,face){ const f0=memo('sh0',()=>sheepSpr(0)), f1=memo('sh1',()=>sheepSpr(1)); const fl=face<0; const ph=hash2(x,y,2)*9; B.blockE(x,y-2,7,3); B.anim({x,y,sort:true,bx:x-10,by:y-16,bw:20,bh:17,draw:(c)=>{ const fr=Math.sin(T*1.2+ph)>0.6?f1:f0; const bob=Math.sin(T*1.2+ph)>0.6?1:0; c.save(); c.translate(x,y); if(fl) c.scale(-1,1); c.drawImage(fr,-9,-14+bob); c.restore(); }}); }
-function animHorse(B,x,y,face,col){ const k='hr'+(col?col[0]:''); const f0=memo(k+0,()=>horseSpr(0,col)), f1=memo(k+1,()=>horseSpr(1,col)); const ph=hash2(x,y,3)*9; B.blockE(x,y-3,15,4); B.shadow(x,y,15,3.5,0.25); B.anim({x,y,sort:true,bx:x-18,by:y-30,bw:36,bh:31,draw:(c)=>{ const fr=Math.sin(T*0.9+ph)>0.7?f1:f0; c.save(); c.translate(x,y); if(face<0) c.scale(-1,1); c.drawImage(fr,-17,-29); c.restore(); }}); }
+function animHorse(B,x,y,face,col){ if(!MAPA_CABALLOS) return; const k='hr'+(col?col[0]:''); const f0=memo(k+0,()=>horseSpr(0,col)), f1=memo(k+1,()=>horseSpr(1,col)); const ph=hash2(x,y,3)*9; B.blockE(x,y-3,15,4); B.shadow(x,y,15,3.5,0.25); B.anim({x,y,sort:true,bx:x-18,by:y-30,bw:36,bh:31,draw:(c)=>{ const fr=Math.sin(T*0.9+ph)>0.7?f1:f0; c.save(); c.translate(x,y); if(face<0) c.scale(-1,1); c.drawImage(fr,-17,-29); c.restore(); }}); }
 function animHeron(B,x,y,face){ const f0=memo('he0',()=>heronSpr(0)), f1=memo('he1',()=>heronSpr(1)); const ph=hash2(x,y,5)*9; B.anim({x,y,sort:true,bx:x-8,by:y-26,bw:16,bh:27,draw:(c)=>{ const fr=Math.sin(T*0.5+ph)>0.85?f1:f0; c.save(); c.translate(x,y); if(face<0) c.scale(-1,1); c.drawImage(fr,-8,-25); c.restore(); c.fillStyle='rgba(216,240,246,.55)'; const s=fi(4,3,ph); c.fillRect(x-4-s,y+1,3,1); c.fillRect(x+2+s,y+1,2,1); }}); }
 function animFire(B,x,y,big,vis){ if(B.hd){ B.hobj(hdFireRing(2),x,y-1,{cast:false}); B.blockE(x,y-3,10,4); B.anim({x,y,sort:true,vis,bx:x-12,by:y-30,bw:24,bh:30,draw:(c)=>{ flameAt(c,x,y-4,big||1,0); flameAt(c,x-3,y-3,(big||1)*0.6,2); flameAt(c,x+3,y-3,(big||1)*0.55,4); }}); return; } const ring=sprite(26,12,P=>{ for(let a=0;a<10;a++){ const an=a/10*TAU; const xx=13+Math.cos(an)*10, yy=6+Math.sin(an)*4; P.ell(xx,yy,2.4,1.8,qpal(C.stone,0.4+(Math.sin(an)+1)*0.25,a,0)); } P.line(7,7,19,4,C.wood[1]); P.line(7,4,19,8,C.wood[2]); P.ell(13,6,5,2,'#2a1a10'); }); B.obj({x,y:y-1,spr:ring,ox:-13,oy:-9}); B.blockE(x,y-3,10,4);
   B.anim({x,y,sort:true,vis,bx:x-12,by:y-30,bw:24,bh:30,draw:(c)=>{ flameAt(c,x,y-4,big||1,0); flameAt(c,x-3,y-3,(big||1)*0.6,2); flameAt(c,x+3,y-3,(big||1)*0.55,4); }}); }
@@ -10445,7 +10449,7 @@ Z.campamento=makeZone({id:'campamento',name:'Claro del campamento',sub:'Camino d
     {id:'cam_ne',x:952,y:30,w:8,h:70,edge:'E',kind:'slide',to:'puente',spawn:{x:16,y:190,face:1,dir:'E',span:[150,230]},need:'fogon',deny:'deny_fogon_primero',warn:'leave_puente_aviso'},
     {id:'cam_n',x:300,y:0,w:300,h:8,edge:'N',kind:'zoom',to:'global',spawn:{x:936,y:544},need:'!fogon',deny:'deny_campamento_noche'}],
   npcs:[{id:'npc_severo_carreta',spr:'severo',x:700,y:128,face:-1,talk:'npc_severo_carreta',inCart:true,hidden:true,need:'!fogon'}].concat(caravanNPCs('campamento',600,196,1).map((n,i)=>{ const P=[[612,148],[676,196],[566,180],[598,232],[652,226],[500,186],[724,168],[452,208],[836,150]][i]; return Object.assign(n,{x:P[0],y:P[1],need:null}); })),
-  props:[{id:'cam_fogon',x:FIRE.x,y:FIRE.y,kind:'examinable',label:'Sentarse al fogón',text:'cam_fogon',scene:'campamento',need:'c3',once:true,sets:'fogon',rest:true,save:true},{id:'cam_ex_caballos',x:868,y:194,kind:'examinable',text:'cam_ex_caballos'}],
+  props:[{id:'cam_fogon',x:FIRE.x,y:FIRE.y,kind:'examinable',label:'Sentarse al fogón',text:'cam_fogon',scene:'campamento',need:'c3',once:true,sets:'fogon',rest:true,save:true},].concat(MAPA_CABALLOS?[{id:'cam_ex_caballos',x:868,y:194,kind:'examinable',text:'cam_ex_caballos'}]:[]),
   triggers:[{id:'cam_llegada',x:0,y:180,w:60,h:110,kind:'enter',scene:'campamento_llegada',need:'c3',once:true}],
   rivals:[],fixed:[],enc:null});
 
@@ -10487,7 +10491,7 @@ Z.puente=makeZone({id:'puente',name:'Paso del Puente Viejo',sub:'Desfiladero del
     const o=hourOverlay('amanecer',[[0,'rgba(255,170,150,.22)'],[0.5,'rgba(255,200,140,.08)'],[1,'rgba(70,40,80,.11)']]); c.drawImage(o,0,0);
     const fl=0.8+0.2*Math.sin(T*7); c.save(); c.globalCompositeOperation='lighter'; c.globalAlpha=0.35*fl*(this.fx.carruaje!==false?1:0.25); c.drawImage(glowSpr('#ff7a30'),508-cx-110,104-cy-90,220,180); c.restore(); c.globalAlpha=1; if(this.S>1) c.drawImage(vignetteSpr('#120a0c',0.16),0,0); },
   fx:{carruaje:true},
-  marks:{boca_puente:{x:540,y:158},carruaje:{x:508,y:132},centro_puente:{x:620,y:157},cornisa_valdris:{x:720,y:40},carreta_volcada:{x:470,y:226},simona:{x:486,y:232},oswin:{x:650,y:157},asesinos:{x:400,y:110},ballestero:{x:600,y:140}},
+  marks:{boca_puente:{x:540,y:158},carruaje:{x:508,y:132},centro_puente:{x:620,y:157},cornisa_valdris:{x:692,y:88},carreta_volcada:{x:470,y:226},simona:{x:486,y:232},oswin:{x:650,y:157},asesinos:{x:400,y:110},ballestero:{x:600,y:140}},
   exits:[
     {id:'pue_o',x:0,y:150,w:8,h:80,edge:'W',kind:'slide',to:'campamento',spawn:{x:942,y:64,face:-1,dir:'W',span:[30,100]},need:'!oeste_cerrado',deny:'deny_oeste_cerrado'},
     {id:'pue_e',x:952,y:100,w:8,h:100,edge:'E',kind:'slide',to:'hondo',spawn:{x:16,y:170,face:1,dir:'E',span:[140,200]},need:'jefe',deny:'deny_oswin'}],
@@ -12071,9 +12075,12 @@ const LINES = {
       ['walk','lina',-90,0,'§5'], ['hide','lina','§5'],
       ['narr','La silueta de Lina desaparece entre el humo, corriendo hacia el río.','§5'],
       ['narr','En el caos, Lina desaparece entre el humo.','§!5'],
-      ['dlg','side'], ['bars',0], ['cam','reset'], ['vig',0.2],
+      ['dlg','low'], ['bars',0], ['cam','reset'], ['vig',0.2],
+      // plano pintado: acercamiento ×2 al caballero en su cornisa (FIGPUENTE, js/p5_world.js); la caja va abajo para no taparlo
+      ['cam','valdris',2,0,'full'],
       ['narr','En lo alto del desfiladero, un caballero de armadura negra observa sin moverse.'],
       ['think','ilian','No pelea. Mira. Como el que vino a ver si salió bien.','t'],
+      ['cam','reset'],
       ['nota','nc_caballero'],
       ['dlg','top'],
       ['hook','partyChange']
@@ -12201,13 +12208,17 @@ const LINES = {
       ['say','oswin','Mi príncipe… perdoname…','s'],
       ['wait',700],
       ['say','ilian','Le dieron la hora para que llegara tarde.','t','§4hora'],
-      ['dlg','side'], ['bars',0], ['cam','reset'],
+      ['dlg','low'], ['bars',0], ['cam','reset'],
+      // el caballero negro baja de la cornisa hasta Nach; la cámara lo encuadra entero (×2) con la caja abajo y vuelve al plano normal cuando se va
+      ['figura','valdris','baja','nach',34,-30,1300], ['cam','valdris',2,0,'full'],
       ['narr','El caballero negro baja y mira a Nach. Simona no lo mira: le gruñe al caballo de Oswin.'],
       ['emote','simona','anger'],
       ['say','simona','*gruñe al fardo de lacre gris*','a'],
       ['say','valdris','…','n'],
+      ['figura','valdris','face',1],
       ['narr','Después da media vuelta y se va sin desenvainar.'],
-      ['cam','reset'], ['bars',0], ['dlg','top'],
+      ['cam','reset'], ['figura','valdris','vuelve',1300],
+      ['bars',0], ['dlg','top'],
       ['say','nach','Me miró como se mira a alguien que te debe algo.','t'],
       ['say','ilian','Alguien que hoy no quiso pelear. No me gusta esa idea.','t'],
       ['say','maela','A mí no me gusta ninguna idea de hoy. Al bosque. Ahora.','a']
@@ -12616,8 +12627,15 @@ LINES.noCierraOrden=['nc_ojo','nc_guantes','nc_peregrino','nc_fardo','nc_encap',
    TEXTOS DEL MUNDO (reemplazan los provisorios de zones.js; ZONES.text los lee de acá)
    Forma: [quién | null, texto, expr, nombre visible si no hay retrato]
    ============================================================ */
-LINES.world={ salida:'Batidor. La loma del centro. Si hay algo, está ahí.' };
+LINES.world={ salida:'Batidor. La loma del centro. Si hay algo, está ahí.',
+  // cofres cerrados (pedido de Brian, 23/10/2026): rótulo del botón A; con _<id> pisa el de un cofre puntual
+  cofre_revisar:'Revisar el cofre', cofre_revisar_sau_cofre_aparejos:'Revisar la caja de aparejos' };
 LINES.zones={
+  // cofres cerrados (pedido de Brian, 23/10/2026): se ven pero todavía no se abren (llave, misión, historia). Con _<id>, el de un cofre puntual (pista sin spoiler)
+  cofre_cerrado:[[null,'Está cerrado con llave. No se puede abrir… por ahora.','n']],
+  cofre_cerrado_lin_cofre_hagen:[[null,'Un cofre chico, envuelto en cuero y metido entre las raíces. Está cerrado y no se puede abrir.','n'],['ilian','Tiene un cuervo tallado en la tapa, como los mojones. Lo dejaron para el que los siga a todos.','t']],
+  cofre_cerrado_sau_cofre_aparejos:[[null,'Una caja de aparejos con un candado chico. Está cerrada y no se puede abrir.','n'],['ilian','Es de algún pescador. La llave la tendrá él.','n']],
+  cofre_cerrado_hollin_molino:[[null,'Detrás de la rueda del molino, el cofre tiene un candado nuevo. Está cerrado y no se puede abrir.','n']],
   deny_hollin_cerrado:[['maela','Atrás quedó la cuenta de Agnes. Adelante, la paga.','n']],
   // Granja de los Oberen (la escena del evento está en LINES.scenes.granja_lobos / granja_post)
   npc_granja_oberen:[[null,'Dos lobos me rondan el corral hace tres noches. Si los sacan de encima, les pago lo que hay.','s','Oberen']],
@@ -21226,6 +21244,9 @@ function camStep(K,dt){ const k=1-Math.exp(-dt*(K.fast?7:3.2)); K.z+=(K.tz-K.z)*
   const hw=W/(2*K.z), hh=H/(2*K.z); K.x=clamp(K.x,hw,W-hw); K.y=clamp(K.y,hh,H-hh); if(Math.abs(K.z-1)<0.002&&Math.abs(K.x-W/2)<0.3&&Math.abs(K.y-H/2)<0.3&&K.tz===1){ K.z=1; K.x=W/2; K.y=H/2; } }
 function camNeutral(K){ if(!K||K.lock) return; K.tz=1; K.tx=W/2; K.ty=H/2; K.tvig=K.vigBase; K.fast=false; }
 function camFocus(K,a,z){ if(!K||REDUCED||!a) return; K.tz=z; K.tx=W/2+(a.x-W/2)*0.55; K.ty=H/2+((a.y-actorH(a)*0.55)-H/2)*0.4; }
+// encuadre completo (['cam',id,z,fast,'full']): centra al actor entero y un poco arriba del medio, para que la caja de diálogo baja ('dlg','low')
+// no lo tape; z entero (2) para que el pixel art escale parejo. camStep lo mantiene dentro del escenario.
+function camFrame(K,a,z){ if(!K||REDUCED||!a) return; const h=actorH(a)*(a.k||1); K.tz=z; K.tx=a.x; K.ty=a.y-h*0.5+H/(2*z)*0.3; }
 let VIGC=null; function vigCanvas(){ if(VIGC) return VIGC; VIGC=document.createElement('canvas'); VIGC.width=W; VIGC.height=H; const x=VIGC.getContext('2d'); const g=x.createRadialGradient(W/2,H*0.55,H*0.28,W/2,H*0.55,W*0.62); g.addColorStop(0,'rgba(4,4,10,0)'); g.addColorStop(0.65,'rgba(4,4,10,.45)'); g.addColorStop(1,'rgba(4,4,10,.92)'); x.fillStyle=g; x.fillRect(0,0,W,H); return VIGC; }
 function drawDirOver(c,st,dt){ const K=st.cam; if(!K) return;
   if(K.sepia>0.01){ c.save(); c.globalCompositeOperation='color'; c.globalAlpha=0.8*K.sepia; c.fillStyle='#a07a48'; c.fillRect(0,0,W,H); c.globalCompositeOperation='multiply'; c.globalAlpha=0.35*K.sepia; c.fillStyle='#f0d4a8'; c.fillRect(0,0,W,H); c.restore();
@@ -21278,6 +21299,8 @@ function layoutCast(ids,name){
   const n=ids.length, sp=n<=2?84:(n<=4?66:(n<=5?60:56)); const x0=Math.round(250-(n-1)*sp/2); const P=POS[name]||{};
   return ids.map((id,i)=>{ const p=P[id]; const isPet=id==='simona'||id==='olaf'||id==='olafNino'; return p?{x:p[0],y:p[1]}:{x:x0+i*sp,y:236+(i%2?4:0)+(isPet?8:0)}; });
 }
+const FIGPUENTE={x:348,y:68};
+function drawFigura(c,a){ moveActor(a,0); const k=a.k||1; if(k===1){ drawActor(c,a); return; } c.save(); c.translate(a.x,a.y); c.scale(k,k); c.translate(-a.x,-a.y); drawActor(c,a); c.restore(); }
 function mkStage(zone,name,opt){
   opt=opt||{}; const ids=findCast(name); const ps=layoutCast(ids,name);
   const st={zone,name,actors:{},list:[],under:opt.under||null,over:opt.over||null,explore:false,cam:mkCam(),onos:[],title:null,faceLock:!!FACE[name]};
@@ -21288,8 +21311,12 @@ function mkStage(zone,name,opt){
   (ENTER[name]||[]).forEach(id=>{ if(st.actors[id]) st.actors[id].hidden=true; });
   st.olafProxy=il&&il.olaf?{id:'olaf',olafOn:il,em:null}:null;
   st.get=id=>st.actors[id]||(id==='olaf'?st.olafProxy:null); CUR.sayStage=st; CUR.sayGet=st.get; try{ if(PXS.warmGestures) PXS.warmGestures(ids.map(sprId)); }catch(e){}
+  // plano pintado del Puente Viejo: el caballero negro en una cornisa de la pared derecha, con su hoja a media escala (lejos) y entero dentro del cuadro.
+  // Reemplaza a la silueta de ENV (404,24), que dejaba el yelmo fuera de cuadro; con el acercamiento ×2 la hoja se ve a su resolución propia.
+  const fig=zone==='puente'?{spr:'valdris',id:'valdris',x:FIGPUENTE.x,y:FIGPUENTE.y,k:0.5,face:-1,ph:0,base:null,at:0}:null;
+  st.figura=id=>id==='valdris'&&fig&&ENV.flags.valdris&&!st.actors.valdris&&!ROOMSTAGE[zone]?fig:null;
   st.draw=(c,dt)=>{ const K=st.cam; camStep(K,dt); const zc=K.z!==1||K.x!==W/2||K.y!==H/2; if(zc){ c.save(); c.translate(W/2,H/2); c.scale(K.z,K.z); c.translate(-K.x,-K.y); }
-    drawBG(c,st.zone,dt); if(st.under) st.under(c,dt);
+    const fv=st.figura('valdris'); if(fv){ ENV.flags.valdris=false; drawBG(c,st.zone,dt); ENV.flags.valdris=true; drawFigura(c,fv); } else drawBG(c,st.zone,dt); if(st.under) st.under(c,dt);
     const vis=st.list.filter(a=>!a.hidden); vis.forEach(a=>moveActor(a,dt)); vis.sort((a,b)=>a.y-b.y).forEach(a=>drawActor(c,a));
     vis.forEach(a=>drawExtras(c,a,a.x,a.y-(a.jump?jumpY(a):0),actorH(a)));
     if(st.olafProxy) drawProxy(c,st.olafProxy);
@@ -21341,26 +21368,15 @@ function drawActor(c,a,alpha){ const [anim,t]=actorAnim(a); const o=a._o||(a._o=
   o.dir=actorDir(a); let sp=a.spr; o.npc=NPCV.on(a)?NPCV.seedOf(a):null; // NPC genéricos: variante estable por vecino (js/npc.js)
   // Severo preso (arte de Brian): mientras viaja en la carreta o sigue encadenado, fuera de combate
   if(sp==='severo'&&G&&(!G.party.severo||(G.flags&&G.flags.severo==='cadena'))&&SPR.has('severoPreso')) sp='severoPreso';
-  SPR.draw(c,sp,Math.round(a.x),Math.round(a.y-(a.jump?jumpY(a):0)),o);
-  if(anim==='sit'&&!a.logTop&&!a.pet&&!a.olafOn) stageSeat(c,a,sp); }
-/* sentado sin tronco: la pose 'sit' de las hojas baja el torso hasta la altura de un tronco (≈ 8 px) y esconde las piernas detrás:
-   en los fogones el tronco de adelante lo pone la escena (logTop) y en ojo/preguntas/af_lista el poste o la raíz de arco1/puesta.js.
-   En el resto (taberna, posada, campamento del prólogo, escenas del mapa) no había nada adelante y el personaje quedaba cortado
-   a la cintura sobre el piso. Ahora se dibuja delante una pieza a esa altura: banco en interiores, caja de herramientas en el
-   prólogo (el guion sienta a Ilian en una caja) y tronco afuera. */
-const SEATIN={taberna:1,pieza:1,posada:1};
-function stageSeat(c,a,sp){ try{ const sn=scene&&scene.name; if(scene&&scene.camp) return; if(typeof ARC_SEAT!=='undefined'&&sn&&ARC_SEAT[sn]&&sp==='ilian') return;
-    const A=window.LDC_ART&&window.LDC_ART['sprite:'+sp]; let h=0, bw=24;
-    if(A&&A.fw){ if(!(A.anims&&A.anims.sit)||!(A.seatDrop>0)) return; h=Math.round(9*(A.sc||1)); bw=(A.bw||24)*(A.sc||1); } else { const se=PXS.seat&&PXS.seat(sp); h=se&&se.y>0?se.y+1:0; const sz=PXS.size&&PXS.size(sp); bw=sz&&sz.w||24; }
-    if(h<=0) return; const z=(scene&&scene.zone)||'', kind=/^prologo/.test(sn||'')?'caja':((SEATIN[z]||(scene&&scene.place&&scene.place!=='town'))?'banco':'tronco');
-    const x=Math.round(a.x), y=Math.round(a.y-(a.jump?jumpY(a):0))+1, w=Math.round(clamp(bw*0.95,22,36)), x0=x-Math.round(w/2), top=y-h;
-    const C=kind==='caja'?['#24170c','#5a3e24','#7a5634','#a07a4c']:kind==='banco'?['#1e120a','#4a2e1c','#6a4628','#8e6440']:['#24160c','#5a3a20','#7a5230','#b88a56'];
-    c.save(); c.fillStyle='rgba(18,14,26,.35)'; c.fillRect(x0-1,y,w+2,2);
-    c.fillStyle=C[0]; c.fillRect(x0,top,w,h); c.fillStyle=C[2]; c.fillRect(x0+1,top+1,w-2,h-2); c.fillStyle=C[3]; c.fillRect(x0+1,top+1,w-2,1); c.fillStyle=C[1]; c.fillRect(x0+1,y-2,w-2,1);
-    if(kind==='banco'){ c.fillStyle=C[0]; c.fillRect(x0+1,top+3,w-2,1); c.fillStyle=C[1]; c.fillRect(x0+2,top+4,2,h-5); c.fillRect(x0+w-4,top+4,2,h-5); } // tabla y patas
-    else if(kind==='caja'){ c.fillStyle=C[1]; c.fillRect(x0+1,top+Math.round(h/2),w-2,1); for(let i=x0+5;i<x0+w-2;i+=6) c.fillRect(i,top+2,1,h-3); } // tablas
-    else { for(let i=x0+3;i<x0+w-2;i+=5){ c.fillStyle=C[1]; c.fillRect(i,top+2,2,1); } c.fillStyle='#c89a64'; c.fillRect(x0+w-4,top+1,3,h-3); } // corteza y corte
-    c.restore(); }catch(e){} }
+  if(anim==='sit'&&sitStands(a,sp)){ o.anim=(SPK.typing&&SPK.id&&SPK.id===a.id)?'talk':'idle'; o.t=T+(a.ph||0); }
+  SPR.draw(c,sp,Math.round(a.x),Math.round(a.y-(a.jump?jumpY(a):0)),o); }
+/* v27 · «sentados» de pie (pedido de Brian, 23/10/2026). Las hojas PNG de humanos (PixelLab + derivadas de tools/art/pl128.py) no
+   tienen una pose sentada de verdad: la fila 'sit' es el cuadro quieto con el torso bajado y las piernas cortadas, y para taparlo se
+   dibujaba delante una caja/banco/tronco (stageSeat) o un poste/raíz/tocón (arco1/puesta.js). Se leía como un busto sobre una caja.
+   Ahora, si la hoja es de humano (seatDrop > 0) o es un NPC genérico, el que «se sienta» queda de pie, quieto (o hablando), en el mismo
+   lugar, con su sombra, sin asiento dibujado. La lógica no cambia: a.base sigue siendo 'sit' (gestos, pararse al gritar, etc.).
+   Los animales (Olaf, Simona, el gato) y los sprites por código (PXS, con rodillas) siguen sentados. */
+function sitStands(a,sp){ if(a.pet||a.olafOn) return false; try{ if(NPCV.on(a)) return true; const A=artEntry('sprite:'+sprVar(sp)); return !!(A&&A.fw&&A.seatDrop>0); }catch(e){ return false; } }
 /* 8 direcciones (arte PixelLab, 21/10/2026): la fila de caminar sale del movimiento real del actor entre cuadros.
    Vertical (|dy| > 1,2·|dx|): de espaldas ('n') o de frente ('s'); horizontal neto (|dx| > 2·|dy|): de perfil ('e', espejado a la izquierda);
    en diagonal, la de 3/4 de siempre. Explorando, al frenar se queda mirando hacia donde iba (quieto de frente o de espaldas); en escenas, no. */
@@ -21416,7 +21432,7 @@ async function runCmds(cmds,ctx,name){
       case 'bars': { const st=dirStage(); if(st) st.cam.tbars=c[1]?1:0; break; }
       case 'vig': { const st=dirStage(); if(st){ st.cam.vigBase=c[1]||0; st.cam.tvig=c[1]||0; } break; }
       case 'sepia': { const st=dirStage(); if(st) st.cam.sepia=c[1]?1:0; break; }
-      case 'cam': { const st=dirStage(); if(!st) break; const K=st.cam; if(c[1]==='reset'||!c[1]){ K.lock=false; camNeutral(K); } else if(c[1]==='@'){ if(!REDUCED){ K.lock=true; K.tz=c[2]||1.2; K.tx=c[4]; K.ty=c[5]; K.fast=!!c[3]; } } else { const a=ctx.get(c[1]); const t=a&&(a.olafOn||a); if(t&&!t.side){ K.lock=true; camFocus(K,t,c[2]||1.15); K.fast=!!c[3]; } } break; }
+      case 'cam': { const st=dirStage(); if(!st) break; const K=st.cam; if(c[1]==='reset'||!c[1]){ K.lock=false; camNeutral(K); } else if(c[1]==='@'){ if(!REDUCED){ K.lock=true; K.tz=c[2]||1.2; K.tx=c[4]; K.ty=c[5]; K.fast=!!c[3]; } } else { const a=ctx.get(c[1])||(st.figura&&st.figura(c[1])); const t=a&&(a.olafOn||a); if(t&&!t.side){ K.lock=true; if(c[4]==='full') camFrame(K,t,c[2]||2); else camFocus(K,t,c[2]||1.15); K.fast=!!c[3]; } } break; }
       case 'ono': { const st=dirStage(); if(!st) break; const a=c[1]?ctx.get(c[1]):null; const t=a&&(a.olafOn||a); const x=c[4]!=null?c[4]:(t&&!t.side?t.x:W/2), y=c[5]!=null?c[5]:(t&&!t.side?t.y-actorH(t)-14:110); addOno(st,c[2],x,y,c[3]); break; }
       case 'walk': if(x&&!x.side&&!x.olafOn){ const dx=c[2]||0, dy=c[3]||0; if(dx) x.face=dx>0?1:-1; await tweenTo(x,x.x+dx,x.y+dy,Math.hypot(dx,dy)*24+120); x.walking=false; } break;
       case 'back': if(x&&!x.side&&!x.olafOn){ const f=x.face; const dx=c[2]||-12; if(!REDUCED) x.jump=nowMs(); await tweenTo(x,x.x+dx,x.y,Math.abs(dx)*14+90); x.walking=false; x.face=f; } break;
@@ -21424,6 +21440,12 @@ async function runCmds(cmds,ctx,name){
       // 'nota' anota una duda en «Lo que no cierra» del Diario (p8: ncAdd; c[2]='silent' sin aviso, 'ans' anota la respuesta)
       case 'hide': { const a=ctx.get(c[1]); if(a&&!a.side&&!a.olafOn){ a.hidden=true; a.held=true; a.tw=null; a.walking=false; } break; }
       case 'show': { const a=ctx.get(c[1]); if(a&&!a.side&&!a.olafOn){ a.held=false; a.hidden=false; markMet(a.id); if(!REDUCED) a.jump=nowMs(); } await sleep(160); break; }
+      // figura de fondo que no es del elenco (el caballero negro en la cornisa del Puente Viejo, p10 stage): ['figura',id,'baja',hacia,dx,dy,ms] la lleva
+      // junto a otro actor, ['figura',id,'vuelve',ms] la devuelve a su lugar y ['figura',id,'face',±1] la gira. No toca G ni el azar.
+      case 'figura': { const st=dirStage(); const f=st&&st.figura&&st.figura(c[1]); if(!f) break;
+        if(c[2]==='face'){ f.face=c[3]; await sleep(140); break; }
+        let tx=f.x, ty=f.y, ms=c[3]||900; if(c[2]==='baja'){ const y=ctx.get(c[3]); tx=(y?y.x:f.x)+(c[4]||0); ty=(y?y.y:f.y)+(c[5]||0); ms=c[6]||1100; } else if(c[2]==='vuelve'&&f.home){ tx=f.home.x; ty=f.home.y; }
+        if(Math.abs(tx-f.x)>1) f.face=tx>f.x?1:-1; if(SKIP.on){ f.x=tx; f.y=ty; break; } await tweenTo(f,tx,ty,ms); f.walking=false; if(c[2]==='baja'&&c[3]){ const y=ctx.get(c[3]); if(y&&Math.abs(y.x-f.x)>1) f.face=y.x>f.x?1:-1; } break; }
       case 'nota': try{ if(typeof ncAdd==='function') ncAdd(c[1],c[2]); }catch(e){ console.error(e); } break;
       case 'approach': { const y=ctx.get(c[2]); if(x&&y&&!x.side&&!x.olafOn){ const gap=c[3]||34; const tx=y.x+(x.x<y.x?-gap:gap); x.face=tx>x.x?1:-1; await tweenTo(x,tx,x.y,Math.abs(tx-x.x)*24+120); x.walking=false; x.face=y.x>x.x?1:-1; } break; }
       // escenas de afinidad v2: ['?', opciones, título] elección dentro de la escena (no se saltea: se pregunta igual; en AUTO gana la primera)
@@ -21611,7 +21633,10 @@ function townExplore(cfg){ cfg=cfg||null;
       npcs.push(rnpc('capilla','gato_capilla',{spot:'gato',face:1,base:'sit',label:LH.ex.gato?LH.ex.gato.label:'Gato',onTalk:async()=>{ await examine('gato'); }})); }
     else npcs.push(npc('odo',{face:1,label:'Hablar con Fray Odo',onTalk:async(n)=>{ await npcTalk(n); }}));
     if(ROOMS.casa) npcs.push(rnpc('casa','anciano',{face:-1,label:'Hablar con el anciano',onTalk:async(n)=>{ await npcTalk(n); }}));
-    if(cfg&&cfg.npcs){ for(let i=npcs.length-1;i>=0;i--) if(!cfg.npcs.includes(npcs[i].id)) npcs.splice(i,1); }
+    if(cfg&&cfg.npcs){ for(let i=npcs.length-1;i>=0;i--) if(!cfg.npcs.includes(npcs[i].id)){
+      // pedido de Brian (23/10/2026): en el Arco I el cofre del molino se sigue viendo; si quedó cerrado desde el Cap. 1, se revisa y avisa que está cerrado (no se abre)
+      if(npcs[i].id==='cofre'&&!G.flags.cofre){ const lz=(LINES.zones||{}), lw=(LINES.world||{}); Object.assign(npcs[i],{label:lw.cofre_revisar||'Revisar el cofre',onTalk:async()=>{ sfx('miss'); await playLines(lz.cofre_cerrado_hollin_molino||lz.cofre_cerrado||[[null,'Está cerrado con llave. No se puede abrir… por ahora.','n']]); }}); continue; }
+      npcs.splice(i,1); } }
     if(cfg&&cfg.talk) npcs.forEach(n=>{ const f=cfg.talk[n.id]; if(f){ n.onTalk=async()=>{ await f(TAPI,n); }; if(cfg.label&&cfg.label[n.id]) Object.defineProperty(n,'label',{get:()=>cfg.label[n.id](),configurable:true}); } });
     // puertas, salidas, examinables y cofres secretos
     const DOORS=(TW.doors||[]).filter(d=>!d.room||ROOMS[d.room]);
@@ -24205,12 +24230,18 @@ function interactables(){ const out=[]; const Z=S.Z; if(!Z) return out; const w=
   if(S.global){ Z.nodes.forEach(n=>{ if((!can(n.need)&&!goalOf(n))||n.sub||!fogOpen(n.x,n.y)) return; const zn=n.zone&&!n.closed&&!n.viaZone; out.push({x:n.x,y:n.y,r:22,label:zn?WL('entrarA','Entrar a ')+n.label+(n.lvl?' · Nv. '+n.lvl:''):n.label,node:n}); }); try{ POSADAS.globalItems(fogOpen).forEach(o=>out.push(o)); }catch(e){} return out; }
   const FH=S.figHide||new Set();
   (S.npcA||[]).concat(S.car).forEach(a=>{ if(a.arriving||(a.car&&FH.has(a.id))) return; out.push({x:a.x,y:a.y,r:30,label:a.label,npc:a}); });
-  Z.props.forEach(p=>{ if(!can(p.need)) return; if(p.kind==='cofre'&&w.chests[p.id]) return; const E=escenaDe(p)&&escenaMeta(p.escena); const el=E&&E.where&&E.where.spot===p.id?escenaLabel(p.escena):null;
+  Z.props.forEach(p=>{ if(p.kind==='cofre'&&w.chests[p.id]) return;
+    // pedido de Brian (23/10/2026): el cofre que se ve pero todavía no se abre (need sin cumplir) se puede revisar: «Revisar el cofre» → «Está cerrado…»
+    // (en las zonas de zones.js el cofre se dibuja aunque falte el need; en las de v1 sin _z no se dibuja, así que ahí sigue sin interacción)
+    if(!can(p.need)){ if(p.kind==='cofre'&&Z._z&&!p.nosprite) out.push({x:p.x,y:p.y,r:30,label:cofreLabel(p),prop:p,locked:true}); return; } const E=escenaDe(p)&&escenaMeta(p.escena); const el=E&&E.where&&E.where.spot===p.id?escenaLabel(p.escena):null;
     out.push({x:p.x,y:p.y,r:p.kind==='cofre'?30:(p.kind==='esfera'?32:26),label:el||p.label||({cofre:'Abrir el cofre',cartel:'Leer el cartel',mojon:'Tocar el mojón del cuervo',examinable:'Examinar'})[p.kind]||'Examinar',prop:p}); });
   if(S.cart&&S.car.length===0){}
   S.F.forEach(f=>{ if(f.id==='simona'||FH.has(f.id)) return; out.push({x:f.x,y:f.y,r:22,label:'Hablar con '+nameOf(f.id),fol:f,low:true}); }); // escenas v2: sin «Charla del grupo»
   S.rivals.forEach(r=>out.push({x:r.a.x,y:r.a.y,r:28,label:(r.def.name||nameOf(r.a.id))+' · Rival · Nv. '+(r.def.lvl||'?'),rival:r}));
   return out; }
+// cofres cerrados: rótulo y texto en LINES.world.cofre_revisar[_<id>] y LINES.zones.cofre_cerrado[_<id>] (lines.js); sin texto propio, el genérico
+function cofreLabel(p){ return WL('cofre_revisar_'+p.id,null)||WL('cofre_revisar','Revisar el cofre'); }
+function cofreCerrado(p){ return linesOf('cofre_cerrado_'+p.id)||linesOf('cofre_cerrado')||[[null,'Está cerrado con llave. No se puede abrir… por ahora.','n']]; }
 function chatsAvail(){ return []; } // escenas v2: las charlas ya no salen del grupo ni de la caravana (pasan en el mundo)
 function chatsAvailV1(){ try{ const step=ORDER.indexOf(G.cp); if(step<=ORDER.indexOf('contrato')) return []; const seen=G.flags.chats||{};
   const av=LINES.chats.filter(ch=>!seen[ch.id]&&ORDER.indexOf(ch.after)>=0&&ORDER.indexOf(ch.after)<step&&ch.cast.every(id=>id==='olaf'||G.party[id])); return av.concat(affChatsAvail(step)); }catch(e){ return []; } }
@@ -24222,6 +24253,7 @@ function giveItems(o){ const names=[]; Object.keys(o||{}).forEach(k=>{ const n=o
 async function useProp(p){ const w=ensure(); S.busy=true; S.P.walking=false; if(Math.abs(p.x-S.P.x)>3) S.P.face=p.x>S.P.x?1:-1; let meta=false;
   try{ const g=S.goal; if(g&&(g.trig||[]).some(id=>id===p.id||id===p.story||(p.sets===id&&p.scene))){ S.busy=false; reachGoal({id:p.id,prop:p}); meta=true; w.seen['prop:'+p.id]=1; return; } // M5: la meta deja busy (un segundo toque no juega la escena del prop sin ganchos) y el prop queda usado
     { const esc=escenaDe(p); if(esc){ await playEscena(esc,{at:{x:p.x,y:p.y+20}}); return; } } // escenas v2: examinar el objeto con «!» juega la escena (después, su texto)
+    if(p.kind==='cofre'&&!can(p.need)){ sfx('miss'); await talkLines(cofreCerrado(p)); return; } // cerrado (llave, misión o historia): se avisa y no se toca nada
     if(p.kind==='cofre'){ if(w.chests[p.id]) return; w.chests[p.id]=1; const got=giveItems(p.items); if(p.oro){ G.oro+=p.oro; got.push(p.oro+' coronas'); } (p.gear||[]).forEach(g2=>{ gearAdd(g2); got.push((MENUTXT.equip[g2]||{}).name||g2); }); sfx('heal'); lootPop(Object.keys(p.items||{}).concat(p.gear||[])); await say(null,p.msg||(WL('cofre','Encontrás un cofre: ')+got.join(', ')+'.')); if(p.place) done(p.place);
       { const PL=linesOf(p.post); if(PL) for(const l of PL) await sayL(l); } (Array.isArray(p.sets)?p.sets:p.sets?[p.sets]:[]).forEach(f=>flag(f,true)); if(p.run) await p.run(apiFor()); return; } // misiones: el cofre también corre sets/run (afinidad) y puede tener mensaje propio
     const k='prop:'+p.id; let L=null;
@@ -24490,9 +24522,13 @@ function stage(name,opt){ opt=opt||{}; const Z=S.Z; const st=mkStage(Z.bgZone===
   { const dy=Math.round((at.y-cam.y)-242); st.list.forEach(a=>{ a.y+=dy; if(!okPos(Z,a.x+cam.x,a.y+cam.y)){ const f=nearestOk(Z,a.x+cam.x,a.y+cam.y); a.x=f.x-cam.x; a.y=f.y-cam.y; } }); }
   const ENT2=[]; const vEnt=(a,deco)=>{ const e=a._sent||(a._sent={a,draw:cc=>{ cc.save(); cc.translate(cam.x,cam.y); drawActor(cc,a); if(!deco) drawExtras(cc,a,a.x,a.y-(a.jump?jumpY(a):0),actorH(a)); cc.restore(); }}); e.x=a.x+cam.x; e.y=a.y+cam.y; const ah=actorH(a); e.bx=Math.round(e.x)-22; e.by=Math.round(e.y)-ah-30; e.bw=44; e.bh=ah+36; return e; };
   const valdris={spr:'valdris',id:'valdris',x:0,y:0,face:-1,ph:0,base:null};
+  // el caballero negro en la cornisa (no es del elenco): se ubica una vez en su marca y la dirección escénica lo puede mover ('figura') y encuadrar ('cam')
+  const mv=Z.marks&&(Z.marks.cornisa_valdris||Z.marks.cornisa);
+  const figV=()=>{ if(!ENV.flags.valdris||!mv||st.actors.valdris) return null; if(!valdris.home){ valdris.x=mv.x-cam.x; valdris.y=mv.y-cam.y; valdris.home={x:valdris.x,y:valdris.y}; } return valdris; };
+  st.figura=id=>id==='valdris'?figV():null;
   st.draw=(c,dt)=>{ const K=st.cam; camStep(K,dt); const zc=K.z!==1||K.x!==W/2||K.y!==H/2; if(zc){ c.save(); c.translate(W/2,H/2); c.scale(K.z,K.z); c.translate(-K.x,-K.y); }
     ENT2.length=0; const vis=st.list.filter(a=>!a.hidden); vis.forEach(a=>{ moveActor(a,dt); ENT2.push(vEnt(a)); });
-    const mv=Z.marks&&(Z.marks.cornisa_valdris||Z.marks.cornisa); if(ENV.flags.valdris&&mv&&!st.actors.valdris){ valdris.x=mv.x-cam.x; valdris.y=mv.y-cam.y; ENT2.push(vEnt(valdris,true)); }
+    if(figV()){ moveActor(valdris,dt); ENT2.push(vEnt(valdris,true)); }
     if(Z._z){ if(Z.id==='hondo'||Z.dark){ const il=st.actors.ilian||vis[0]; if(il) Z.light={x:il.x+cam.x,y:il.y+cam.y-18}; } ENT2.sort((a,b)=>a.y-b.y); Z.draw(c,cam,dt,ENT2); if(st.under) st.under(c,dt); }
     else { Z.draw(c,cam,T); if(st.under) st.under(c,dt); if(Z.ents) for(const e of Z.ents()){ const sx=e.x-cam.x, sy=e.y-cam.y; if(sx>-80&&sx<W+80&&sy>-20&&sy<H+110) ENT2.push({y:e.y,img:e}); } if(S.cart) ENT2.push({y:S.cart.y,img:S.cart}); ENT2.sort((a,b)=>a.y-b.y);
       for(const it of ENT2){ if(it.img){ c.drawImage(it.img.img,Math.round(it.img.x-it.img.ox-cam.x),Math.round(it.img.y-it.img.oy-cam.y)); } else it.draw(c); } }
@@ -26113,18 +26149,11 @@ function arcPosFor(name,actors,tramo){ if(name!=='c4_carrera') return null; cons
   return out; }
 try{ ARC.posFor=arcPosFor; ARC.POS=ARC_POS; }catch(e){}
 
-/* ---------- B14 · Ilian sentado donde el texto lo sienta ----------
-   ojo («sentado en el poste del cerco»), preguntas (la primera guardia, en una raíz) y af_lista (la última guardia): pose 'sit'
-   sobre un asiento dibujado (poste o tocón) cuyo tope coincide con la cadera de la pose (seatDrop de la hoja de Brian).
-   En los fogones (escenas en el campamento) ya se sientan en los troncos del fuego: no se dibuja nada extra. */
-const ARC_SEAT={ojo:'poste',preguntas:'raiz',af_lista:'tocon'}, ARC_SIT_INIT={af_lista:['ilian']};
-function arcSeatDrop(id){ try{ const A=window.LDC_ART&&window.LDC_ART['sprite:'+id]; if(A&&A.fw) return Math.round((A.seatDrop||0)*(A.sc||1)); const s=PXS.seat&&PXS.seat(id); return s&&s.y>0?s.y:0; }catch(e){ return 0; } }
-function arcDrawSeat(c,kind,x,y,face,drop){ const top=y-drop, w=kind==='poste'?12:16, x0=Math.round(x-face*4-w/2); c.save();
-  const C=kind==='raiz'?['#2a1e14','#4a3422','#6a4c30','#8a6a44']:['#2c1a0e','#4e3220','#70482c','#94683e'];
-  c.fillStyle='rgba(18,14,26,.4)'; c.fillRect(x0-2,y-1,w+4,3);
-  c.fillStyle=C[0]; c.fillRect(x0-1,top-1,w+2,y-top+1); c.fillStyle=C[1]; c.fillRect(x0,top,w,y-top); c.fillStyle=C[2]; c.fillRect(x0+1,top,w-3,y-top-1);
-  c.fillStyle=C[3]; c.fillRect(x0,top,w,1); if(kind!=='poste'){ c.fillStyle=C[1]; c.fillRect(x0+3,top+1,w-6,1); } c.restore(); }
-try{ const d0=SPR.draw; SPR.draw=function(c,id,x,y,o){ try{ const sn=scene&&scene.name, k=sn&&ARC_SEAT[sn]; if(k&&o&&o.anim==='sit'&&!scene.camp&&id==='ilian'){ const dr=arcSeatDrop(id); if(dr>0) arcDrawSeat(c,k,x,y,o.face==null?-1:o.face,dr); } }catch(e){} return d0.apply(this,arguments); }; }catch(e){ console.error('[arco1] asiento',e); }
+/* ---------- B14 · Ilian «sentado» donde el texto lo sienta ----------
+   ojo (el poste del cerco), preguntas (una raíz) y af_lista (la última guardia) ponen la pose 'sit'. Desde v27 (pedido de Brian)
+   los humanos con hoja PNG no se dibujan sentados (p5_world.js, sitStands): quedan de pie y ya no se pinta el poste/raíz/tocón
+   que tapaba las piernas cortadas. ARC_SIT_INIT se mantiene para que la lógica (gestos) no cambie. */
+const ARC_SIT_INIT={af_lista:['ilian']};
 // af_lista no trae la orden de sentarse en el guion: se sienta al empezar (sin texto nuevo)
 try{ const ps0=playScene; playScene=async function(name,ctx){ try{ (ARC_SIT_INIT[name]||[]).forEach(id=>{ const a=ctx&&ctx.get&&ctx.get(id); if(a&&!a.side){ a.base='sit'; a.at=T; } }); }catch(e){} return ps0.apply(this,arguments); }; }catch(e){ console.error('[arco1] sentar',e); }
 
