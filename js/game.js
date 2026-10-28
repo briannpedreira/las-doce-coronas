@@ -222,7 +222,7 @@ A["fxa:emb_es"]={"src": LDC_ASSET("art/ref/fx/emb-es.png"), "fw": 64, "fh": 64, 
 })();
 
 });
-/* ---------- etapa principal: 48 módulos ---------- */
+/* ---------- etapa principal: 52 módulos ---------- */
 LDC_GAME.stages.push(function(){
 (()=>{
 'use strict';
@@ -9371,7 +9371,7 @@ function makeZone(def){
   z.solid=(x,y)=>{ if(x<2||y<4||x>w-2||y>h-1) return true; if(!built) z.build(); if(MASK[(y>>1)*MW+(x>>1)]) return true; for(const b of DYNB){ if((!b.vis||b.vis())&&x>=b.x&&x<b.x+b.w&&y>=b.y&&y<b.y+b.h) return true; } return false; };
   z.onRoad=(x,y)=>{ if(!built) z.build(); const RW=Math.ceil(w/4); x=clamp(x|0,0,w-1); y=clamp(y|0,0,h-1); return !!ROADM[(y>>2)*RW+(x>>2)]; };
   z.dynBlock=(b)=>{ DYNB.push(b); };
-  z._world=()=>WORLD; z._mask=()=>({MASK,MW,MH}); z._anims=()=>ANIMS;
+  z._world=()=>WORLD; z._mask=()=>({MASK,MW,MH}); z._anims=()=>ANIMS; z._objs=()=>OBJ; // escenarios (js/ambiente.js): bases de objetos quietos para las sombras de contacto
   // cámara: centrada en zonas chicas
   const camX=cam=>w<=W?Math.round((w-W)/2):Math.round(clamp(cam.x,0,w-W)), camY=cam=>h<=H?Math.round((h-H)/2):Math.round(clamp(cam.y,0,h-H));
   z.draw=(c,cam,dt,ents)=>{ z.build(); dt=clamp(dt||0,0,0.1); const cx=camX(cam), cy=camY(cam); lastEnts=!!ents;
@@ -19517,6 +19517,7 @@ function frame(now){
   try{ if(scene.update && !document.body.classList.contains('pzon')) scene.update(dt); scene.draw(cx,dt); }catch(err){ console.error(err); }
   cx.restore();
   if(fade.a>0.001){ cx.fillStyle='rgba(0,0,0,'+fade.a+')'; cx.fillRect(0,0,W,H); }
+  try{ AMBI.frame(fade.a); }catch(e){} // escenarios: la capa del velo (js/ambiente.js) sigue al cuadro y al fundido
   try{ updBubs(); if(scene.ui) scene.ui(); updMenuBtn(); }catch(err){ console.error(err); }
   const ms=performance.now()-t0; PERF.n++; PERF.sum+=ms; if(ms>PERF.max) PERF.max=ms;
   if(RUNS.size && !AUTO){ PERFM.n++; PERFM.sum+=dt; if(PERFM.n>=40){ const avg=PERFM.sum/PERFM.n; PERFM.n=0; PERFM.sum=0; if(avg>0.024&&!SLOWFX){ SLOWFX=true; if(!WIDE&&DPRCAP>1.5){ DPRCAP=1.5; fit(); } } if(avg>0.028 && DPRCAP>1.25){ DPRCAP=Math.max(1.25,DPRCAP-0.5); fit(); } } }
@@ -20590,7 +20591,7 @@ function battleView(B){
       const rk=cRate(); if(rk!==1) T+=dt*(rk-1); const dts=dt*rk;
       const k=FX.camera(); c.save(); c.translate(W/2+k.sx,H/2+k.sy); c.scale(k.zoom,k.zoom); c.translate(-k.x,-k.y);
       const pk=punchK(); if(pk){ c.translate(pk.x,pk.y); c.scale(pk.z,pk.z); c.translate(-pk.x,-pk.y); }
-      drawBG(c,B.zone,dt); try{ AMBZ.battle(c,B.zone,dt); }catch(e){} if(SHIFT.y) c.translate(0,SHIFT.y); /* ficha abierta: las unidades bajan para no quedar tapadas */ FX.drawUnder(c);
+      drawBG(c,B.zone,dt); try{ AMBZ.battle(c,B.zone,dt); }catch(e){} try{ AMBI.battle(c,B.zone,dt); }catch(e){} /* escenarios (js/ambiente.js): velo, viñeta y partículas del fondo, debajo de las unidades */ if(SHIFT.y) c.translate(0,SHIFT.y); /* ficha abierta: las unidades bajan para no quedar tapadas */ FX.drawUnder(c);
       // los cuadros de las bestias pueden llegar unos cuadros tarde (atlas / Worker): al tenerlos, se rearma la formación con las cajas reales
       if(B._bbEst && !AUTO && (B._bbTry=(B._bbTry||0)+1)%8===1){ if(B.units.every(u=>bodyBox(u))) stageLayout(B); else if(B._bbTry>480) B._bbEst=false; }
       B.units.forEach(u=>moveUnit(u,dts));
@@ -21316,26 +21317,37 @@ function mkStage(zone,name,opt){
   // Reemplaza a la silueta de ENV (404,24), que dejaba el yelmo fuera de cuadro; con el acercamiento ×2 la hoja se ve a su resolución propia.
   const fig=zone==='puente'?{spr:'valdris',id:'valdris',x:FIGPUENTE.x,y:FIGPUENTE.y,k:0.5,face:-1,ph:0,base:null,at:0}:null;
   st.figura=id=>id==='valdris'&&fig&&ENV.flags.valdris&&!st.actors.valdris&&!ROOMSTAGE[zone]?fig:null;
+  const am=ROOMSTAGE[zone]?null:ambStage(st);
   st.draw=(c,dt)=>{ const K=st.cam; camStep(K,dt); const zc=K.z!==1||K.x!==W/2||K.y!==H/2; if(zc){ c.save(); c.translate(W/2,H/2); c.scale(K.z,K.z); c.translate(-K.x,-K.y); }
-    const fv=st.figura('valdris'); if(fv){ ENV.flags.valdris=false; drawBG(c,st.zone,dt); ENV.flags.valdris=true; drawFigura(c,fv); } else drawBG(c,st.zone,dt); if(st.under) st.under(c,dt);
+    const fv=st.figura('valdris'); if(fv){ ENV.flags.valdris=false; drawBG(c,st.zone,dt); ENV.flags.valdris=true; drawFigura(c,fv); } else drawBG(c,st.zone,dt); if(st.under) st.under(c,dt); if(am) am.under(c);
     const vis=st.list.filter(a=>!a.hidden); vis.forEach(a=>moveActor(a,dt)); vis.sort((a,b)=>a.y-b.y).forEach(a=>drawActor(c,a));
     vis.forEach(a=>drawExtras(c,a,a.x,a.y-(a.jump?jumpY(a):0),actorH(a)));
     if(st.olafProxy) drawProxy(c,st.olafProxy);
     if(st.mark) drawHeadMark(c,st.mark.x,st.mark.y,'#ffe9a8');
-    if(st.over) st.over(c,dt); drawOnos(c,st); if(zc) c.restore(); ambDraw(c,st.zone,dt); drawDirOver(c,st,dt); };
+    if(st.over) st.over(c,dt); if(am) am.over(c,dt); drawOnos(c,st); if(zc) c.restore(); ambDraw(c,st.zone,dt); drawDirOver(c,st,dt); };
   if(ROOMSTAGE[zone]) roomStageDraw(st);
   return st;
 }
 // v24 · escenario sobre un interior de Hollin («pieza»: la pieza de arriba de la taberna). El cuarto se dibuja centrado, igual que al explorarlo,
 // y los actores del escenario (coordenadas de pantalla, POS) se ordenan por profundidad con sus muebles y reciben la misma penumbra del cuarto.
 const ROOMSTAGE={pieza:1};
+/* escenarios (js/ambiente.js): ambientación de las escenas sobre fondos pintados. Perfil propio 'esc_<fondo>' (coordenadas de pantalla
+   del fondo de 480×300) o, si no hay, el de la zona del mismo nombre sin las capas atadas al mundo (strip). under: sombras de contacto de
+   los actores y fondo suavizado (antes de los actores) · over: luz, partículas, primer plano y velo (antes de onomatopeyas, globos y barras). */
+function ambStage(st,o){ o=o||{}; let E=null; try{ E=typeof AMBI!=='undefined'?AMBI.esc(st.zone):null; }catch(e){} if(!E) return null; const strip=E.strip||!!o.strip, K=st.cam;
+  const X={ox:0,oy:0,P:null,actors:()=>st.list.filter(a=>!a.hidden),near:null,coll:null,objs:null,room:strip?null:{w:W,h:H,wallH:0},ww:W,wh:H,strip,z:1,tx:0,ty:0};
+  return { under(c){ if(o.noUnder) return; try{ AMBI.under(c,E.key,X); }catch(e){} }, over(c,dt){ try{ const z=K&&K.z||1; X.z=z; X.tx=K?W/2-K.x*z:0; X.ty=K?H/2-K.y*z:0; X.barH=K&&K.bars>0.01?Math.round(24*K.bars):0; AMBI.over(c,E.key,dt,X); }catch(e){} } }; }
 function roomStageOff(id){ const R=ENV.town&&ENV.town.room&&ENV.town.room(id); return R?{R,ox:Math.round((W-R.w)/2),oy:Math.round((H-R.h)/2)}:null; }
 function roomStageDraw(st){ const O=roomStageOff(st.zone); if(!O) return false; const {R,ox,oy}=O, rc={x:-ox,y:-oy}, ents=[];
+  // escenarios (js/ambiente.js): el cuarto lleva la misma ambientación que al explorarlo (actores pasados a coordenadas del cuarto)
+  const ak=(()=>{ try{ return typeof AMBI!=='undefined'&&AMBI.has(st.zone)?st.zone:null; }catch(e){ return null; } })(), AP=[];
+  const AX={ox:-ox,oy:-oy,P:null,actors:()=>AP,near:null,coll:(x,y)=>R.collide(x,y),objs:()=>R._ambObjs||(R._ambObjs=(R._objs||[]).filter(o=>o.spr&&!o.draw&&o.x!=null).map(o=>({x:o.x,y:o.y,bx:o.x+(o.ox||0),bw:o.spr.width/(o.spr.S||1),kind:''}))),room:R,ww:R.w,wh:R.h,z:1,tx:0,ty:0};
   st.draw=(c,dt)=>{ const K=st.cam; camStep(K,dt); const zc=K.z!==1||K.x!==W/2||K.y!==H/2; if(zc){ c.save(); c.translate(W/2,H/2); c.scale(K.z,K.z); c.translate(-K.x,-K.y); }
     ents.length=0; const vis=st.list.filter(a=>!a.hidden); vis.forEach(a=>moveActor(a,dt));
     vis.forEach(a=>{ const e=a._rse||(a._rse={y:0,draw:cc=>{ cc.save(); cc.translate(-ox,-oy); drawActor(cc,a); drawExtras(cc,a,a.x,a.y-(a.jump?jumpY(a):0),actorH(a)); if(st.olafProxy&&st.olafProxy.olafOn===a) drawProxy(cc,st.olafProxy); cc.restore(); }}); e.y=a.y-oy; ents.push(e); });
+    if(ak){ AP.length=0; vis.forEach(a=>{ const q=a._rsa||(a._rsa={}); q.x=a.x-ox; q.y=a.y-oy; AP.push(q); }); try{ AMBI.ents(ents,ak,AX); }catch(e){} }
     R.draw(c,rc,dt,ents); if(R.drawOver) R.drawOver(c,rc,dt);
-    if(st.mark) drawHeadMark(c,st.mark.x,st.mark.y,'#ffe9a8'); if(st.over) st.over(c,dt); drawOnos(c,st); if(zc) c.restore(); drawDirOver(c,st,dt); };
+    if(st.mark) drawHeadMark(c,st.mark.x,st.mark.y,'#ffe9a8'); if(st.over) st.over(c,dt); if(ak){ try{ const z=K.z||1; AX.z=z; AX.tx=W/2-K.x*z; AX.ty=H/2-K.y*z; AX.barH=K.bars>0.01?Math.round(24*K.bars):0; AMBI.over(c,ak,dt,AX); }catch(e){} } drawOnos(c,st); if(zc) c.restore(); drawDirOver(c,st,dt); };
   return true; }
 function facing(st,name){ const F=FACE[name]||{}; const L=st.list;
   L.forEach(a=>{ if(F[a.id]!=null) a.face=F[a.id]; else if(F['*']!=null) a.face=F['*']; else { const o=L.filter(b=>b!==a); const mx=o.length?o.reduce((s,b)=>s+b.x,0)/o.length:240; a.face=mx>=a.x?1:-1; } }); }
@@ -21782,6 +21794,16 @@ function townExplore(cfg){ cfg=cfg||null;
     function doorIcon(c,x,y){ const b=Math.round(Math.sin(T*3+x)*1); y+=b; c.fillStyle='#1a1008'; c.fillRect(x-4,y-1,9,9); c.fillRect(x-3,y-2,7,1); c.fillStyle='#ffe9a8'; c.fillRect(x-3,y,7,7); c.fillRect(x-2,y-1,5,1); c.fillStyle='#7a4a22'; c.fillRect(x-2,y+1,5,6); c.fillStyle='#ffd04a'; c.fillRect(x+1,y+4,1,1); }
     // entidades persistentes (un objeto y una función por actor, sin crear basura por cuadro)
     const ENTS=[]; const entOf=a=>a._ent||(a._ent={a,y:0,bx:0,by:0,bw:44,bh:0,draw:cc=>{ drawActor(cc,a); drawExtras(cc,a,a.x,a.y-(a.jump?jumpY(a):0),actorH(a)); if(a===P) drawProxy(cc,olafProxy); else if(S.near===a) drawHeadMark(cc,Math.round(a.x),Math.round(a.y-actorH(a)-6),'#ffd04a'); }});
+    // escenarios fase 1 (js/ambiente.js): luz y color, profundidad, sombras de contacto, vida y utilería por zona (Hollin de día/de noche y la taberna)
+    // marcas quietas (cofres, examinables, puertas del lugar actual): el primer plano de AMBI se aparta de ellas también en los interiores
+    const AMK=[]; const ambMarks=()=>{ AMK.length=0; for(const t of things){ if(t.hidden||!here(t)) continue; AMK.push({x:t.mx!=null?t.mx:t.x,y:t.y,hw:16,up:t.my!=null?Math.max(30,t.y-t.my+18):40}); }
+      for(const n of npcs){ if(n.nosprite&&!n.hidden&&here(n)) AMK.push({x:n.mx!=null?n.mx:n.x,y:n.y,hw:16,up:40}); } return AMK; };
+    const ACX={ox:0,oy:0,P,actors:()=>S.visActors(),near:null,coll:null,objs:null,room:null,ww:0,wh:0,marks:ambMarks};
+    const townObjs=()=>TW._objs?TW._objs():[], roomObjs=rm=>rm._ambObjs||(rm._ambObjs=(rm._objs||[]).filter(o=>o.spr&&!o.draw&&o.x!=null).map(o=>({x:o.x,y:o.y,bx:o.x+(o.ox||0),bw:o.spr.width/(o.spr.S||1),kind:''})));
+    const ambKey=()=>{ try{ if(typeof AMBI==='undefined') return null; const k=S.room?S.room.id:((cfg&&cfg.tint)?'hollin_noche':'hollin'); return AMBI.has(k)?k:null; }catch(e){ return null; } };
+    const ambEnts=(ents,k)=>{ try{ const rm=S.room; ACX.room=rm; ACX.ox=rm?Math.round(S.cam.x):Math.round(clamp(S.cam.x,0,TW.w-W)); ACX.oy=rm?Math.round(S.cam.y):Math.round(clamp(S.cam.y,0,TW.h-H)); ACX.near=S.near;
+      ACX.coll=rm?((x,y)=>rm.collide(x,y)):((x,y)=>TW.collide(x,y)); ACX.objs=rm?(()=>roomObjs(rm)):townObjs; ACX.ww=rm?rm.w:TW.w; ACX.wh=rm?rm.h:TW.h; AMBI.ents(ents,k,ACX); }catch(e){} };
+    const ambOver=(c,k,dt)=>{ try{ ACX.ov=!S.title&&!S.trans; /* velo en la capa del compositor salvo con el título del cuarto encima */ AMBI.over(c,k,dt,ACX); }catch(e){} };
     const markEnt={y:9999,draw:cc=>{ const nn=S.near; if(nn) drawHeadMark(cc,Math.round(nn.mx!=null?nn.mx:nn.x),Math.round(nn.my!=null?nn.my:nn.y-18),'#ffd04a'); }};
     things.forEach(t=>{ if(t.door) t._ent={y:9998,draw:cc=>doorIcon(cc,t.x,t.y-34)}; });
     S.draw=(c,dt)=>{ if(!reFaced){ reFaced=true; try{ reFace(); }catch(e){} }
@@ -21797,9 +21819,10 @@ function townExplore(cfg){ cfg=cfg||null;
       for(const t of talkers){ if(!t.bangFn||t.hidden||!here(t)||!t.bangFn()) continue; const bt=t._pbang||(t._pbang={y:9997,draw:cc=>drawBang(cc,Math.round(t.mx!=null?t.mx:t.x),Math.round(t.nosprite?(t.my!=null?t.my-6:t.y-30):t.y-actorH(t)-(S.near===t?18:8)))}); ents.push(bt); } // posadas: «!» de los puntos de formación
       for(const t of things){ if(t.escena&&here(t)&&escenaAvail(t.escena)){ const bt=t._bang||(t._bang={y:9997,draw:cc=>drawBang(cc,Math.round(t.x),Math.round(t.y-(S.near===t?44:30)))}); ents.push(bt); } }
       if(!S.room){ for(const t of things){ if(!t.door||t===nn) continue; if(Math.abs(t.x-P.x)>110||Math.abs(t.y-P.y)>90) continue; ents.push(t._ent); } }
-      if(S.room){ S.room.draw(c,S.cam,dt,ents); if(S.room.drawOver) S.room.drawOver(c,S.cam,dt);
+      const ak=ambKey(); if(ak) ambEnts(ents,ak);
+      if(S.room){ S.room.draw(c,S.cam,dt,ents); if(S.room.drawOver) S.room.drawOver(c,S.cam,dt); if(ak) ambOver(c,ak,dt);
         const tt=S.title; if(tt){ const el=T-tt.t0; if(el>2.2) S.title=null; else { const a=Math.min(1,el*4,(2.2-el)*2.5); const top=-S.cam.y, fs=FSZ(13); c.save(); c.globalAlpha=a; c.textAlign='center'; c.textBaseline='middle'; c.font=fs+'px "Marcellus SC", Georgia, serif'; const ty=WIDE?Math.round(Math.max(fs*0.6+2,top/2)):Math.round(Math.min(H-fs*0.6-2,H-top/2)); /* en teléfono los avisos van arriba: el nombre va en el margen de abajo */ c.lineWidth=3; c.strokeStyle='rgba(0,0,0,.85)'; c.strokeText(tt.text,W/2,ty); c.fillStyle='#f0dca8'; c.fillText(tt.text,W/2,ty); c.restore(); } } }
-      else { TW.draw(c,S.cam,dt,ents); if(TW.drawOver) TW.drawOver(c,S.cam,dt); ambDraw(c,'hollin',dt); if(cfg&&cfg.tint){ c.fillStyle=cfg.tint; c.fillRect(0,0,W,H); lampGlow(c); } }
+      else { TW.draw(c,S.cam,dt,ents); if(TW.drawOver) TW.drawOver(c,S.cam,dt); ambDraw(c,'hollin',dt); if(cfg&&cfg.tint){ c.fillStyle=cfg.tint; c.fillRect(0,0,W,H); lampGlow(c); } if(ak) ambOver(c,ak,dt); }
       if(!S.ended) goalHud(c);
     };
     S.onTap=(x,y)=>{ if(S.busy||S.trans) return; const wx=x+S.cam.x, wy=y+S.cam.y; const n=talkers.find(n=>!n.hidden&&here(n)&&Math.hypot(n.x-wx,n.y-18-wy)<22); if(n && Math.hypot(n.x-P.x,n.y-P.y)<36){ S.near=n; S.onAction(); return; } S.target={x:wx,y:wy}; };
@@ -21912,7 +21935,8 @@ async function playChat(S,ch,ni){
   st.draw=(c,dt)=>{ const K=st.cam; camStep(K,dt); const zc=K.z!==1||K.x!==W/2||K.y!==H/2; if(zc){ c.save(); c.translate(W/2,H/2); c.scale(K.z,K.z); c.translate(-K.x,-K.y); }
     const fc=ENV.flags.carruaje, fv=ENV.flags.valdris; ENV.flags.carruaje=false; ENV.flags.valdris=false; drawBG(c,zone,dt); ENV.flags.carruaje=fc; ENV.flags.valdris=fv;
     const ents=[]; for(const a of st.list){ if(a.hidden) continue; moveActor(a,dt); ents.push({y:a.y,draw:cc=>{ drawActor(cc,a); if(a.base==='sit'&&a.logTop) cc.drawImage(FL,Math.round(a.x)-14,Math.round(a.y)-a.logTop); drawExtras(cc,a,a.x,a.y-(a.jump?jumpY(a):0),actorH(a)); }}); }
-    CP.draw(c,zone,dt,ents); if(st.olafProxy) drawProxy(c,st.olafProxy); drawOnos(c,st); if(zc) c.restore(); ambDraw(c,zone,dt,{camp:true}); drawDirOver(c,st,dt); };
+    CP.draw(c,zone,dt,ents); if(st.olafProxy) drawProxy(c,st.olafProxy); if(amc) amc.over(c,dt); drawOnos(c,st); if(zc) c.restore(); ambDraw(c,zone,dt,{camp:true}); drawDirOver(c,st,dt); };
+  const amc=ambStage(st,{strip:true,noUnder:true}); // escenarios: charlas del fogón con el velo y las partículas del fondo (sin luces del fondo pintado: el fogón ya ilumina)
   hideDialog(); await fadeTo(1,110);
   setScene(st); CUR.sayStage=st; CUR.sayGet=st.get; st.cam.bars=0; st.cam.tbars=1; st.cam.vigBase=st.cam.tvig=CP.def(zone).night>0.4?0.25:0.1;
   st.title={t:ch.title,sub:((ENV.map.nodes[ni]||{}).n||'')+' · '+(CHATHORA[zone]||''),t0:T,dur:1.1};
@@ -23609,6 +23633,981 @@ const AMBZ=(()=>{
 })();
 
 /* ============================================================
+   AMBIENTACIÓN VISUAL DE ESCENARIOS (Hefesto · escenarios, fase 1) — AMBI
+   Referencia de ESTILO (no de arte): luz dorada con bloom y neblina, profundidad de campo tipo maqueta,
+   sombras de contacto, vida ambiental y densidad de detalle. Todo se arma con arte que ya existe
+   (MATS, dibujo por código); no toca env.js (el atlas horneado no cambia) ni la colisión.
+
+   Capas (por zona, según la tabla Z de abajo):
+     A · luz y color   grading propio (soft-light cálido/frío), neblina del plano lejano, haces de luz,
+                       bloom suave de las altas luces y viñeta.
+     B · profundidad   fondo lejano (franja de arriba) suavizado ANTES de dibujar actores; primer plano
+                       (follaje / vigas) desenfocado con parallax y vaivén, que se aparta (se vuelve casi
+                       transparente) cuando un actor, el jugador o una marca interactuable pasan detrás.
+     C · contacto      oclusión ambiental: oscurece bases de casas, árboles, muebles, muros y pies de actores.
+     D · vida          pasto que se mece, banderines y estandartes al viento, brillos del agua, polvo en
+                       suspensión, polen, hojas, brasas, humo, luciérnagas.
+     E · densidad      utilería de decoración (barriles, cajones, sacos, macetas, flores, pasto alto) con
+                       MATS; lo que tiene volumen solo se apoya en suelo YA bloqueado (no cambia la colisión).
+
+   Uso (lo llaman los motores de escena, siempre dentro de try/catch):
+     AMBI.has(key)                         ¿la zona tiene ambientación?
+     AMBI.ents(ents,key,ctx)               agrega a la lista ordenada por y: la pasada "debajo" (AO + fondo
+                                           suavizado, y=-∞) y la utilería con profundidad (E, D).
+     AMBI.over(c,key,dt,ctx)               pasada de pantalla (A, B primer plano, D partículas), después de
+                                           drawOver y antes del HUD.
+     ctx = {ox,oy (cámara: mundo→pantalla), P (líder), actors() (visibles), near (marca), coll(x,y),
+            objs() (objetos quietos de la zona: x,y,bx,bw,kind), marks() (opcional: salidas/cofres {x,y,hw,up})}
+   Calidad: 'alta' | 'media' | 'baja' | 'min' (+ 'auto', por defecto) — se ajusta sola midiendo ms por cuadro
+   (objetivo 60 fps; si el promedio pasa de 20 ms baja un escalón, y si en 'baja' sigue arriba de 30 ms va a
+   'min'; sube de nuevo solo después de varios segundos holgados). Se fuerza con '#…&ambi=alta|media|baja|min|off'
+   o LDC_AMBI.set(q). prefers-reduced-motion: sin vaivén ni parallax del primer plano, partículas lentas y pocas.
+   Azar: RNG propio (mulberry32 con semilla por zona); NUNCA Math.random ni LR (no toca el azar del juego).
+   ============================================================ */
+const AMBI=(()=>{
+  const TAU=Math.PI*2;
+  const mkRng=s=>()=>{ s|=0; s=s+0x6D2B79F5|0; let t=Math.imul(s^s>>>15,1|s); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; };
+  const mk=(w,h)=>{ const k=document.createElement('canvas'); k.width=Math.max(1,Math.ceil(w)); k.height=Math.max(1,Math.ceil(h)); return k; };
+  const HX={}; const rgb=h=>{ let v=HX[h]; if(v) return v; const n=parseInt(h.slice(1),16); return HX[h]=[n>>16,(n>>8)&255,n&255]; };
+  const rgba=(h,a)=>{ const v=rgb(h); return 'rgba('+v[0]+','+v[1]+','+v[2]+','+a+')'; };
+  const HASF=(()=>{ try{ const x=mk(2,2).getContext('2d'); x.filter='blur(1px)'; return x.filter==='blur(1px)'; }catch(e){ return false; } })();
+  const RED=typeof REDUCED!=='undefined'&&REDUCED;
+  const now=()=>performance.now();
+
+  /* ---------- calidad ---------- */
+  const QL=['pausa','min','baja','media','alta']; /* 'pausa': piso automático (sin capas) solo si 'min' no sostiene 30 fps POR CULPA de AMBI (se prueba antes, ver tickQ) */ const DIS=new Set(); const on=f=>!DIS.has(f); // DIS: capas apagadas a mano (diagnóstico de rendimiento)
+  // Todo lo de 'min' y 'baja' se compone con source-over (barato también sin GPU); 'media' suma el grading real (soft-light)
+  // y 'alta' el bloom (lectura del lienzo + screen). Medido: cada capa de pantalla completa con modo de mezcla cuesta 8-17 ms sin GPU.
+  // Sin GPU lo caro es REMUESTREAR: un drawImage de pantalla completa escalado con suavizado cuesta ~8 veces más que el mismo
+  // lienzo copiado 1:1 en píxeles del dispositivo (medido a 1088×680: 2,7 ms contra 0,33 ms; con la CPU ×4, 11,5 contra 1,6 ms).
+  // Por eso el velo (grading horneado + neblina + haces quietos + viñeta) se hornea UNA vez a la resolución real del lienzo
+  // (cv.width×cv.height) y se copia 1:1, y el primer plano y el reflejo del agua usan copias a escala del dispositivo (devCopy).
+  // 'min': velo con grading horneado, viñeta, pocas partículas (12 %), sombras de contacto de actores y muros y la utilería quieta (props 1: flores,
+  // barriles, cajones, sacos; sin pasto, banderines ni juncos que se mecen); sin primer plano ni fondo suavizado.
+  const QP={ pausa:{pausa:1},
+             min:  {bloom:0,dof:0,part:0.12,shafts:1,fg:0,props:1,grade:0,lite:1,velo:1,aoo:0}, // M2: en 'min', menos partículas y sin sombras de contacto por objeto (el suelo horneado ya trae las suyas); quedan las de actores y muros
+             baja: {bloom:0,dof:4,part:0.5,shafts:1,fg:1,props:2,grade:0,lite:1,velo:1},
+             media:{bloom:0,dof:3,part:0.75,shafts:2,fg:1,props:2,grade:1},
+             alta: {bloom:4,dof:3,part:1,shafts:2,fg:1,props:2,grade:1} };
+  const HQ=(()=>{ try{ const m=/[#&]ambi=(\w+)/.exec(location.hash); return m?m[1]:null; }catch(e){ return null; } })();
+  const coarse=(()=>{ try{ return matchMedia('(pointer:coarse)').matches; }catch(e){ return false; } })();
+  const Q={ off:HQ==='off', auto:!(HQ&&QL.includes(HQ)), i:HQ&&QL.includes(HQ)?QL.indexOf(HQ):(coarse?3:4),
+    ema:16.7, pass:0, bad:0, good:0, cool:0, downs:0, last:0, log:[], probe:null, noPause:0, retry:0, key:null, settle:0, rb:[] };
+  try{ const s=store.get('ambiQ',null); if(!HQ&&s&&QL.includes(s)){ Q.auto=false; Q.i=QL.indexOf(s); } if(!HQ&&s==='off') Q.off=true; }catch(e){}
+  function qp(){ return QP[QL[Q.i]]; }
+  function setQ(i,why){ i=clamp(i,0,QL.length-1); if(i===Q.i) return; Q.log.push([Math.round(now()),QL[Q.i]+'→'+QL[i],why]); if(Q.log.length>12) Q.log.shift(); Q.i=i; if(!Q.probe) Q.settle=Math.max(Q.settle,now()+4000); }
+  /* Automático: de 'alta'/'media'/'baja' se baja un escalón si el cuadro pasa de 20 ms (se pierden 50 fps) durante 1,2 s.
+     'min' → 'pausa' NO es automático por lentitud: si en 'min' el cuadro pasa de 33,4 ms (menos de 30 fps), se PRUEBA 'pausa' 1,5 s
+     y se compara: solo se queda en 'pausa' si sin AMBI el juego sí sostiene 30 fps y gana más de 3 ms por cuadro (o sea, si la culpa es
+     de AMBI). Si el juego va lento igual (equipo modesto: lo caro es el resto del cuadro), se vuelve a 'min', que cuesta 1-2 ms y se
+     sigue viendo. Desde 'pausa' se reintenta 'min' cada 20 s (con la misma comparación). */
+  /* B1 · régimen: la prueba de 'pausa' (y su reintento) solo corre con cuadros de régimen, no durante la carga ni la precarga
+     de fondo (al entrar a una zona hay 20-50 s de cuadros de 90-150 ms que no dicen nada de AMBI). Hace falta: (a) 8 s desde que
+     AMBI empezó a dibujar esta zona o cambió de calidad, (b) la precarga terminada (efectos, cuadros de sprites y arte de fondo), y (c) los últimos 3 s estables:
+     la mediana de la primera y la segunda mitad no difieren más de 15 %, y a lo sumo 5 % de los cuadros pasa de 1,8 veces la mediana. */
+  function steady(t){ if(t<Q.settle) return false; try{ if(typeof FXW!=='undefined'&&FXW&&FXW.done===false) return false; }catch(e){}
+    try{ if(typeof PXS!=='undefined'&&PXS.stats&&PXS.stats().queue>0) return false; }catch(e){} // precarga de cuadros de sprites pendiente
+    try{ if(typeof ARTIMG!=='undefined') for(const im of ARTIMG.values()) if(im&&!im.complete) return false; }catch(e){} // arte de fondo (retratos, hojas) todavía bajando
+    const R=Q.rb, A=[], B=[]; for(let i=R.length-1;i>=0;i--){ const d=t-R[i][0]; if(d>3000) break; (d>1500?A:B).push(R[i][1]); }
+    if(A.length<12||B.length<12) return false; const med=a=>{ const v=a.slice().sort((x,y)=>x-y); return v[v.length>>1]; }; const ma=med(A), mb=med(B), m=med(A.concat(B));
+    if(Math.abs(ma-mb)>0.15*Math.max(ma,mb)) return false; let sp=0; for(const v of A) if(v>1.8*m) sp++; for(const v of B) if(v>1.8*m) sp++; return sp<=0.05*(A.length+B.length); }
+  function tickQ(passMs){ const t=now(); const iv=Q.last?t-Q.last:16.7; Q.last=t; if(iv>250){ Q.settle=Math.max(Q.settle,t+3000); return; } // pestaña oculta / pausa: no cuenta
+    Q.rb.push([t,iv]); if(Q.rb.length>240) Q.rb.splice(0,Q.rb.length-240);
+    Q.ema=Q.ema*0.9+iv*0.1; Q.pass=Q.pass*0.9+passMs*0.1; if(!Q.auto) return;
+    const P=Q.probe; if(P){ P.n++; P.sum+=iv; if(t<P.end) return; const m=P.sum/P.n; Q.probe=null; // fin de la prueba: m = cuadro medio en el escalón probado
+      if(P.to===0){ if(m<=33.4&&P.base-m>3){ Q.log.push([Math.round(t),'prueba pausa','min '+P.base.toFixed(1)+' → pausa '+m.toFixed(1)+' ms: queda']); Q.retry=t+20000; }
+        else { setQ(1,'pausa no ayuda ('+P.base.toFixed(1)+' → '+m.toFixed(1)+' ms)'); Q.noPause=t+30000*Math.min(4,++Q.downs); } }
+      else { if(m<=33.4||m-P.base<3){ Q.log.push([Math.round(t),'prueba min','pausa '+P.base.toFixed(1)+' → min '+m.toFixed(1)+' ms: queda']); } else { setQ(0,'min sigue lento ('+m.toFixed(1)+' ms)'); Q.retry=t+20000; } }
+      if(Q.log.length>12) Q.log.shift(); Q.ema=m; Q.bad=0; Q.good=0; Q.cool=t+3000; return; }
+    if(Q.i===0){ if(t>Q.retry&&steady(t)){ Q.probe={to:1,base:Q.ema,end:t+1500,n:0,sum:0}; setQ(1,'reintento'); } return; }
+    const lim=Q.i===1?33.4:20;
+    if(Q.ema>lim){ Q.bad+=iv; Q.good=0; } else { Q.bad=Math.max(0,Q.bad-iv*0.5); }
+    if(Q.bad>1200){ Q.bad=0;
+      if(Q.i===1){ if(t>Q.noPause&&t>Q.cool+2000&&steady(t)){ /* recién bajado a 'min' se espera ~6 s (los primeros cuadros hornean velos y copias) y, además, régimen (B1) */ Q.probe={to:0,base:Q.ema,end:t+1500,n:0,sum:0}; setQ(0,'prueba ('+Q.ema.toFixed(1)+' ms)'); } return; }
+      setQ(Q.i-1,'ema '+Q.ema.toFixed(1)+' ms'); Q.downs++; Q.cool=t+4000; Q.ema=16.7; return; }
+    if(Q.ema<17.6){ Q.good+=iv; if(Q.i<4&&t>Q.cool&&Q.good>(Q.downs?14000:6000)){ setQ(Q.i+1,'holgado'); Q.good=0; Q.cool=t+3000; } } else Q.good=0; }
+
+  /* ---------- tabla de zonas (datos) ----------
+     grade: [colorLuz, colorSombra, alfa] en soft-light (diagonal de arriba-izq. a abajo-der.) · tone: multiplicador suave
+     haze: neblina del plano lejano {col,a,h (fracción de H)} · shafts: haces {kind:'sun'|'window',...}
+     bloom: {a, tint} · vig: {a,col} · dof: {far,near (fracción de H)} · ao: {obj,actor,col,walls}
+     fg: juego de primer plano · parts: partículas · props: utilería (coordenadas del mundo) */
+  const RIVER=[[0,1092,20],[64,1096,22],[128,1091,24],[192,1088,22],[256,1095,21],[320,1102,20],[384,1094,18],[448,1075,17],[512,1055,18],[548,1052,18],[600,1060,24],[672,1073,26],[736,1068,24],[800,1069,21],[864,1075,17],[944,1094,18]];
+  const Z={
+    hollin:{ seed:11, grade:['#ffcf7e','#36406e',0.34], tone:'#fff2de', haze:{col:'#ffe4b0',a:0.2,h:0.34}, shafts:{kind:'sun',n:6,col:'#ffe6a6',a:0.16,ang:0.62,par:0.25},
+      bloom:{a:0.3,tint:'#ffd9a0'}, vig:{a:0.5,col:'#1c1208'}, dof:{far:0.24,near:0.13}, ao:{obj:0.42,actor:0.34,col:'#24180c'},
+      fg:'bosque', parts:{motes:26,pollen:16,leaves:7,glint:RIVER},
+      props:[
+        // banderines entre faroles de la plaza (D+E); y = pie de orden
+        {t:'banderines',a:[521,420,36],b:[773,442,36],sag:16,seed:3},{t:'banderines',a:[549,516,36],b:[792,513,36],sag:14,seed:7},
+        {t:'banderines',a:[380,470,36],b:[521,420,36],sag:10,seed:5},
+        // estandartes colgados de la fachada de la taberna y de la herrería (vaivén de tela)
+        {t:'estandarte',x:430,y:371,top:300,len:38,col:'#8e2a30',orla:'#e2b44c',seed:1},{t:'estandarte',x:552,y:371,top:300,len:38,col:'#8e2a30',orla:'#e2b44c',seed:2},
+        {t:'estandarte',x:812,y:379,top:318,len:30,col:'#2e4a7a',orla:'#d8c47a',seed:4},
+        // utilería apoyada en suelo ya bloqueado (frente de las casas)
+        {t:'maceta',x:462,y:369,seed:3},{t:'maceta',x:518,y:369,seed:5},{t:'maceta',x:842,y:377,seed:2},{t:'maceta',x:878,y:377,seed:6},
+        {t:'barril',x:598,y:369,seed:2},{t:'saco',x:586,y:370,seed:1},{t:'barril',x:430,y:369,seed:5},{t:'cajon',x:794,y:377,seed:4,load:'apple'},{t:'barril',x:920,y:377,seed:3},{t:'saco',x:930,y:378,seed:3},
+        {t:'maceta',x:150,y:377,seed:1},{t:'maceta',x:226,y:377,seed:4},{t:'barril',x:252,y:377,seed:7},
+        {t:'saco',x:704,y:549,seed:2},{t:'cajon',x:740,y:549,seed:6,load:'cabbage'},{t:'saco',x:768,y:564,seed:4},{t:'cajon',x:806,y:564,seed:8,load:'apple'},
+        {t:'maceta',x:448,y:703,seed:2},{t:'maceta',x:503,y:703,seed:5},
+        // flores (planas) y pasto alto que se mece, en los bordes de pasto de la plaza y los caminos
+        {t:'flores',x:458,y:446,n:7,r:9,seed:1},{t:'flores',x:612,y:404,n:5,r:7,seed:2},{t:'flores',x:836,y:470,n:6,r:8,seed:3},{t:'flores',x:470,y:540,n:6,r:8,seed:4},
+        {t:'flores',x:705,y:398,n:5,r:7,seed:5},{t:'flores',x:858,y:600,n:6,r:9,seed:6},{t:'flores',x:330,y:470,n:6,r:8,seed:7},{t:'flores',x:612,y:610,n:5,r:7,seed:8},
+        {t:'pasto',x:528,y:448,n:5,seed:1},{t:'pasto',x:540,y:574,n:6,seed:2},{t:'pasto',x:812,y:452,n:5,seed:3},{t:'pasto',x:820,y:590,n:6,seed:4},{t:'pasto',x:690,y:408,n:4,seed:5},
+        {t:'pasto',x:446,y:494,n:5,seed:6},{t:'pasto',x:880,y:500,n:5,seed:7},{t:'pasto',x:610,y:440,n:3,seed:8},{t:'pasto',x:360,y:430,n:5,seed:9},{t:'pasto',x:970,y:430,n:6,seed:10},
+        {t:'pasto',x:1010,y:470,n:6,seed:11},{t:'pasto',x:1015,y:620,n:6,seed:12},{t:'pasto',x:300,y:520,n:5,seed:13} ] },
+    hollin_noche:{ seed:12, grade:['#7e9ee0','#141a3a',0.36], tone:'#c8d0f0', haze:{col:'#8aa0d8',a:0.12,h:0.3}, shafts:null,
+      bloom:{a:0.42,tint:'#ffc880'}, vig:{a:0.62,col:'#04060e'}, dof:{far:0.22,near:0.12}, ao:{obj:0.36,actor:0.3,col:'#060814'},
+      fg:'bosqueNoche', parts:{flies:22,glint:RIVER,glintCol:'#bcd0ff'}, propsFrom:'hollin' },
+    taberna:{ seed:21, grade:['#ffb35c','#2a1630',0.34], tone:'#ffeedd', haze:{col:'#ffcf8a',a:0.12,h:0.38}, shafts:{kind:'window',rects:[[240,26,26,34]],dx:58,dy:148,spread:22,col:'#ffe2a0',a:0.26},
+      bloom:{a:0.38,tint:'#ffbf70'}, vig:{a:0.56,col:'#0c0604'}, dof:{far:0.2,near:0}, ao:{obj:0.5,actor:0.4,col:'#1a0e06',walls:1},
+      lights:[{x:75,y:86,r:150,col:'#ff9a40',a:0.16,flick:1},{x:252,y:66,r:60,col:'#ffd88a',a:0.12,flick:0.5}],
+      fg:'taberna', parts:{dust:30,embers:{x:75,y:96,w:30,n:16},smoke:{x:75,y:58,n:7}},
+      props:[ {t:'pasto',x:-999,y:-999,n:0} ] } // (sin utilería extra: el cuarto ya está lleno; la densidad la ponen la luz y la vida)
+  };
+  Z.hollin_noche.props=Z.hollin.props;
+  /* API de extensión (una sola, para todos los archivos de perfiles: ambi_exteriores.js, ambi_agua.js, ambi_interiores.js, …).
+     Se cargan DESPUÉS de este archivo (js/modules.json) y solo registran datos, sin tocar el motor:
+     AMBI.zones[id]={…}           perfil de zona (esquema de la tabla Z). Claves especiales: 'esc_<fondo>' (escena sobre fondo pintado)
+                                  y 'bat_<fondo>' (combate). pick:()=>otraClave elige una variante por estado (p. ej. campamento al alba).
+     AMBI.fg[nombre]=(R,K)=>[…]   juego de primer plano: devuelve elementos {src (lienzo nítido con lw/lh), blur?, ax:'s'|'l'|'r'|'c', y, x0?,
+                                  u?, par, sway, ph, dir?, still?, swing?, glow?, glowY?}; el motor los desenfoca (o usa spr si ya viene).
+                                  R = azar propio con semilla del nombre · K = AMBI.kit (ayudantes de dibujo).
+     AMBI.fx[k]={under,ents,over} efectos; una zona los usa con fx:[{k,...cfg}]
+       under(c,f,ctx,E): coordenadas del MUNDO, en la pasada "debajo" (sobre el suelo y los objetos horneados, debajo de actores; antes del fondo suavizado)
+       ents(list,f,ctx,E): agrega a la lista ordenada por y ({y,draw(c)} en coordenadas del mundo)
+       over(c,f,ctx,E):  coordenadas del MUNDO menos (E.ox,E.oy), después de las partículas y antes del grading / primer plano / velo
+       E = {key,Zc,q (perfil de calidad),pk (multiplicador de partículas),RED,t,dt,ox,oy,R (azar propio de la zona),st (estado propio de ese efecto)}
+       Ninguno corre en escenas «strip» (perfil prestado sobre un fondo pintado) ni en combate.
+     AMBI.kit                     ayudantes: mk, mkRng, rgba, glowSpr, blobSpr, tinted, blurCopy, leafClump, fernClump, beamSpr, herbsSpr,
+                                  lanternSpr, fgProp, drawFramed, fadeFor, propSpr, flowerSpr, wrap, MATS (getter), TAU, HASF. */
+  const FX={}, FGK={};
+  function has(key){ return !Q.off&&!!Z[key]; }
+  // variante por estado (p. ej. el campamento al alba después del fogón): la zona puede declarar pick() → otra clave de la tabla
+  function rk(key){ const z=Z[key]; if(z&&typeof z.pick==='function'){ try{ const k2=z.pick(); if(k2&&k2!==key&&Z[k2]) return k2; }catch(e){} } return key; }
+
+  /* ---------- sprites cacheados ---------- */
+  const C={};
+  function blobSpr(){ if(C.blob) return C.blob; const k=mk(64,64), x=k.getContext('2d'); const g=x.createRadialGradient(32,32,0,32,32,32); g.addColorStop(0,'rgba(0,0,0,1)'); g.addColorStop(0.45,'rgba(0,0,0,.6)'); g.addColorStop(1,'rgba(0,0,0,0)'); x.fillStyle=g; x.fillRect(0,0,64,64); return C.blob=k; }
+  function glowSpr(col){ const kk='g'+col; if(C[kk]) return C[kk]; const k=mk(64,64), x=k.getContext('2d'); const g=x.createRadialGradient(32,32,0,32,32,32); g.addColorStop(0,rgba(col,1)); g.addColorStop(0.25,rgba(col,0.55)); g.addColorStop(1,rgba(col,0)); x.fillStyle=g; x.fillRect(0,0,64,64); return C[kk]=k; }
+  // sombras de contacto horneadas: una mancha por tamaño (rx, ry en medios píxeles), a 2× (y a escala del dispositivo vía blit1)
+  function aoBlob(B,kk,rx,ry){ const k2=kk+'_'+rx+'_'+ry; let k=C[k2]; if(k) return k; k=mk(rx*4,ry*4); const x=k.getContext('2d'); x.imageSmoothingEnabled=true; x.drawImage(B,0,0,k.width,k.height); return C[k2]=k; }
+  // AO de los muros de un interior (borde de la pared del fondo y costados), horneada una vez por cuarto
+  function aoWalls(key,R,ao){ const kk='aow'+key+'_'+R.w+'x'+R.h; let k=C[kk]; if(k) return k; k=mk(R.w,R.h); const c=k.getContext('2d'); const wh=R.wallH||96;
+    const g=c.createLinearGradient(0,wh-2,0,wh+16); g.addColorStop(0,rgba(ao.col,0.95)); g.addColorStop(1,rgba(ao.col,0)); c.fillStyle=g; c.fillRect(0,wh-2,R.w,18);
+    for(const [x0,x1] of [[0,30],[R.w,R.w-30]]){ const g2=c.createLinearGradient(x0,0,x1,0); g2.addColorStop(0,rgba(ao.col,0.9)); g2.addColorStop(1,rgba(ao.col,0)); c.fillStyle=g2; c.fillRect(Math.min(x0,x1),wh-2,30,R.h-wh); }
+    return C[kk]=k; }
+  function tinted(spr,col,kk){ if(C[kk]) return C[kk]; const k=mk(spr.width,spr.height), x=k.getContext('2d'); x.drawImage(spr,0,0); x.globalCompositeOperation='source-in'; x.fillStyle=col; x.fillRect(0,0,k.width,k.height); return C[kk]=k; }
+  function gradeCv(key,Zc){ const kk='gr'+key; if(C[kk]) return C[kk]; const k=mk(W,H), x=k.getContext('2d'); const g=x.createLinearGradient(0,0,W*0.55,H); g.addColorStop(0,Zc.grade[0]); g.addColorStop(1,Zc.grade[1]); x.fillStyle=g; x.fillRect(0,0,W,H); return C[kk]=k; }
+  function washCv(key,Zc,sh,ctx){ const kk='wa'+key+(sh?1:0); if(C[kk]) return C[kk]; const k=mk(W,H), x=k.getContext('2d'); const w=Zc.wash||[0.1,0.16];
+    const g=x.createLinearGradient(0,0,W*0.55,H); g.addColorStop(0,rgba(Zc.grade[0],w[0])); g.addColorStop(0.5,rgba(Zc.grade[0],0)); g.addColorStop(0.62,rgba(Zc.grade[1],0)); g.addColorStop(1,rgba(Zc.grade[1],w[1])); x.fillStyle=g; x.fillRect(0,0,W,H);
+    if(sh&&Zc.shafts){ const S=Zc.shafts; if(S.kind==='sun') x.drawImage(sunShafts(key,S,mkRng(Zc.seed)),0,0); else if(ctx&&ctx.room) x.drawImage(winShafts(key,S,ctx.room.w,ctx.room.h),-ctx.ox,-ctx.oy); }
+    if(Zc.haze) x.drawImage(hazeCv(key,Zc),0,0); if(Zc.vig) x.drawImage(vigCv(key,Zc),0,0); return C[kk]=k; }
+  // velo de pantalla a la resolución REAL del lienzo (se copia 1:1). Con velo=1 ('min'/'baja', sin soft-light) suma un grading
+  // horneado: tinte suave de la luz de la zona arriba a la izquierda y de su sombra abajo a la derecha, en toda la pantalla.
+  function washDev(key,Zc,sh,ctx,velo){ const CW=cv.width, CH=cv.height, kk='wd'+key+(sh?1:0)+(velo?1:0)+'_'+CW+'x'+CH; let k=C[kk]; if(k) return k;
+    for(const o in C) if(o.startsWith('wd')&&C[o]){ C[o]=null; } // una sola a la vez (pesa CW·CH·4 bytes)
+    k=mk(CW,CH); const x=k.getContext('2d'); x.imageSmoothingEnabled=true; x.imageSmoothingQuality='high'; x.setTransform(CW/W,0,0,CH/H,0,0);
+    if(velo&&Zc.grade){ const a=Zc.velo||[Zc.grade[2]*0.22,Zc.grade[2]*0.3]; const g=x.createLinearGradient(0,0,W*0.55,H); g.addColorStop(0,rgba(Zc.grade[0],a[0])); g.addColorStop(0.45,rgba(Zc.grade[0],a[0]*0.35)); g.addColorStop(0.6,rgba(Zc.grade[1],a[1]*0.3)); g.addColorStop(1,rgba(Zc.grade[1],a[1])); x.fillStyle=g; x.fillRect(0,0,W,H); }
+    x.drawImage(washCv(key,Zc,sh,ctx),0,0,W,H); return C[kk]=k; }
+  function vigCv(key,Zc){ const kk='vg'+key; if(C[kk]) return C[kk]; const k=mk(W,H), x=k.getContext('2d'); const v=Zc.vig; const g=x.createRadialGradient(W/2,H*0.52,H*0.36,W/2,H*0.52,W*0.66); g.addColorStop(0,rgba(v.col,0)); g.addColorStop(0.7,rgba(v.col,v.a*0.45)); g.addColorStop(1,rgba(v.col,v.a)); x.fillStyle=g; x.fillRect(0,0,W,H); return C[kk]=k; }
+  function hazeCv(key,Zc){ const kk='hz'+key; if(C[kk]) return C[kk]; const hz=Zc.haze, hh=Math.ceil(H*hz.h)+2; const k=mk(W,hh), x=k.getContext('2d'); const g=x.createLinearGradient(0,0,0,hh); g.addColorStop(0,rgba(hz.col,hz.a)); g.addColorStop(0.55,rgba(hz.col,hz.a*0.4)); g.addColorStop(1,rgba(hz.col,0)); x.fillStyle=g; x.fillRect(0,0,W,hh); return C[kk]=k; }
+  // haces de sol: franjas diagonales suaves que se repiten (se tilan en x con período W)
+  function sunShafts(key,sh,R){ const kk='sh'+key; if(C[kk]) return C[kk]; const k=mk(W,H), x=k.getContext('2d'); if(HASF) x.filter='blur(5px)';
+    const dx=Math.tan(sh.ang)*H; for(let i=0;i<sh.n;i++){ const x0=(i+R()*0.6)*(W/sh.n), w0=6+R()*16, a=sh.a*(0.5+R()*0.7);
+      for(const off of [-W,0,W]){ const g=x.createLinearGradient(0,0,0,H); g.addColorStop(0,rgba(sh.col,a)); g.addColorStop(0.6,rgba(sh.col,a*0.45)); g.addColorStop(1,rgba(sh.col,0)); x.fillStyle=g;
+        x.beginPath(); x.moveTo(x0+off,-4); x.lineTo(x0+off+w0,-4); x.lineTo(x0+off+w0*1.8+dx,H+4); x.lineTo(x0+off+dx-w0*0.2,H+4); x.closePath(); x.fill(); } }
+    return C[kk]=k; }
+  // haz de ventana (coordenadas del cuarto): del vano hacia el piso, abriéndose
+  function winShafts(key,sh,ww,wh){ const kk='sw'+key; if(C[kk]) return C[kk]; const k=mk(ww,wh), x=k.getContext('2d'); if(HASF) x.filter='blur(4px)';
+    sh.rects.forEach(([rx,ry,rw,rh])=>{ const g=x.createLinearGradient(rx,ry,rx+sh.dx,ry+rh+sh.dy); g.addColorStop(0,rgba(sh.col,sh.a)); g.addColorStop(0.5,rgba(sh.col,sh.a*0.55)); g.addColorStop(1,rgba(sh.col,0)); x.fillStyle=g;
+      x.beginPath(); x.moveTo(rx,ry); x.lineTo(rx+rw,ry); x.lineTo(rx+rw+sh.dx+sh.spread,ry+rh+sh.dy); x.lineTo(rx+sh.dx-sh.spread,ry+rh+sh.dy); x.closePath(); x.fill(); });
+    return C[kk]=k; }
+  function blurCopy(src,px,kk){ if(C[kk]) return C[kk]; const pad=Math.ceil(px*2)+2; const k=mk(src.width+pad*2,src.height+pad*2), x=k.getContext('2d');
+    if(HASF){ x.filter='blur('+px+'px)'; x.drawImage(src,pad,pad); }
+    else { const s=mk(src.width/3,src.height/3), sx=s.getContext('2d'); sx.imageSmoothingEnabled=true; sx.drawImage(src,0,0,s.width,s.height); x.imageSmoothingEnabled=true; x.drawImage(s,pad,pad,src.width,src.height); }
+    k.pad=pad; return C[kk]=k; }
+
+  /* ---------- copias a la resolución del dispositivo (sin remuestreo por cuadro) ----------
+     devCopy(src,s): el lienzo src escalado UNA vez a s píxeles por unidad (s = escala actual del contexto). Se guardan en un LRU
+     con tope de píxeles (los velos de pantalla y los reflejos grandes pesan; no se acumulan al recorrer zonas).
+     blit1(c,src,sx,sy,sw,sh,dx,dy,dw,dh): como drawImage, pero si la transformación es una escala uniforme sin rotar (el caso de
+     casi todo AMBI) y es la del lienzo, copia 1:1 desde la copia del dispositivo en coordenadas enteras; si no (zoom de escena, rotación), drawImage normal. */
+  const DEVC=new Map(); let DEVPX=0; const DEVMAX=9e6;
+  function devCopy(src,f){ let e=DEVC.get(src); if(e&&Math.abs(e.f-f)<1e-4){ DEVC.delete(src); DEVC.set(src,e); return e.k; } // f: píxeles del dispositivo por píxel de src
+    if(e){ DEVPX-=e.k.width*e.k.height; DEVC.delete(src); }
+    const k=mk(Math.round(src.width*f),Math.round(src.height*f)), x=k.getContext('2d'); x.imageSmoothingEnabled=true; x.imageSmoothingQuality='high'; x.drawImage(src,0,0,k.width,k.height);
+    DEVC.set(src,{f,k}); DEVPX+=k.width*k.height; for(const [kk,v] of DEVC){ if(DEVPX<=DEVMAX||kk===src) break; DEVPX-=v.k.width*v.k.height; DEVC.delete(kk); } return k; }
+  function blit1(c,src,sx,sy,sw,sh,dx,dy,dw,dh){ const m=c.getTransform(), s=m.a, r=sw/dw; // r: píxeles de src por unidad del contexto
+    if(m.b||m.c||Math.abs(m.a-m.d)>1e-6||!(r>0)||Math.abs(sh/dh-r)>1e-3*r||Math.abs(s-cv.width/W)>1e-3){ /* con zoom de escena (escala distinta de la del lienzo): drawImage normal, para no rehornear en cada cuadro de la animación */ c.drawImage(src,sx,sy,sw,sh,dx,dy,dw,dh); return; }
+    const f=s/r, k=devCopy(src,f); c.save(); c.setTransform(1,0,0,1,0,0);
+    const X=Math.round(m.e+dx*s), Y=Math.round(m.f+dy*s), ksx=Math.round(sx*f), ksy=Math.round(sy*f), kw=Math.min(k.width-ksx,Math.round(sw*f)), kh=Math.min(k.height-ksy,Math.round(sh*f));
+    if(kw>0&&kh>0) c.drawImage(k,ksx,ksy,kw,kh,X,Y,kw,kh); c.restore(); }
+
+  /* ---------- primer plano (B): follaje y vigas dibujados por código, con borde de luz ---------- */
+  function leafClump(R,w,h,pal,rim,dir){ // dir: 1 = crece hacia arriba (desde abajo), -1 = cuelga (desde arriba)
+    const S=2, k=mk(w*S,h*S), x=k.getContext('2d'); x.setTransform(S,0,0,S,0,0);
+    const n=Math.round(w*h/40); for(let i=0;i<n;i++){ const t=R(); const bx=w*(0.1+R()*0.8), by=dir>0?h-(t*t)*h*0.95:t*t*h*0.95; const L=4+R()*9, an=(dir>0?-Math.PI/2:Math.PI/2)+(R()-0.5)*2.2, cw=L*0.42;
+      const tone=Math.min(pal.length-1,Math.floor(R()*pal.length*(dir>0?(1-t*0.5):(0.6+t*0.4)))); x.fillStyle=pal[tone];
+      x.save(); x.translate(bx,by); x.rotate(an); x.beginPath(); x.moveTo(0,0); x.quadraticCurveTo(L*0.5,-cw,L,0); x.quadraticCurveTo(L*0.5,cw,0,0); x.fill();
+      if(R()<0.35){ x.fillStyle=rim; x.globalAlpha=0.55; x.beginPath(); x.moveTo(L*0.15,-cw*0.2); x.quadraticCurveTo(L*0.55,-cw*0.95,L*0.95,-0.2); x.quadraticCurveTo(L*0.5,-cw*0.55,L*0.15,-cw*0.2); x.fill(); x.globalAlpha=1; }
+      x.restore(); }
+    k.lw=w; k.lh=h; return k; }
+  function fernClump(R,w,h,pal,rim){ const S=2, k=mk(w*S,h*S), x=k.getContext('2d'); x.setTransform(S,0,0,S,0,0); x.lineCap='round';
+    for(let f=0;f<9;f++){ const bx=w*(0.2+R()*0.6), an=-Math.PI/2+(R()-0.5)*1.9, L=h*(0.55+R()*0.45); const ex=bx+Math.cos(an)*L, ey=h+Math.sin(an)*L;
+      x.strokeStyle=pal[1]; x.lineWidth=1.1; x.beginPath(); x.moveTo(bx,h); x.quadraticCurveTo(bx+Math.cos(an)*L*0.4,h+Math.sin(an)*L*0.7,ex,ey); x.stroke();
+      for(let s=1;s<9;s++){ const q=s/9, px=bx+(ex-bx)*q, py=h+(ey-h)*q-Math.sin(q*Math.PI)*L*0.08, ll=(1-q)*6+2; for(const sd of [-1,1]){ const a2=an+sd*1.1; x.fillStyle=pal[(s+f)%2?2:3]; x.beginPath(); x.ellipse(px+Math.cos(a2)*ll*0.5,py+Math.sin(a2)*ll*0.5,ll*0.5,1.1,a2,0,TAU); x.fill(); } }
+      x.fillStyle=rim; x.globalAlpha=0.5; x.beginPath(); x.ellipse(ex,ey,1.6,0.8,an,0,TAU); x.fill(); x.globalAlpha=1; }
+    k.lw=w; k.lh=h; return k; }
+  function beamSpr(w,h){ const S=2, k=mk(w*S,h*S), x=k.getContext('2d'); x.setTransform(S,0,0,S,0,0); const g=x.createLinearGradient(0,0,0,h); g.addColorStop(0,'#120a06'); g.addColorStop(0.7,'#2a180c'); g.addColorStop(1,'#4a2c16'); x.fillStyle=g; x.fillRect(0,0,w,h);
+    x.fillStyle='rgba(255,190,110,.22)'; x.fillRect(0,h-1.2,w,1.2); for(let i=0;i<w;i+=7){ x.fillStyle='rgba(0,0,0,.25)'; x.fillRect(i,1,0.6,h-3); } k.lw=w; k.lh=h; return k; }
+  function herbsSpr(R){ const w=34, h=40, S=2, k=mk(w*S,h*S), x=k.getContext('2d'); x.setTransform(S,0,0,S,0,0); x.strokeStyle='#2a1a0c'; x.lineWidth=0.8;
+    for(let i=0;i<5;i++){ const bx=4+i*6.5, L=18+R()*16; x.beginPath(); x.moveTo(bx,0); x.lineTo(bx,L*0.4); x.stroke(); const pal=i%2?['#4a5a2a','#6a7a3a','#8a8a4a']:['#6a4a2a','#8a6a3a','#b08a4a'];
+      for(let j=0;j<10;j++){ const yy=L*0.35+R()*L*0.65, xx=bx+(R()-0.5)*6; x.fillStyle=pal[(R()*3)|0]; x.beginPath(); x.ellipse(xx,yy,1.2+R()*1.6,2.4+R()*1.6,(R()-0.5)*0.8,0,TAU); x.fill(); } }
+    k.lw=w; k.lh=h; return k; }
+  function lanternSpr(){ const w=16, h=46, S=2, k=mk(w*S,h*S), x=k.getContext('2d'); x.setTransform(S,0,0,S,0,0); x.strokeStyle='#1a120a'; x.lineWidth=0.9; x.beginPath(); x.moveTo(8,0); x.lineTo(8,26); x.stroke();
+    x.fillStyle='#1e1610'; x.beginPath(); x.moveTo(3,28); x.lineTo(13,28); x.lineTo(8,24); x.closePath(); x.fill(); const g=x.createLinearGradient(0,28,0,40); g.addColorStop(0,'#fff0c0'); g.addColorStop(1,'#ff9a30'); x.fillStyle=g; x.fillRect(4,28,8,11); x.fillStyle='#1e1610'; x.fillRect(3.4,28,1.2,11); x.fillRect(11.4,28,1.2,11); x.fillRect(7.4,28,1.2,11); x.fillRect(3,39,10,2);
+    k.lw=w; k.lh=h; return k; }
+  // utilería de MATS agrandada y casi en silueta (primer plano de interiores), con borde de luz cálida arriba
+  function fgProp(spr,sc,dark,rim){ const lw=spr.lw*sc, lh=spr.lh*sc, S=2, k=mk(lw*S,lh*S), x=k.getContext('2d'); x.imageSmoothingEnabled=true; x.drawImage(spr,0,0,k.width,k.height);
+    x.globalCompositeOperation='source-atop'; x.fillStyle=rgba(dark,0.78); x.fillRect(0,0,k.width,k.height); const g=x.createLinearGradient(0,0,0,k.height*0.35); g.addColorStop(0,rgba(rim,0.45)); g.addColorStop(1,rgba(rim,0)); x.fillStyle=g; x.fillRect(0,0,k.width,k.height*0.35);
+    k.lw=lw; k.lh=lh; return k; }
+  // juego de primer plano: elementos {spr (desenfocado), ax: 'l'|'r'|'s' (tira), y, par (parallax), sway, dir}
+  function fgSet(name){ const kk='fg'+name; if(C[kk]) return C[kk]; const R=mkRng(name.length*977+13); const L=[];
+    const PALD=['#0c1a0e','#132616','#1b331c','#244224','#2f5430'], RIMD='#e8c060', PALN=['#05080e','#0a1018','#101a24','#182634','#22344a'], RIMN='#7c9ad0';
+    if(name==='bosque'||name==='bosqueNoche'){ const pal=name==='bosque'?PALD:PALN, rim=name==='bosque'?RIMD:RIMN;
+      // tira de abajo (parallax 1,35): matas y helechos con huecos
+      for(let i=0;i<6;i++){ const fern=R()<0.45, w=fern?54+R()*20:64+R()*40, h=fern?30+R()*10:26+R()*20; const s=fern?fernClump(R,w,h,pal,rim):leafClump(R,w,h,pal,rim,1);
+        L.push({spr:blurCopy(s,2.2,kk+'b'+i),src:s,ax:'s',u:i*(W*2/6)+R()*40,y:H+4,par:1.35,sway:1.4+R()*1.6,ph:R()*9}); }
+      // ramas colgando de las esquinas de arriba
+      for(const side of ['l','r']){ const s=leafClump(R,96+R()*30,46+R()*14,pal,rim,-1); L.push({spr:blurCopy(s,2.6,kk+'t'+side),src:s,ax:side,y:-6,par:0.2,sway:1.8,ph:R()*9,dir:-1}); } }
+    else if(name==='taberna'){ const bm=beamSpr(W+40,12); L.push({spr:blurCopy(bm,1.6,kk+'beam'),src:bm,ax:'c',y:-3,par:0,sway:0,ph:0,dir:-1,still:1});
+      const hb=herbsSpr(R); L.push({spr:blurCopy(hb,1.8,kk+'herb'),src:hb,ax:'l',x0:22,y:4,par:0.15,sway:0.8,ph:1,dir:-1,swing:1});
+      const ln=lanternSpr(); L.push({spr:blurCopy(ln,1.4,kk+'lan'),src:ln,ax:'r',x0:-30,y:4,par:0.15,sway:0.6,ph:2,dir:-1,swing:1,glow:'#ffb050'});
+      const M=typeof MATS!=='undefined'?MATS:null; if(M){ try{ const b1=fgProp(M.barrel(2,9),2.5,'#1a0c05','#ffae5a'); L.push({spr:blurCopy(b1,2.4,kk+'c1'),src:b1,ax:'l',x0:-12,y:H+10,par:0.12,sway:0,ph:0,still:1});
+        const b2=fgProp(M.crate(2,47,{load:'cabbage'}),2.3,'#1a0c05','#ffae5a'); L.push({spr:blurCopy(b2,2.4,kk+'c2'),src:b2,ax:'r',x0:16,y:H+8,par:0.12,sway:0,ph:0,still:1}); }catch(e){} }
+      L.forEach(o=>o.a=1); }
+    else if(FGK[name]){ // juegos registrados desde otros archivos: AMBI.fg[name]=(R,K)=>[{src (nítido), blur?, ax, y, …} | {spr ya desenfocado, src, …}]
+      try{ const out=FGK[name](R,KIT)||[]; out.forEach((o,i)=>{ if(!o) return; if(!o.spr){ if(!o.src) return; o.spr=blurCopy(o.src,o.blur==null?2:o.blur,kk+'x'+i); } L.push(o); }); }catch(e){ console.warn('AMBI fg',name,e&&e.message); } }
+    L.forEach(o=>{ o.a=1; o.fade=1; }); return C[kk]=L; }
+
+  /* ---------- utilería (E) ---------- */
+  function propSpr(p){ const M=typeof MATS!=='undefined'?MATS:null; if(!M) return null; const kk='pr'+p.t+(p.seed||0)+(p.load||''); if(C[kk]!==undefined) return C[kk];
+    let s=null; try{ if(p.t==='barril') s=M.barrel(2,60+(p.seed||0)); else if(p.t==='cajon') s=M.crate(2,40+(p.seed||0),{load:p.load}); else if(p.t==='saco') s=M.sack(2,70+(p.seed||0)); else if(p.t==='maceta') s=M.flowerPot(2,p.seed||0); }catch(e){ s=null; }
+    return C[kk]=s; }
+  function flowerSpr(p){ const kk='fl'+p.seed+'_'+p.n; if(C[kk]) return C[kk]; const M=typeof MATS!=='undefined'?MATS:null; const R=mkRng(500+p.seed*31); const r=p.r||8, w=r*2+12, h=r*1.2+12;
+    const k=mk(w*2,h*2), x=k.getContext('2d'); x.setTransform(2,0,0,2,0,0);
+    for(let i=0;i<(p.n||5);i++){ const a=R()*TAU, d=Math.sqrt(R())*r, fx=w/2+Math.cos(a)*d, fy=h-6+Math.sin(a)*d*0.5; if(M&&M.flowerStamp){ const st=M.flowerStamp(((R()*7)|0)+p.seed,2); x.drawImage(st,fx-st.lw/2,fy-st.lh+2,st.lw,st.lh); }
+      else { x.fillStyle=['#f4efe0','#f6d860','#e88aa8','#b88ae0'][i%4]; x.fillRect(fx,fy-3,2,2); } }
+    k.lw=w; k.lh=h; return C[kk]=k; }
+  const FLAGC=['#b8323a','#e2b44c','#2e5a9a','#f0e6d0','#3a7a4a'];
+  // animaciones periódicas cacheadas en cuadros (el trazado de caminos por cuadro es caro sin GPU): se pinta cada cuadro una vez
+  function drawFramed(c,kk,n,period,x0,y0,w,h,fn){ let F=C[kk]; if(!F) F=C[kk]=[]; const i=RED?0:Math.floor((((T/period)%1)+1)%1*n)%n; let k=F[i];
+    if(!k){ k=F[i]=mk(w*2,h*2); const x=k.getContext('2d'); x.setTransform(2,0,0,2,-x0*2,-y0*2); x.lineCap='round'; fn(x,i/n*period); } blit1(c,k,0,0,k.width,k.height,x0,y0,w,h); }
+  const PB_=TAU/1.3, PBN=TAU/2.1, PG=TAU/1.7;
+  function bunting(c,p){ const x0=Math.min(p.a[0],p.b[0])-5, x1=Math.max(p.a[0],p.b[0])+5, y0=Math.min(p.a[1]-p.a[2],p.b[1]-p.b[2])-4, y1=Math.max(p.a[1]-p.a[2],p.b[1]-p.b[2])+p.sag+14; drawFramed(c,'bu'+p.seed+'_'+p.a[0],16,PB_,x0,y0,x1-x0,y1-y0,(x,t)=>drawBunting(x,p,t)); }
+  function banner(c,p){ drawFramed(c,'bn'+p.seed+'_'+p.x,12,PBN,p.x-10,p.top-3,20,p.len+10,(x,t)=>drawBanner(x,p,t)); }
+  function grass(c,p){ drawFramed(c,'gr'+p.seed+'_'+p.x,12,PG,p.x-12,p.y-17,24,20,(x,t)=>drawGrass(x,p,t)); }
+  function drawBunting(c,p,t){ const [ax,ay,ah]=p.a, [bx,by,bh]=p.b; const x0=ax, y0=ay-ah, x1=bx, y1=by-bh; const n=Math.max(6,Math.round(Math.hypot(x1-x0,y1-y0)/9)); const wind=RED?0:Math.sin(t*1.3+p.seed)*2.2;
+    c.strokeStyle='rgba(40,28,18,.85)'; c.lineWidth=0.7; c.beginPath(); for(let i=0;i<=n;i++){ const q=i/n, x=x0+(x1-x0)*q, y=y0+(y1-y0)*q+Math.sin(q*Math.PI)*(p.sag+wind*0.6); if(i) c.lineTo(x,y); else c.moveTo(x,y); } c.stroke();
+    for(let i=1;i<n;i++){ const q=i/n, x=x0+(x1-x0)*q, y=y0+(y1-y0)*q+Math.sin(q*Math.PI)*(p.sag+wind*0.6); const fl=RED?0:Math.sin(t*3.9+i*0.9+p.seed)*1.6; c.fillStyle=FLAGC[(i+p.seed)%FLAGC.length];
+      c.beginPath(); c.moveTo(x-2.6,y); c.lineTo(x+2.6,y); c.lineTo(x+fl*0.6,y+6.2); c.closePath(); c.fill(); c.fillStyle='rgba(255,240,200,.35)'; c.fillRect(x-2.6,y,5.2,0.6); } }
+  function drawBanner(c,p,t){ const x=p.x, top=p.top, L=p.len, wv=RED?0:1; c.fillStyle='#2a1a0e'; c.fillRect(x-7,top-1,14,1.6); c.fillStyle='#c8a050'; c.fillRect(x-7.6,top-1.4,1.4,2.2); c.fillRect(x+6.2,top-1.4,1.4,2.2);
+    const N=10; c.beginPath(); for(let i=0;i<=N;i++){ const q=i/N, yy=top+q*L, off=wv*Math.sin(t*2.1+q*3.2+p.seed)*q*1.8; if(i) c.lineTo(x-6+off,yy); else c.moveTo(x-6,yy); }
+    const tipOff=wv*Math.sin(t*2.1+3.2+p.seed)*1.8; c.lineTo(x+tipOff,top+L+5); for(let i=N;i>=0;i--){ const q=i/N, yy=top+q*L, off=wv*Math.sin(t*2.1+q*3.2+p.seed)*q*1.8; c.lineTo(x+6+off,yy); } c.closePath();
+    c.fillStyle=p.col; c.fill(); c.save(); c.clip(); c.fillStyle='rgba(0,0,0,.28)'; c.fillRect(x+1.5,top,6,L+6); c.fillStyle='rgba(255,240,210,.18)'; c.fillRect(x-6,top,2,L+6);
+    c.fillStyle=p.orla; c.fillRect(x-6,top+2,12,1.2); c.fillRect(x-6,top+L-3,12,1); // escudo simple: corona de Hollin (rombo + punto)
+    const cy=top+L*0.45; c.beginPath(); c.moveTo(x,cy-5); c.lineTo(x+3.4,cy); c.lineTo(x,cy+5); c.lineTo(x-3.4,cy); c.closePath(); c.fill(); c.fillStyle=p.col; c.fillRect(x-0.8,cy-0.8,1.6,1.6); c.restore(); }
+  function drawGrass(c,p,t,R0){ const pts=p._b||(p._b=(()=>{ const R=mkRng(900+p.seed*17); const a=[]; for(let i=0;i<(p.n||5)*4;i++) a.push([(R()-0.5)*14,(R()-0.5)*4,6+R()*7,R()*9,R()<0.5?0:1,R()]); return a; })());
+    const wind=RED?0.25:1; for(const [dx,dy,h,ph,tn,lt] of pts){ const sw=(Math.sin(t*1.7+ph+p.x*0.02)*2.2+Math.sin(t*3.4+ph)*0.6)*wind; const bx=p.x+dx, by=p.y+dy;
+      c.strokeStyle=tn?'#5a8a2e':'#3e6a24'; c.lineWidth=1; c.beginPath(); c.moveTo(bx,by); c.quadraticCurveTo(bx+sw*0.3,by-h*0.6,bx+sw,by-h); c.stroke(); if(lt>0.6){ c.strokeStyle='rgba(240,220,130,.75)'; c.lineWidth=0.6; c.beginPath(); c.moveTo(bx+sw*0.5,by-h*0.7); c.lineTo(bx+sw,by-h); c.stroke(); } } }
+
+  /* ---------- M1 · lo bajo no va debajo de copas ni techos ----------
+     Los objetos quietos (árboles, casas, carros) están horneados en el suelo; los motores redibujan encima de cada entidad los que quedan
+     delante (o.y mayor), pero los árboles con una transparencia alrededor (softOcc, pensada para que se vea a los actores). Pasto, flores y
+     juncos de AMBI que caen debajo de la copa o el techo de un objeto que está delante se verían ENCIMA del follaje (M1 de Poseidón: el
+     manojo sobre la copa del sauce del vado). Se descartan al armar la zona: se mira el alfa real del sprite del objeto en 5×5 puntos de la
+     caja del adorno (lienzo de 1×1, una vez por zona). covered(ctx,x,y,w,h,pie) → true si algún objeto de delante lo tapa. */
+  let PX1=null;
+  function alphaAt(spr,sx,sy){ try{ if(!PX1){ PX1=mk(1,1); PX1.x=PX1.getContext('2d',{willReadFrequently:true}); } const x=PX1.x; x.globalCompositeOperation='copy'; x.drawImage(spr,Math.floor(sx),Math.floor(sy),1,1,0,0,1,1); return x.getImageData(0,0,1,1).data[3]; }catch(e){ return 0; } }
+  function covered(ctx,bx,by,bw,bh,foot){ let L=null; try{ L=ctx.objs?ctx.objs():null; }catch(e){ L=null; } if(!L||!L.length) return false;
+    for(const o of L){ const sp=o.spr; if(!sp||o.y==null||o.y<=foot+1) continue; const S=o.S||sp.S||1, ox=o.bx!=null?o.bx:o.x+(o.ox||0), oy=o.by!=null?o.by:o.y+(o.oy||0), ow=sp.width/S, oh=sp.height/S;
+      if(ox>bx+bw||ox+ow<bx||oy>by+bh||oy+oh<by) continue;
+      for(let i=0;i<5;i++) for(let j=0;j<5;j++){ const px=bx+bw*(0.1+0.2*i), py=by+bh*(0.1+0.2*j); if(px<ox||px>=ox+ow||py<oy||py>=oy+oh) continue; if(alphaAt(sp,(px-ox)*S,(py-oy)*S)>40) return true; } }
+    return false; }
+  const objsReady=ctx=>{ if(!ctx.objs) return true; try{ const L=ctx.objs(); return !!(L&&L.length); }catch(e){ return false; } };
+
+  /* ---------- estado por zona ---------- */
+  const ST={};
+  function zst(key){ let s=ST[key]; if(s) return s; const Zc=Z[key]; s=ST[key]={R:mkRng(Zc.seed*7919+1), parts:{}, fgA:[], props:null, under:null, skipped:[]}; return s; }
+  function propsOf(key,ctx){ const s=zst(key); if(s.props) return s.props; if(!objsReady(ctx)) return []; /* zona sin armar todavía: sin utilería este cuadro (no se guarda) */ const Zc=Z[key]; const out=[]; const coll=ctx.coll||(()=>true);
+    for(const p of (Zc.props||[])){ if(p.n===0) continue;
+      if(p.t==='barril'||p.t==='cajon'||p.t==='saco'||p.t==='maceta'){ // con volumen: el pie tiene que caer en suelo ya bloqueado (no cambia la colisión)
+        const ok=coll(p.x,p.y)&&coll(p.x-3,p.y)&&coll(p.x+3,p.y)&&coll(p.x,p.y-2); if(!ok){ s.skipped.push(p.t+'@'+p.x+','+p.y); continue; }
+        out.push({y:p.y,p,kind:'spr'}); }
+      else if(p.t==='banderines') out.push({y:(p.a[1]+p.b[1])/2,p,kind:'bunt',bx:Math.min(p.a[0],p.b[0]),by:Math.min(p.a[1]-p.a[2],p.b[1]-p.b[2]),bw:Math.abs(p.b[0]-p.a[0]),bh:p.sag+12});
+      else if(p.t==='estandarte'){ if(!coll(p.x,p.y)){ s.skipped.push('estandarte@'+p.x); continue; } out.push({y:p.y,p,kind:'ban'}); }
+      else if(p.t==='flores'){ const r=p.r||8, w=r*2+12, h=r*1.2+12; if(covered(ctx,p.x-w/2,p.y-h+6,w,h,p.y)){ s.skipped.push('flores@'+p.x+','+p.y+' (bajo copa/techo)'); continue; } out.push({y:-1e8,p,kind:'flat'}); }
+      else if(p.t==='pasto'){ if(covered(ctx,p.x-10,p.y-17,20,20,p.y)){ s.skipped.push('pasto@'+p.x+','+p.y+' (bajo copa/techo)'); continue; } out.push({y:p.y,p,kind:'grass'}); } }
+    return s.props=out; }
+
+  /* ---------- pasada "debajo" (y=-∞): fondo lejano suavizado (B) + AO (C) + flores planas (E) ---------- */
+  const BUF={};
+  function buf(n,w,h){ let k=BUF[n]; if(!k){ k=BUF[n]=mk(w,h); k.x=k.getContext('2d'); } if(k.width!==Math.ceil(w)||k.height!==Math.ceil(h)){ k.width=Math.ceil(w); k.height=Math.ceil(h); } return k; }
+  function dofBand(c,top,frac,div){ if(!(frac>0)) return; const D=cv.width/W, bh=Math.ceil(H*frac); const sy=top?0:H-bh;
+    const s=buf('dofS'+(top?'t':'b'),Math.ceil(W/div),Math.ceil(bh/div)); const sx=s.x; sx.globalCompositeOperation='copy'; sx.imageSmoothingEnabled=true; sx.imageSmoothingQuality='medium'; sx.drawImage(cv,0,Math.round(sy*D),cv.width,Math.round(bh*D),0,0,s.width,s.height);
+    const m=buf('dofM'+(top?'t':'b'),W,bh); const mx=m.x; mx.globalCompositeOperation='copy'; mx.imageSmoothingEnabled=true; mx.drawImage(s,0,0,W,bh);
+    mx.globalCompositeOperation='destination-in'; const g=mx.createLinearGradient(0,0,0,bh); if(top){ g.addColorStop(0,'rgba(0,0,0,1)'); g.addColorStop(0.45,'rgba(0,0,0,.75)'); g.addColorStop(1,'rgba(0,0,0,0)'); } else { g.addColorStop(0,'rgba(0,0,0,0)'); g.addColorStop(0.6,'rgba(0,0,0,.7)'); g.addColorStop(1,'rgba(0,0,0,1)'); } mx.fillStyle=g; mx.fillRect(0,0,W,bh);
+    c.save(); c.setTransform(D,0,0,D,0,0); c.imageSmoothingEnabled=true; c.globalCompositeOperation='source-over'; c.drawImage(m,0,sy); c.restore(); }
+  function underDraw(c,key,ctx){ const Zc=Z[key], q=qp(); const t0=now();
+    // E · flores planas (sobre el suelo, debajo de todo lo que se ordena por y)
+    if(q.props&&on('props')&&!ctx.strip){ for(const it of propsOf(key,ctx)){ if(it.kind!=='flat') continue; const p=it.p; if(p.x<ctx.ox-30||p.x>ctx.ox+W+30||p.y<ctx.oy-20||p.y>ctx.oy+H+20) continue; const s=flowerSpr(p); blit1(c,s,0,0,s.width,s.height,p.x-s.lw/2,p.y-s.lh+6,s.lw,s.lh); } }
+    // B · fondo lejano (y cercano, en exteriores) suavizado: se lee el lienzo ya pintado (suelo + objetos quietos), antes de los actores
+    // C · oclusión ambiental: bases de objetos quietos, muros del cuarto y pies de actores (en coordenadas del mundo)
+    const ao=on('ao')?Zc.ao:null; if(ao){ const B=tinted(blobSpr(),ao.col,'aob'+key); c.save(); const ox=ctx.ox, oy=ctx.oy; // source-over con color oscuro: casi igual que multiply y mucho más barato sin GPU
+      if(ao.obj&&ctx.objs&&on('aoo')&&q.aoo!==0){ c.globalAlpha=ao.obj; const L=ctx.objs()||[]; const s=zst(key);
+        // M2: la lista de manchas se arma UNA vez por zona (los objetos son quietos) y se dibuja en píxeles del dispositivo con una sola
+        // transformación (antes: por objeto, getTransform + save/setTransform/restore + claves de texto del caché; ~3 ms con la CPU ×4 en Hollin)
+        let A=s.aoL; if(!A||A.src!==L||A.n!==L.length){ A=s.aoL={src:L,n:L.length,it:[]}; for(const o of L){ if(o.x==null||o.bx==null) continue; let rx, ry, cx=o.bx+o.bw/2;
+            if(o.kind==='bld'){ rx=o.bw*0.56; ry=7; } else if(o.kind==='tree'){ rx=Math.min(16,o.bw*0.22); ry=4; cx=o.x; } else { rx=Math.min(14,Math.max(4,o.bw*0.46)); ry=Math.max(2.4,Math.min(4,rx*0.3)); }
+            rx=Math.round(rx*2)/2; ry=Math.round(ry*2)/2; A.it.push({o,k:aoBlob(B,'aob'+key,rx,ry),x:cx-rx,y:o.y-ry*1.1,w:rx*2,h:ry*2,dk:null,df:0}); } }
+        const m=c.getTransform(), sc=m.a, fast=!m.b&&!m.c&&Math.abs(m.a-m.d)<1e-6&&Math.abs(sc-cv.width/W)<1e-3;
+        if(fast){ c.save(); c.setTransform(1,0,0,1,0,0); }
+        for(const it of A.it){ const o=it.o; if(o.bx>ox+W+20||o.bx+o.bw<ox-20||o.y<oy-10||o.y>oy+H+30) continue;
+          if(fast){ const f=sc*it.w/it.k.width; if(!it.dk||it.df!==f){ it.dk=devCopy(it.k,f); it.df=f; } c.drawImage(it.dk,Math.round(m.e+it.x*sc),Math.round(m.f+it.y*sc)); }
+          else blit1(c,it.k,0,0,it.k.width,it.k.height,it.x,it.y,it.w,it.h); }
+        if(fast) c.restore(); }
+      if(ao.walls&&ctx.room&&on('aow')){ const R=ctx.room; c.globalAlpha=ao.obj; const wk=aoWalls(key,R,ao), wh=R.wallH||96, y0=Math.max(0,wh-2), hh=R.h-y0;
+        // solo las franjas con sombra (borde de la pared del fondo y los dos costados), no el cuarto entero
+        blit1(c,wk,0,y0,R.w,18,0,y0,R.w,18); if(hh>18){ blit1(c,wk,0,y0+18,30,hh-18,0,y0+18,30,hh-18); blit1(c,wk,R.w-30,y0+18,30,hh-18,R.w-30,y0+18,30,hh-18); } }
+      if(ao.actor&&ctx.actors&&on('aoa')){ c.globalAlpha=ao.actor; const bk=aoBlob(B,'aob'+key,11,3.5); for(const a of ctx.actors()){ if(!a||a.hidden) continue; blit1(c,bk,0,0,bk.width,bk.height,a.x-11,a.y-3.6,22,7); } }
+      c.restore(); }
+    // efectos registrados (p. ej. agua: reflejos y brillos sobre el suelo; polvo a ras del piso), debajo de actores
+    if(Zc.fx&&on('fx')&&!ctx.strip) runFx('under',c,key,Zc,ctx,0);
+    // B · fondo lejano (y cercano, en exteriores) suavizado: se lee el lienzo ya pintado (suelo + objetos quietos + AO), antes de los actores
+    if(q.dof&&Zc.dof&&on('dof')){ try{ dofBand(c,true,Zc.dof.far,q.dof); if(Zc.dof.near) dofBand(c,false,Zc.dof.near,q.dof); }catch(e){} }
+    Q.underMs=now()-t0; }
+  function ents(list,key,ctx){ if(!has(key)||qp().pausa) return; key=rk(key); const s=zst(key); try{
+      const u=s.under||(s.under={y:-1e9,draw:c=>{ try{ underDraw(c,key,s.ctx); }catch(e){} }}); s.ctx=ctx; list.push(u);
+      if(Z[key].fx&&on('fx')&&!ctx.strip) runFx('ents',list,key,Z[key],ctx,0);
+      if(!qp().props||!on('props')) return; const t=T; const ox=ctx.ox, oy=ctx.oy; const mov=qp().props>1; // en 'min' (props 1) solo la utilería quieta: lo que se mece se dibuja por cuadro
+
+      for(const it of propsOf(key,ctx)){ if(it.kind==='flat') continue; const p=it.p;
+        if(it.kind==='spr'){ if(p.x<ox-30||p.x>ox+W+30||p.y<oy-10||p.y>oy+H+40) continue; const sp=propSpr(p); if(!sp) continue; if(!it.draw){ it.draw=c=>{ blit1(c,sp,0,0,sp.width,sp.height,p.x-sp.ax,p.y-sp.ay,sp.lw,sp.lh); }; } list.push(it); }
+        else if(!mov) continue;
+        else if(it.kind==='bunt'){ if(it.bx>ox+W+20||it.bx+it.bw<ox-20||it.by>oy+H||it.by+it.bh+20<oy) continue; it.draw=it.draw||(c=>{ const fa=fadeFor(it,s.ctx,0.4); c.save(); c.globalAlpha=fa; bunting(c,p); c.restore(); }); list.push(it); }
+        else if(it.kind==='ban'){ if(p.x<ox-20||p.x>ox+W+20||p.y<oy-10||p.top>oy+H) continue; it.draw=it.draw||(c=>banner(c,p)); list.push(it); }
+        else if(it.kind==='grass'){ if(p.x<ox-20||p.x>ox+W+20||p.y<oy-4||p.y>oy+H+16) continue; if(!it.draw){ it.bx=p.x-9; it.by=p.y-14; it.bw=18; it.bh=16; it.draw=c=>{ const fa=fadeFor(it,s.ctx,0.3); c.save(); c.globalAlpha=fa; grass(c,p); c.restore(); }; } list.push(it); } }
+    }catch(e){} }
+  // ¿algún actor (o la marca de interacción) cruza la caja? → alfa bajo (no tapar actores)
+  function fadeFor(it,ctx,lo){ const x0=it.bx, x1=it.bx+it.bw, y0=it.by-4, y1=it.by+it.bh+8; let hit=false; for(const a of ctx.actors()){ if(!a||a.hidden) continue; if(a.x+12>x0&&a.x-12<x1&&a.y>y0&&a.y-62<y1&&a.y<=it.y+2){ hit=true; break; } } // solo si el actor queda detrás (más arriba en y)
+    it.fa=it.fa==null?1:it.fa; it.fa+=((hit?lo:1)-it.fa)*0.18; return it.fa; }
+
+  /* ---------- pasada de pantalla ---------- */
+  function partsOf(key,name,n,init){ const s=zst(key); let a=s.parts[name]; if(!a){ a=s.parts[name]=[]; for(let i=0;i<n;i++) a.push(init({},s.R)); } return a; }
+  function wrap(v,m){ return ((v%m)+m)%m; }
+  function bloom(c,Zc,div){ const D=cv.width/W; const bw=Math.ceil(W/div), bh=Math.ceil(H/div);
+    const a=buf('blA',bw,bh), b=buf('blB',bw,bh); a.x.globalCompositeOperation='copy'; a.x.imageSmoothingEnabled=true; a.x.imageSmoothingQuality='medium'; a.x.drawImage(cv,0,0,cv.width,cv.height,0,0,bw,bh);
+    b.x.globalCompositeOperation='copy'; b.x.drawImage(a,0,0); b.x.globalCompositeOperation='multiply'; b.x.drawImage(a,0,0); // x²
+    a.x.globalCompositeOperation='copy'; a.x.drawImage(b,0,0); a.x.globalCompositeOperation='multiply'; a.x.drawImage(b,0,0); // x⁴: solo las altas luces
+    a.x.fillStyle=Zc.bloom.tint; a.x.fillRect(0,0,bw,bh); // tinte (multiply)
+    const s2=buf('blC',Math.ceil(bw/2),Math.ceil(bh/2)); s2.x.globalCompositeOperation='copy'; s2.x.imageSmoothingEnabled=true; s2.x.drawImage(a,0,0,s2.width,s2.height);
+    c.save(); c.setTransform(D,0,0,D,0,0); c.imageSmoothingEnabled=true; c.globalCompositeOperation='screen'; c.globalAlpha=Zc.bloom.a; c.drawImage(s2,0,0,W,H); c.globalAlpha=Zc.bloom.a*0.6; c.drawImage(a,0,0,W,H); c.restore(); }
+  function over(c,key,dt,ctx){ if(!has(key)) return; if(key!==Q.key){ Q.key=key; Q.settle=Math.max(Q.settle,now()+8000); } if(qp().pausa){ tickQ(0); return; } key=rk(key); const Zc=Z[key], q=qp(), t0=now(); const s=zst(key); const t=T; const ox=ctx.ox, oy=ctx.oy; dt=Math.min(0.05,dt||0);
+    c.save(); const D=cv.width/W; c.setTransform(D,0,0,D,0,0); c.imageSmoothingEnabled=true;
+    const SP=!!ctx.strip, BT=!!ctx.bat, zx=ctx.z&&ctx.z!==1; // strip: sin capas atadas a coordenadas del mundo (escena pintada con el perfil de otra zona) · bat: combate (solo velo, viñeta y partículas)
+    try{
+      if(zx) c.setTransform(D*ctx.z,0,0,D*ctx.z,D*(ctx.tx||0),D*(ctx.ty||0)); // escenas con acercamiento de cámara: las capas del mundo siguen al encuadre
+      // A · luces de la zona (pulso cálido de hogares y faroles, en coordenadas del mundo)
+      if(Zc.lights&&q.grade&&on('lights')&&!SP){ for(const l of Zc.lights){ const f=l.flick?(0.82+0.12*Math.sin(t*7.3+l.x)+0.06*Math.sin(t*17+l.y))*(RED?1:1):1; const gl=glowSpr(l.col); c.globalAlpha=l.a*(1-(1-f)*l.flick); c.drawImage(gl,l.x-ox-l.r,l.y-oy-l.r,l.r*2,l.r*2); } c.globalAlpha=1; c.globalCompositeOperation='source-over'; }
+      // A · haces de luz
+      if(q.shafts===2&&Zc.shafts&&on('shafts')&&!BT&&!(SP&&Zc.shafts.kind==='window')){ /* animados (media/alta); en min/baja van horneados quietos en el velo */ const sh=Zc.shafts; const br=RED?1:0.85+0.15*Math.sin(t*0.35);
+        if(sh.kind==='sun'){ const k=sunShafts(key,sh,mkRng(Zc.seed)); const off=wrap(-ox*sh.par+(RED?0:Math.sin(t*0.07)*14),W); c.globalAlpha=br; c.drawImage(k,off-W,0); c.drawImage(k,off,0); }
+        else if(sh.kind==='window'&&ctx.room){ const k=winShafts(key,sh,ctx.room.w,ctx.room.h); c.globalAlpha=br; c.drawImage(k,-ox,-oy); }
+        c.globalAlpha=1; c.globalCompositeOperation='source-over'; }
+      // D · partículas
+      const P=on('parts')?(Zc.parts||{}):{}, pk=q.part*(RED?0.5:1), sl=RED?0.25:1;
+      if(P.glint&&ctx.ww&&!SP){ const G=partsOf(key,'gl',Math.round(46*pk),(p,R)=>{ p.i=R(); p.o=R()*2-1; p.ph=R()*9; p.r=1.5+R()*2.5; return p; }); const RV=P.glint; const gs=glowSpr(P.glintCol||'#fff6d8');
+        c.globalCompositeOperation='lighter'; for(const p of G){ const y=p.i*ctx.wh; if(y-oy<-6||y-oy>H+6||(y>548&&y<598)) continue; let j=0; while(j<RV.length-2&&RV[j+1][0]<y) j++; const A=RV[j], B=RV[j+1]||A, f=B[0]>A[0]?(y-A[0])/(B[0]-A[0]):0; const cxr=A[1]+(B[1]-A[1])*f, hw=(A[2]+(B[2]-A[2])*f)-4; const x=cxr+p.o*hw;
+          if(x-ox<-6||x-ox>W+6) continue; const on=Math.sin(t*(RED?0.8:2.4)+p.ph); if(on<0.55) continue; const k=(on-0.55)/0.45; c.globalAlpha=0.55*k; c.drawImage(gs,x-ox-p.r*2,y-oy-p.r*2,p.r*4,p.r*4); c.globalAlpha=0.9*k; c.fillStyle='#ffffff'; c.fillRect(x-ox-p.r*1.2,y-oy-0.3,p.r*2.4,0.6); c.fillRect(x-ox-0.3,y-oy-p.r*0.8,0.6,p.r*1.6); }
+        c.globalAlpha=1; c.globalCompositeOperation='source-over'; }
+      if(P.motes){ const M=partsOf(key,'mo',P.motes,(p,R)=>{ p.x=R()*(W+40); p.y=R()*H; p.ph=R()*9; p.r=0.7+R()*1.6; p.v=2+R()*4; return p; }); const gs=glowSpr(P.motesCol||'#ffe6a0'); const n=Math.round(M.length*pk); c.globalCompositeOperation='lighter';
+        for(let i=0;i<n;i++){ const p=M[i]; p.x+=(p.v*0.6+Math.sin(t*0.4+p.ph)*2)*dt*sl; p.y+=(Math.sin(t*0.3+p.ph*1.7)*3-0.8)*dt*sl; if(p.y<-4) p.y=H+4; const x=wrap(p.x-ox*1.05,W+40)-20, y=wrap(p.y-oy*1.05,H+8)-4; const b=0.5+0.5*Math.sin(t*1.2+p.ph); c.globalAlpha=0.25+0.45*b; c.drawImage(gs,x-p.r*2.5,y-p.r*2.5,p.r*5,p.r*5); } c.globalAlpha=1; c.globalCompositeOperation='source-over'; }
+      if(P.pollen){ const M=partsOf(key,'po',P.pollen,(p,R)=>{ p.x=R()*W; p.y=R()*H; p.ph=R()*9; return p; }); const n=Math.round(M.length*pk); c.fillStyle=P.pollenCol||'rgba(255,248,200,.85)';
+        for(let i=0;i<n;i++){ const p=M[i]; p.x+=(7+Math.sin(t+p.ph)*4)*dt*sl; p.y+=Math.sin(t*0.8+p.ph)*5*dt*sl; const x=wrap(p.x-ox*1.2,W), y=wrap(p.y-oy*1.2,H); if(Math.sin(t*2+p.ph)>-0.3) c.fillRect(x,y,1,1); } }
+      if(P.leaves&&!RED){ const M=partsOf(key,'lv',P.leaves,(p,R)=>{ p.x=R()*W; p.y=R()*H; p.v=10+R()*10; p.ph=R()*9; p.c=['#c89a3a','#9aa83a','#d8b050','#7a8a2a'][(R()*4)|0]; return p; }); const n=Math.round(M.length*pk);
+        for(let i=0;i<n;i++){ const p=M[i]; p.y+=p.v*dt; p.x+=(Math.sin(t*1.3+p.ph)*16+6)*dt; if(p.y>H+8) p.y=-8; const x=wrap(p.x-ox*1.1,W), y=wrap(p.y-oy*1.1,H+16)-8; const a=Math.sin(t*3+p.ph); c.fillStyle=p.c; c.save(); c.translate(x,y); c.rotate(a*0.9); c.fillRect(-1.6,-0.8,3.2,1.6); c.restore(); } }
+      if(P.flies){ const M=partsOf(key,'ff',P.flies,(p,R)=>{ p.x=R()*W; p.y=R()*H; p.ph=R()*9; return p; }); const gs=glowSpr(P.fliesCol||'#d8ff9a'); const n=Math.round(M.length*pk); c.globalCompositeOperation='lighter';
+        for(let i=0;i<n;i++){ const p=M[i]; p.x+=Math.sin(t*0.7+p.ph)*9*dt*sl; p.y+=Math.cos(t*0.9+p.ph)*6*dt*sl; const b=Math.max(0,Math.sin(t*1.6+p.ph)); if(b<0.15) continue; const x=wrap(p.x-ox,W), y=wrap(p.y-oy,H); c.globalAlpha=b; c.drawImage(gs,x-5,y-5,10,10); c.fillStyle='#f6ffd0'; c.fillRect(x-0.5,y-0.5,1,1); } c.globalAlpha=1; c.globalCompositeOperation='source-over'; }
+      if(P.dust&&ctx.room&&!SP&&Zc.shafts&&Zc.shafts.rects){ const sh=Zc.shafts, nr=sh.rects.length; const M=partsOf(key,'du',P.dust,(p,R)=>{ p.q=R(); p.u=R(); p.ph=R()*9; p.r=0.5+R()*1.1; p.k=Math.min(nr-1,(R()*nr)|0); return p; }); const n=Math.round(M.length*pk); const gs=glowSpr(P.dustCol||'#ffe6b0'); c.globalCompositeOperation='lighter';
+        for(let i=0;i<n;i++){ const p=M[i]; p.q+=dt*0.012*sl; if(p.q>1) p.q-=1; const [rx,ry,rw,rh]=sh.rects[p.k||0]; const q2=p.q, wx=rx+sh.dx*q2+(p.u-0.5)*(rw+sh.spread*2*q2)+Math.sin(t*0.5+p.ph)*3*sl+rw/2, wy=ry+rh*0.5+(rh+sh.dy)*q2+Math.cos(t*0.4+p.ph)*2*sl;
+          const b=0.5+0.5*Math.sin(t*1.1+p.ph); c.globalAlpha=(0.3+0.6*b)*(1-q2*0.7); c.drawImage(gs,wx-ox-p.r*2.5,wy-oy-p.r*2.5,p.r*5,p.r*5); } c.globalAlpha=1; c.globalCompositeOperation='source-over'; }
+      if(P.embers&&!SP) [].concat(P.embers).forEach((E,ei)=>{ const M=partsOf(key,'em'+(ei||''),E.n,(p,R)=>{ p.l=R(); p.x=(R()-0.5)*E.w; p.v=14+R()*16; p.ph=R()*9; return p; }); const n=Math.round(M.length*pk); const gs=glowSpr(E.col||'#ff9a30'); c.globalCompositeOperation='lighter';
+        for(let i=0;i<n;i++){ const p=M[i]; p.l+=dt*(p.v/60)*sl; if(p.l>1){ p.l=0; p.x=(s.R()-0.5)*E.w; } const x=E.x+p.x*(1-p.l*0.4)+Math.sin(t*3+p.ph)*4*p.l, y=E.y-p.l*(E.h||60); const a=(1-p.l); c.globalAlpha=a*0.85; c.drawImage(gs,x-ox-3,y-oy-3,6,6); c.fillStyle='#ffe0a0'; c.fillRect(x-ox-0.5,y-oy-0.5,1,1); } c.globalAlpha=1; c.globalCompositeOperation='source-over'; });
+      if(P.smoke&&!SP) [].concat(P.smoke).forEach((E,ei)=>{ const M=partsOf(key,'sm'+(ei||''),E.n,(p,R)=>{ p.l=R(); p.ph=R()*9; return p; }); const n=Math.round(M.length*Math.max(0.5,pk)); const gs=glowSpr(E.col||'#9a8a7a');
+        for(let i=0;i<n;i++){ const p=M[i]; p.l+=dt*0.12*sl; if(p.l>1) p.l=0; const x=E.x+Math.sin(t*0.6+p.ph)*5*p.l, y=E.y-p.l*52, r=6+p.l*12; c.globalAlpha=(E.a||0.22)*Math.sin(p.l*Math.PI); c.drawImage(gs,x-ox-r,y-oy-r,r*2,r*2); } c.globalAlpha=1; });
+      if(Zc.fx&&on('fx')&&!SP) runFx('over',c,key,Zc,ctx,dt); // efectos registrados (AMBI.fx), en coordenadas del mundo
+      if(zx) c.setTransform(D,0,0,D,0,0);
+      // A · neblina del plano lejano (arriba) y grading de color
+      if(q.grade&&on('grade')){ c.globalCompositeOperation='soft-light'; c.globalAlpha=Zc.grade[2]; c.drawImage(gradeCv(key,Zc),0,0); c.globalAlpha=1; c.globalCompositeOperation='source-over'; }
+      // A · bloom (altas luces → halo cálido)
+      if(q.bloom&&Zc.bloom&&on('bloom')&&!BT) bloom(c,Zc,q.bloom);
+      // B · primer plano desenfocado (parallax + vaivén; se aparta cuando alguien pasa detrás)
+      if(q.fg&&Zc.fg&&on('fg')&&!BT&&ctx.fg!==false) drawFg(c,key,Zc,ctx,t,dt);
+      // A · viñeta
+      // A · velo de color por zona + neblina del plano lejano + viñeta, horneados en UNA capa (source-over)
+      if(on('wash')){ // 1:1 en píxeles del lienzo: ~0,3 ms de escritorio sin GPU, ~1,6 ms con la CPU ×4 (antes, escalado: 2-3 ms / 8-12 ms)
+        const wd=washDev(key,Zc,q.shafts===1&&on('shafts')&&!BT&&!(SP&&Zc.shafts&&Zc.shafts.kind==='window'),ctx,q.velo&&on('velo'));
+        if(ctx.ov&&!BT&&!SP&&!zx&&on('ovl')&&ovUse(wd)){ /* M2: el velo va en la capa del compositor; en el lienzo solo el rincón del minimapa (lo dibuja el HUD encima) */ const h=OV.hk; if(h){ c.save(); c.setTransform(1,0,0,1,0,0); c.drawImage(h,h.dx,h.dy); c.restore(); } }
+        else { c.save(); c.setTransform(1,0,0,1,0,0); c.drawImage(wd,0,0); c.restore(); OV.block=1; } }
+    }catch(e){ console.warn('AMBI',e&&e.message); }
+    c.restore(); tickQ(now()-t0+(Q.underMs||0)); Q.underMs=0; }
+  /* ---------- M2 · velo en la capa del compositor ----------
+     El velo (grading horneado + neblina + haces quietos + viñeta) es una imagen QUIETA de pantalla completa. Mezclarla en el lienzo cada
+     cuadro es lo más caro de 'min' en un teléfono sin margen (~3 ms del hilo principal con la CPU ×4, y además fuerza el volcado del lienzo
+     dentro del pase). En exploración (mundo, pueblo y cuartos: ctx.ov) se pone en un <canvas> encima de #cv (sin eventos, debajo de
+     burbujas, diálogo, menús y pad) y la mezcla la hace el compositor (GPU en el teléfono): costo por cuadro ~0 en el hilo principal.
+     Mismo resultado: el velo era lo último que AMBI dibujaba; lo que va después en el lienzo es HUD. El rincón del minimapa (y su farol)
+     se sigue dibujando en el lienzo (OV.hk) y queda como hueco en la capa, así el HUD sigue encima del velo como antes. Quien dibuja
+     cosas grandes después (cartel de zona, mapa completo, viaje, título de cuarto) no pasa ctx.ov ese cuadro y vuelve el camino del lienzo.
+     El fundido a negro (fade.a, en p2_ui) baja la opacidad de la capa: AMBI.frame(fade.a) se llama al final de cada cuadro y esconde la
+     capa si en ese cuadro nadie la pidió (combate, escenas, mapa, menús) o si alguien dibujó el velo en el lienzo. */
+  const OV={el:null,src:null,used:0,block:0,on:false,op:-1,hk:null};
+  const OVHOLE=[W-112,0,112,68]; // minimapa (W-95…W, 1…63) y el farol de peligro (W-108…W-96)
+  function ovUse(wd){ let k=OV.el; if(!k){ try{ if(typeof cv==='undefined'||!cv||!cv.parentNode) return false; k=document.createElement('canvas'); k.id='ambiVelo'; k.setAttribute('aria-hidden','true');
+        k.style.cssText='position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none;display:none'; cv.parentNode.insertBefore(k,cv.nextSibling); OV.el=k; }catch(e){ return false; } }
+    if(OV.src!==wd){ if(k.width!==wd.width||k.height!==wd.height){ k.width=wd.width; k.height=wd.height; } const x=k.getContext('2d'); x.globalCompositeOperation='copy'; x.drawImage(wd,0,0); x.globalCompositeOperation='source-over';
+      const f=wd.width/W, hx=Math.floor(OVHOLE[0]*f), hy=Math.floor(OVHOLE[1]*f), hw=Math.min(wd.width-hx,Math.ceil(OVHOLE[2]*f)), hh=Math.min(wd.height-hy,Math.ceil(OVHOLE[3]*f));
+      x.clearRect(hx,hy,hw,hh); const h=mk(hw,hh); h.getContext('2d').drawImage(wd,hx,hy,hw,hh,0,0,hw,hh); h.dx=hx; h.dy=hy; OV.hk=h; OV.src=wd; }
+    OV.used=1; return true; }
+  function frame(fa){ const k=OV.el; if(k){ const show=!!OV.used&&!OV.block&&!Q.off; if(show!==OV.on){ k.style.display=show?'block':'none'; OV.on=show; }
+      if(show){ const op=Math.round(Math.max(0,1-(fa||0))*100)/100; if(op!==OV.op){ k.style.opacity=String(op); OV.op=op; } } } OV.used=0; OV.block=0; }
+  function drawFg(c,key,Zc,ctx,t,dt){ const L=fgSet(Zc.fg); const ox=ctx.ox, oy=ctx.oy, zk=ctx.z||1, tx=ctx.z?ctx.tx||0:0, ty=ctx.z?ctx.ty||0:0; const boxes=[]; for(const a of ctx.actors()){ if(!a||a.hidden) continue; const sx=(a.x-ox)*zk+tx, sy=(a.y-oy)*zk+ty; boxes.push([sx-16*zk,sy-66*zk,sx+16*zk,sy+4*zk]); }
+    const nn=ctx.near; if(nn&&nn.x!=null){ const sx=((nn.mx!=null?nn.mx:nn.x)-ox)*zk+tx, sy=((nn.my!=null?nn.my:nn.y)-oy)*zk+ty; boxes.push([sx-16*zk,sy-40*zk,sx+16*zk,sy+6*zk]); }
+    if(ctx.marks&&on('marks')) try{ for(const m of ctx.marks()){ const sx=(m.x-ox)*zk+tx, sy=(m.y-oy)*zk+ty; if(sx<-60||sx>W+60||sy<-50||sy>H+50) continue; const hw=(m.hw||18)*zk; boxes.push([sx-hw,sy-(m.up||34)*zk,sx+hw,sy+8*zk,0.4]); } }catch(e){} /* marcas quietas: el primer plano baja a 0,4 (se ve la marca a través; con actores baja a 0,16) */ // marcas quietas (salidas, cofres, examinables): el primer plano también se aparta
+    if(ctx.boxes) for(const b of ctx.boxes) boxes.push(b); // cajas extra en pantalla (cofres, marcas de escena)
+    // rectángulo útil en pantalla: el cuarto (si es más chico que la pantalla, queda centrado con margen negro) menos las barras de cine.
+    // Lo de abajo sube hasta el borde de abajo útil, lo que cuelga de arriba baja hasta el de arriba, lo de los costados asoma desde el borde del cuarto (a lo sumo la mitad afuera,
+    // recortada), y todo se recorta al rectángulo: nada cae sobre el margen negro ni queda medio tapado por las barras.
+    const bh=ctx.barH||0, R=ctx.room; let X0=0, Y0=bh, X1=W, Y1=H-bh;
+    if(R&&!ctx.strip){ X0=Math.max(X0,(0-ox)*zk+tx); Y0=Math.max(Y0,(0-oy)*zk+ty); X1=Math.min(X1,(R.w-ox)*zk+tx); Y1=Math.min(Y1,(R.h-oy)*zk+ty); }
+    const clip=X0>0.5||Y0>0.5||X1<W-0.5||Y1<H-0.5; if(clip){ if(X1-X0<40||Y1-Y0<40) return; c.save(); c.beginPath(); c.rect(X0,Y0,X1-X0,Y1-Y0); c.clip(); }
+    for(const o of L){ const sp=o.spr, lw=sp.width/2, lh=sp.height/2, pad=sp.pad/2; const sw=RED||o.still?0:Math.sin(t*0.9+o.ph)*o.sway;
+      const draws=[]; // [x,y] esquina sup-izq del lienzo desenfocado en pantalla
+      if(o.ax==='s'){ const per=W*2; const u=wrap(o.u-(RED?0:ox*(o.par-1)),per)-60; const by=o.y-o.src.lh; draws.push([u-pad+sw,by-pad]); }
+      else if(o.ax==='l'){ const px=RED?0:Math.sin(ox*0.004)*12*o.par/0.2; draws.push([(o.x0||-10)-pad+px+(o.swing?0:sw),(o.dir<0?o.y:o.y-o.src.lh)-pad]); }
+      else if(o.ax==='r'){ const px=RED?0:Math.sin(ox*0.004+1)*12*o.par/0.2; draws.push([W-o.src.lw+(o.x0||10)-pad+px+(o.swing?0:sw),(o.dir<0?o.y:o.y-o.src.lh)-pad]); }
+      else if(o.ax==='c') draws.push([(W-o.src.lw)/2-pad,o.y-pad]);
+      if(clip) for(const d of draws){ if(o.dir<0) d[1]+=Y0; else if(o.y>H*0.5) d[1]+=Y1-H;
+        const out=o.src.lw<30?-0.08:0.5; /* lo angosto (velas, candeleros) entra entero */ if(o.ax==='l'&&X0>0.5) d[0]=Math.max(d[0],X0-o.src.lw*out-pad); else if(o.ax==='r'&&X1<W-0.5) d[0]=Math.min(d[0],X1-o.src.lw*(1-out)-pad); }
+      for(const [dx,dy] of draws){ if(dx>W||dx+lw<0) continue; let hit=1; const x0=dx+pad+4, y0=dy+pad+4, x1=dx+lw-pad-4, y1=dy+lh-pad-4; for(const b of boxes){ if(b[2]>x0&&b[0]<x1&&b[3]>y0&&b[1]<y1){ hit=Math.min(hit,b[4]||0.16); if(hit<=0.16) break; } }
+        const k='fa'+(o.u||0)+o.ax; o[k]=o[k]==null?1:o[k]; o[k]+=(hit-o[k])*Math.min(1,dt*7); c.globalAlpha=o[k];
+        if(o.swing&&!RED){ const ang=Math.sin(t*1.1+o.ph)*0.05*o.sway; c.save(); c.translate(dx+lw/2,dy+pad); c.rotate(ang); c.drawImage(sp,-lw/2,-pad,lw,lh); c.restore(); }
+        else blit1(c,sp,0,0,sp.width,sp.height,dx,dy,lw,lh);
+        if(o.glow){ c.globalCompositeOperation='lighter'; c.globalAlpha=o[k]*(0.5+0.08*Math.sin(t*6)); const g=glowSpr(o.glow); c.drawImage(g,dx+lw/2-26,dy+pad+o.src.lh*(o.glowY!=null?o.glowY:0.72)-26,52,52); c.globalCompositeOperation='source-over'; } } }
+    if(clip) c.restore(); c.globalAlpha=1; }
+  function runFx(ph,c,key,Zc,ctx,dt){ const s=zst(key); const q=qp(); const E=s.E||(s.E={key,Zc,R:s.R,st:{}}); E.q=q; E.pk=q.part*(RED?0.5:1); E.RED=RED; E.t=T; if(dt) E.dt=dt; else if(E.dt==null) E.dt=0; E.ox=ctx.ox; E.oy=ctx.oy;
+    for(const f of Zc.fx){ const F=FX[f.k]; if(!F||!F[ph]) continue; E.st=f._st||(f._st={}); try{ F[ph](c,f,ctx,E); }catch(e){ if(!f._w){ f._w=1; console.warn('AMBI fx',f.k,ph,e&&e.message); } } } }
+  const KIT={TAU,mkRng,mk,rgba,rgb,blit1,devCopy,covered,objsReady,skip:(key,m)=>{ try{ zst(key).skipped.push(m); }catch(e){} },glowSpr,blobSpr,tinted,blurCopy,leafClump,fernClump,beamSpr,herbsSpr,lanternSpr,fgProp,drawFramed,fadeFor,propSpr,flowerSpr,wrap,HASF,get MATS(){ return typeof MATS!=='undefined'?MATS:null; }};
+  function stat(){ return {q:QL[Q.i],auto:Q.auto,off:Q.off,emaMs:+Q.ema.toFixed(2),passMs:+Q.pass.toFixed(2),ovl:OV.on,regimen:steady(now()),log:Q.log.slice(),skipped:Object.keys(ST).reduce((o,k)=>(o[k]=ST[k].skipped.slice(),o),{})}; }
+  function set(q){ if(q==='off'){ Q.off=true; } else if(q==='auto'){ Q.off=false; Q.auto=true; } else if(QL.includes(q)){ Q.off=false; Q.auto=false; Q.i=QL.indexOf(q); } try{ store.set('ambiQ',q); }catch(e){} return stat(); }
+  // escenas sobre fondos pintados / interiores (p5 mkStage, p10 stage): perfil propio 'esc_<fondo>' o, si no hay, el de la zona sin capas del mundo
+  function esc(bg){ if(Q.off||!bg) return null; if(Z['esc_'+bg]) return {key:'esc_'+bg,strip:false}; if(Z[bg]) return {key:bg,strip:true}; return null; }
+  function under(c,key,ctx){ if(!has(key)||qp().pausa) return; key=rk(key); try{ underDraw(c,key,ctx); }catch(e){} }
+  // combate: debajo de las unidades (justo después del fondo): velo de color + neblina + viñeta y partículas de pantalla; nada de primer plano, bloom ni haces
+  const BCX={ox:0,oy:0,P:null,actors:()=>[],near:null,coll:null,objs:null,room:null,ww:0,wh:0,strip:1,bat:1};
+  function battle(c,zone,dt){ if(Q.off||!zone) return; const k=Z['bat_'+zone]?'bat_'+zone:(Z['esc_'+zone]?'esc_'+zone:(Z[zone]?zone:null)); if(!k) return; over(c,k,dt,BCX); }
+  const api={has,ents,over,under,esc,battle,stat,set,frame,zones:Z,fx:FX,fg:FGK,kit:KIT,dis:DIS,get q(){ return QL[Q.i]; }};
+  try{ window.LDC_AMBI=api; }catch(e){}
+  return api;
+})();
+
+/* ============================================================
+   AMBIENTACIÓN DE EXTERIORES (Hefesto · escenarios, fase 2 · amb-ext) — perfiles de AMBI para las zonas de zones.js
+   Prados del Brezo y la granja de los Oberen (mañana), Bosque de Sauces (mediodía), Linde del pantano (tarde dorada),
+   Claro del campamento (noche con fogón · alba gris después del fogón) y Bosque Hondo (noche cerrada con el farol).
+   Solo datos: cada zona se registra en AMBI.zones con el mismo esquema que Hollin (ver js/ambiente.js):
+     A grade/haze/shafts/bloom/vig/lights · B dof + fg · C ao · D parts + banderines/pasto · E props (MATS).
+   Lo que tiene volumen (barril, cajón, saco) se apoya en suelo YA bloqueado (pie de casas, pircas, carpas, carretas):
+   AMBI lo descarta si cae en suelo libre, así que la colisión no cambia. Nada tapa actores ni marcas: el primer plano
+   y los banderines se apartan (ctx.actors / ctx.near / ctx.marks).
+   Hondo: la única luz es el farol del grupo (ZONES.hondo.light, que p10_world mueve con el líder cada cuadro); las
+   luces de AMBI la leen en vivo con getters.
+   ============================================================ */
+(()=>{ if(typeof AMBI==='undefined'||!AMBI.zones) return; const Z=AMBI.zones;
+  const fogon=()=>{ try{ if(typeof G!=='undefined'&&G&&G.flags&&G.flags.fogon) return true; }catch(e){} try{ return !!(window.WORLDT&&window.WORLDT.flag('fogon')); }catch(e){ return false; } };
+  const farol=()=>{ try{ return (typeof ZONES!=='undefined'&&ZONES.hondo&&ZONES.hondo.light)||null; }catch(e){ return null; } };
+  // río principal del Bosque de Sauces [y, centro x, medio ancho] (para los brillos del agua)
+  const RIO_SAU=[[-12,380,10],[110,418,11],[236,492,12],[330,520,12],[436,500,12],[522,538,12],[620,600,12]];
+
+  /* ---------- PRADOS DEL BREZO · mañana dorada, brezo y loma ---------- */
+  Z.prados={ seed:31, grade:['#ffd890','#3a4a78',0.3], tone:'#fff4e0', haze:{col:'#fff0c8',a:0.17,h:0.3}, shafts:{kind:'sun',n:5,col:'#fff0b8',a:0.14,ang:0.55,par:0.25},
+    bloom:{a:0.26,tint:'#ffe0a8'}, vig:{a:0.42,col:'#1a1408'}, dof:{far:0.22,near:0.12}, ao:{obj:0.4,actor:0.32,col:'#1e1a0c'}, wash:[0.1,0.14],
+    fg:'bosque', parts:{motes:20,pollen:18,leaves:5},
+    props:[
+      // utilería al pie de las pircas (suelo bloqueado)
+      {t:'saco',x:226,y:133,seed:2},{t:'barril',x:272,y:133,seed:4},{t:'cajon',x:902,y:187,seed:3,load:'cabbage'},{t:'saco',x:918,y:187,seed:5},
+      {t:'saco',x:654,y:185,seed:6},{t:'barril',x:1252,y:123,seed:1},{t:'saco',x:1266,y:123,seed:7},{t:'cajon',x:120,y:139,seed:5,load:'apple'},
+      // flores y pasto alto a los costados del camino y en el brezo
+      {t:'flores',x:96,y:200,n:6,r:9,seed:1},{t:'flores',x:330,y:112,n:6,r:8,seed:2},{t:'flores',x:470,y:202,n:7,r:9,seed:3},{t:'flores',x:612,y:118,n:5,r:7,seed:4},
+      {t:'flores',x:760,y:110,n:6,r:9,seed:5},{t:'flores',x:842,y:208,n:6,r:8,seed:6},{t:'flores',x:1004,y:120,n:6,r:8,seed:7},{t:'flores',x:1150,y:206,n:7,r:9,seed:8},
+      {t:'flores',x:1340,y:112,n:6,r:8,seed:9},{t:'flores',x:226,y:250,n:5,r:8,seed:10},{t:'flores',x:690,y:262,n:6,r:9,seed:11},{t:'flores',x:1380,y:250,n:6,r:9,seed:12},
+      {t:'pasto',x:60,y:146,n:5,seed:1},{t:'pasto',x:180,y:180,n:6,seed:2},{t:'pasto',x:340,y:178,n:5,seed:3},{t:'pasto',x:420,y:140,n:5,seed:4},{t:'pasto',x:560,y:182,n:6,seed:5},
+      {t:'pasto',x:720,y:140,n:5,seed:6},{t:'pasto',x:790,y:186,n:6,seed:7},{t:'pasto',x:960,y:140,n:5,seed:8},{t:'pasto',x:1060,y:186,n:6,seed:9},{t:'pasto',x:1180,y:142,n:5,seed:10},
+      {t:'pasto',x:1300,y:180,n:6,seed:11},{t:'pasto',x:1400,y:150,n:5,seed:12},{t:'pasto',x:270,y:226,n:5,seed:13},{t:'pasto',x:880,y:240,n:5,seed:14},{t:'pasto',x:500,y:60,n:5,seed:15} ] };
+
+  /* ---------- GRANJA DE LOS OBEREN · mañana, humo de la chimenea, molino y corral ---------- */
+  Z.granja={ seed:32, grade:['#ffd488','#3a4876',0.32], tone:'#fff2dc', haze:{col:'#fff0c8',a:0.16,h:0.3}, shafts:{kind:'sun',n:5,col:'#ffeeb0',a:0.15,ang:0.6,par:0.25},
+    bloom:{a:0.28,tint:'#ffdca0'}, vig:{a:0.44,col:'#1a1208'}, dof:{far:0.22,near:0.12}, ao:{obj:0.44,actor:0.34,col:'#22180c'}, wash:[0.1,0.14],
+    fg:'bosque', parts:{motes:18,pollen:14,leaves:4,smoke:{x:233,y:62,n:7}},
+    props:[
+      // al pie de la casa grande (pared ya bloqueada), lejos de la puerta
+      {t:'barril',x:158,y:211,seed:2},{t:'saco',x:171,y:211,seed:1},{t:'maceta',x:186,y:211,seed:3},{t:'maceta',x:262,y:211,seed:5},{t:'barril',x:286,y:211,seed:6},
+      // galpón de la izquierda y molino (bolsas de harina)
+      {t:'cajon',x:44,y:195,seed:4,load:'apple'},{t:'barril',x:100,y:195,seed:7},{t:'saco',x:614,y:176,seed:3},{t:'saco',x:628,y:177,seed:5},{t:'cajon',x:648,y:176,seed:8,load:'cabbage'},
+      {t:'flores',x:130,y:232,n:7,r:9,seed:1},{t:'flores',x:300,y:236,n:6,r:8,seed:2},{t:'flores',x:470,y:425,n:6,r:9,seed:3},{t:'flores',x:560,y:205,n:6,r:8,seed:4},
+      {t:'flores',x:250,y:420,n:6,r:8,seed:5},{t:'flores',x:690,y:400,n:5,r:7,seed:6},{t:'flores',x:40,y:420,n:6,r:9,seed:7},
+      {t:'pasto',x:398,y:250,n:5,seed:1},{t:'pasto',x:612,y:248,n:5,seed:2},{t:'pasto',x:614,y:398,n:6,seed:3},{t:'pasto',x:392,y:400,n:5,seed:4},{t:'pasto',x:192,y:300,n:5,seed:5},
+      {t:'pasto',x:36,y:262,n:6,seed:6},{t:'pasto',x:330,y:262,n:5,seed:7},{t:'pasto',x:520,y:432,n:6,seed:8},{t:'pasto',x:690,y:262,n:5,seed:9},{t:'pasto',x:200,y:440,n:5,seed:10} ] };
+
+  /* ---------- BOSQUE DE SAUCES · mediodía verde, haces entre las copas, río con brillos ---------- */
+  Z.sauces={ seed:33, grade:['#f4ffb8','#123a30',0.32], tone:'#f4ffe8', haze:{col:'#e8f8d0',a:0.18,h:0.32}, shafts:{kind:'sun',n:7,col:'#f8ffc8',a:0.17,ang:0.32,par:0.3},
+    bloom:{a:0.28,tint:'#f0ffc0'}, vig:{a:0.5,col:'#06120a'}, dof:{far:0.22,near:0.13}, ao:{obj:0.46,actor:0.34,col:'#0a1a10'}, wash:[0.08,0.16],
+    fg:'bosque', parts:{motes:22,pollen:14,leaves:9,glint:RIO_SAU,glintCol:'#f0fff0'},
+    props:[
+      {t:'flores',x:150,y:250,n:6,r:9,seed:1},{t:'flores',x:330,y:250,n:6,r:8,seed:2},{t:'flores',x:660,y:420,n:6,r:9,seed:3},{t:'flores',x:780,y:470,n:6,r:8,seed:4},
+      {t:'flores',x:150,y:470,n:7,r:9,seed:5},{t:'flores',x:720,y:200,n:5,r:8,seed:6},{t:'flores',x:380,y:560,n:6,r:8,seed:7},{t:'flores',x:900,y:400,n:6,r:9,seed:8},
+      {t:'pasto',x:60,y:262,n:5,seed:1},{t:'pasto',x:200,y:310,n:6,seed:2},{t:'pasto',x:340,y:296,n:5,seed:3},{t:'pasto',x:466,y:346,n:6,seed:4},{t:'pasto',x:610,y:390,n:5,seed:5},
+      {t:'pasto',x:740,y:396,n:6,seed:6},{t:'pasto',x:880,y:436,n:5,seed:7},{t:'pasto',x:470,y:250,n:6,seed:8},{t:'pasto',x:560,y:280,n:5,seed:9},{t:'pasto',x:300,y:460,n:5,seed:10},
+      {t:'pasto',x:640,y:540,n:6,seed:11},{t:'pasto',x:100,y:420,n:5,seed:12} ] };
+
+  /* ---------- LINDE DEL PANTANO · tarde dorada baja, juncos, luciérnagas tempranas ---------- */
+  Z.linde={ seed:34, grade:['#ffb860','#3a2848',0.38], tone:'#ffeed6', haze:{col:'#ffd8a0',a:0.22,h:0.36}, shafts:{kind:'sun',n:5,col:'#ffd090',a:0.18,ang:0.9,par:0.25},
+    bloom:{a:0.34,tint:'#ffc080'}, vig:{a:0.52,col:'#1a0e06'}, dof:{far:0.24,near:0.12}, ao:{obj:0.42,actor:0.34,col:'#1c1006'}, wash:[0.12,0.16],
+    fg:'bosque', parts:{motes:26,flies:10,pollen:8},
+    props:[
+      {t:'flores',x:60,y:120,n:5,r:8,seed:1},{t:'flores',x:230,y:120,n:6,r:8,seed:2},{t:'flores',x:340,y:186,n:5,r:7,seed:3},{t:'flores',x:740,y:80,n:6,r:9,seed:4},
+      {t:'flores',x:860,y:120,n:5,r:8,seed:5},{t:'flores',x:120,y:250,n:5,r:8,seed:6},
+      {t:'pasto',x:40,y:168,n:6,seed:1},{t:'pasto',x:200,y:176,n:5,seed:2},{t:'pasto',x:300,y:140,n:6,seed:3},{t:'pasto',x:660,y:150,n:5,seed:4},{t:'pasto',x:760,y:130,n:6,seed:5},
+      {t:'pasto',x:900,y:100,n:5,seed:6},{t:'pasto',x:250,y:96,n:5,seed:7},{t:'pasto',x:540,y:110,n:6,seed:8},{t:'pasto',x:60,y:220,n:5,seed:9} ] };
+
+  /* ---------- CLARO DEL CAMPAMENTO · noche azul con el fogón (antes de «La última guardia») ---------- */
+  const CAMP_PROPS=[
+      // al pie de carpas y carretas (bases bloqueadas)
+      {t:'barril',x:488,y:111,seed:2},{t:'saco',x:500,y:111,seed:1},{t:'saco',x:752,y:131,seed:3},{t:'barril',x:818,y:131,seed:4},
+      {t:'saco',x:728,y:213,seed:5},{t:'cajon',x:794,y:213,seed:6,load:'cabbage'},{t:'barril',x:572,y:245,seed:7},
+      // banderines de la caravana: de la carpa grande a la carreta, y de la carreta cubierta a la carpa del este
+      {t:'banderines',a:[520,112,62],b:[680,126,56],sag:12,seed:3},{t:'banderines',a:[792,132,56],b:[764,214,60],sag:8,seed:6},
+      {t:'pasto',x:440,y:196,n:5,seed:1},{t:'pasto',x:470,y:140,n:5,seed:2},{t:'pasto',x:800,y:250,n:6,seed:3},{t:'pasto',x:860,y:230,n:5,seed:4},{t:'pasto',x:430,y:240,n:5,seed:5},
+      {t:'flores',x:450,y:262,n:5,r:8,seed:1},{t:'flores',x:830,y:100,n:5,r:8,seed:2} ];
+  Z.campamento={ seed:35, pick:()=>fogon()?'campamento_alba':null,
+    grade:['#ffb070','#18204a',0.3], tone:'#d0d4f0', haze:{col:'#8090c8',a:0.1,h:0.28}, shafts:null,
+    bloom:{a:0.42,tint:'#ffb070'}, vig:{a:0.58,col:'#04060e'}, dof:{far:0.2,near:0.12}, ao:{obj:0.38,actor:0.32,col:'#060814'}, wash:[0.06,0.16],
+    lights:[{x:620,y:170,r:170,col:'#ff9a40',a:0.16,flick:1},{x:620,y:166,r:56,col:'#ffd890',a:0.1,flick:0.6}],
+    fg:'bosqueNoche', parts:{flies:16,embers:{x:620,y:168,w:10,n:14},smoke:{x:620,y:150,n:6}}, props:CAMP_PROPS };
+  /* alba gris después del fogón: fuego apagado que humea, niebla baja, sin luciérnagas */
+  Z.campamento_alba={ seed:36, grade:['#e0dcf0','#2a3050',0.3], tone:'#e8e8f4', haze:{col:'#dce0f0',a:0.24,h:0.42}, shafts:{kind:'sun',n:4,col:'#ffd8c0',a:0.1,ang:0.9,par:0.25},
+    bloom:{a:0.2,tint:'#ffe0d0'}, vig:{a:0.46,col:'#0a0c16'}, dof:{far:0.24,near:0.12}, ao:{obj:0.38,actor:0.3,col:'#0c0e18'}, wash:[0.1,0.16],
+    fg:'bosque', parts:{motes:14,smoke:{x:620,y:166,n:9}}, props:CAMP_PROPS };
+
+  /* ---------- BOSQUE HONDO · noche cerrada: el farol del grupo es la única luz ---------- */
+  Z.hondo={ seed:37, grade:['#7e9ee0','#0a1028',0.28], tone:'#c0c8e8', haze:{col:'#6a80c0',a:0.07,h:0.26}, shafts:{kind:'sun',n:3,col:'#9ab4ff',a:0.05,ang:0.4,par:0.2},
+    bloom:{a:0.45,tint:'#ffc880'}, vig:{a:0.5,col:'#02030a'}, dof:{far:0.2,near:0.1}, ao:{obj:0.3,actor:0.36,col:'#020308'}, wash:[0.04,0.1],
+    lights:[{get x(){ const L=farol(); return L?L.x:-999; },get y(){ const L=farol(); return L?L.y-6:-999; },r:96,col:'#ffb860',a:0.14,flick:1}],
+    fg:'bosqueNoche', parts:{flies:20},
+    props:[ // pasto y helecho al borde del sendero: solo se ven cuando pasa el farol
+      {t:'pasto',x:100,y:160,n:5,seed:1},{t:'pasto',x:200,y:252,n:5,seed:2},{t:'pasto',x:250,y:360,n:6,seed:3},{t:'pasto',x:380,y:388,n:5,seed:4},{t:'pasto',x:480,y:300,n:5,seed:5},
+      {t:'pasto',x:580,y:236,n:6,seed:6},{t:'pasto',x:700,y:330,n:5,seed:7},{t:'pasto',x:760,y:430,n:5,seed:8},{t:'pasto',x:860,y:404,n:6,seed:9},{t:'pasto',x:480,y:200,n:5,seed:10} ] };
+})();
+
+/* ============================================================
+   AMBIENTACIÓN · ZONAS CON AGUA Y CON HUMO / POLVO / HOLLÍN (Hefesto · amb-agua) — perfiles de AMBI (js/ambiente.js)
+   Se carga DESPUÉS de ambiente.js: registra zonas en AMBI.zones, efectos en AMBI.fx y primeros planos en AMBI.fg ((R,K)=>[…], ver la API en ambiente.js).
+   No toca env.js, el atlas, la colisión ni el azar del juego (todo el azar sale de AMBI.kit.mkRng con semilla propia).
+
+   Agua (puente, sirga, juncal, albardón, y el arroyo de la aldea):
+     el cauce de cada zona viene SONDEADO de su mapa (campo de profundidad WD < -3 después de layout(), por columna;
+     en el puente, de la fórmula del río del abismo, puenteChasmPx). Formato: {ax:'x'|'y', st:paso, s:[a,lo,hi, …]}
+     = por cada columna x (o fila y) a, el agua va de lo a hi.
+     · reflejo horneado una vez: orilla lejana reflejada (banda oscura bajo el borde de arriba), cielo en el centro,
+       borde mojado claro y nenúfares (E) cerca de las orillas;
+     · por cuadro: estelas de luz que corren con la corriente y destellos (D), debajo de actores y copas.
+   Humo / polvo / hollín (aldea, carboneros, granja_vieja, zorro):
+     humo de chimeneas y de la carbonera (volutas grandes que se abren con el viento; se aclaran si un actor queda detrás),
+     hollín que cae alrededor de la carbonera (con alguna chispa), manchas de carbón en el suelo, polvo a ras del piso que
+     arrastra el viento, arenilla que se desprende de las paredes de roca y motas al sol.
+   ============================================================ */
+(function(){ if(typeof AMBI==='undefined'||!AMBI.fx) return;
+const K=AMBI.kit, FX=AMBI.fx, FG=AMBI.fg, ZN=AMBI.zones, TAU=Math.PI*2;
+const mkRng=K.mkRng, rgba=K.rgba, glow=K.glowSpr, mk=K.mk;
+
+/* ---------- cauces sondeados (ver cabecera) ---------- */
+const CAUCE={
+  sirga:{ax:"x",st:8,s:[0,240,303,8,239,303,16,240,303,24,238,302,32,239,302,40,239,302,48,238,300,56,237,300,64,237,301,72,237,301,80,235,301,88,236,300,96,235,298,104,236,300,112,235,299,120,235,298,128,236,298,136,234,297,144,236,299,152,234,298,160,235,298,168,235,299,176,235,297,184,235,297,192,234,297,200,233,298,208,235,298,216,234,297,224,234,298,232,235,298,240,236,300,248,235,298,256,237,299,264,238,299,272,236,300,280,238,301,288,239,301,296,239,302,304,240,303,312,239,302,320,240,303,328,240,303,336,241,303,344,243,303,352,242,303,360,243,303,368,243,303,376,244,303,384,242,303,392,244,303,400,244,303,408,243,303,416,245,303,424,244,303,432,245,303,440,244,303,448,244,303,456,243,303,464,244,303,472,243,303,480,242,303,488,243,303,496,242,303,504,241,303,512,241,303,520,240,303,528,240,303,536,241,303,544,239,303,552,239,303,560,239,303,568,239,302,576,238,300,584,238,301,592,237,300,600,237,301,608,237,299,616,237,300,624,237,301,632,237,299,640,237,300,648,237,300,656,237,300,664,237,300,672,237,300,680,237,301,688,238,301,696,237,301,704,238,302,712,237,301,720,237,301,728,238,303,736,240,303,744,241,302,752,240,303,760,241,302,768,240,303,776,241,303,784,242,303,792,242,303,800,243,303,808,243,303,816,243,303,824,244,303,832,244,303,840,244,303,848,244,303,856,245,303,864,244,303,872,245,303,880,245,303,888,244,303,896,244,303,904,243,303,912,242,303,920,243,303,928,242,303,936,242,303,944,241,303,952,241,303]},
+  juncal:{ax:"x",st:8,s:[0,23,75,0,233,258,0,262,278,0,280,296,8,30,72,8,75,82,8,233,294,16,22,77,16,237,303,24,12,88,24,239,303,32,15,89,32,236,303,40,9,94,40,229,303,48,4,93,48,227,303,56,12,88,56,228,303,64,0,94,64,223,303,72,5,101,72,226,303,80,4,98,80,220,303,88,4,98,88,216,303,96,0,105,96,216,303,104,0,102,104,218,303,112,0,102,112,219,303,120,0,103,120,219,303,128,0,103,128,212,303,136,1,104,136,217,303,144,0,101,144,213,303,152,0,105,152,218,303,160,0,105,160,216,303,168,0,110,168,213,303,176,0,106,176,212,303,184,0,104,184,212,303,192,0,105,192,210,303,200,0,111,200,216,303,208,0,100,208,216,303,216,0,110,216,218,303,224,0,104,224,218,303,232,0,107,232,211,303,240,0,104,240,212,303,248,0,104,248,211,303,256,0,105,256,212,303,264,0,108,264,214,303,272,0,104,272,214,303,280,0,104,280,221,303,288,2,108,288,217,303,296,0,101,296,216,303,304,3,97,304,219,303,312,2,100,312,220,303,320,3,97,320,222,303,328,3,97,328,224,303,336,10,89,336,95,100,336,228,303,344,9,88,344,224,303,352,12,88,352,221,303,360,12,94,360,231,303,368,15,79,368,231,303,376,20,79,376,86,91,376,227,299,384,23,76,384,86,91,384,236,295,392,20,74,392,253,303,400,13,75,400,249,303,408,11,76,408,242,303,416,5,80,416,246,303,424,4,81,424,242,303,432,5,92,432,243,303,440,0,79,440,232,303,448,0,93,448,241,303,456,0,91,456,234,303,464,0,89,464,232,303,472,0,97,472,234,303,480,0,97,480,236,303,488,0,96,488,232,303,496,0,95,496,228,303,504,0,101,504,225,303,512,0,97,512,224,303,520,0,98,520,233,303,528,0,102,528,225,303,536,0,99,536,226,303,544,0,96,544,227,303,552,0,96,552,227,303,560,0,100,560,229,303,568,0,99,568,229,303,576,0,103,576,223,303,584,0,101,584,228,303,592,0,102,592,224,303,600,0,96,600,226,303,608,0,99,608,230,303,616,0,100,616,232,303,624,0,94,624,234,303,632,0,92,632,234,303,640,0,102,640,235,303,648,0,95,648,228,303,656,0,92,656,231,303,664,0,92,664,239,303,672,0,92,672,239,303,680,0,93,680,237,303,688,0,88,688,243,303,696,0,84,696,246,303,704,0,5,704,11,82,704,248,303,712,0,5,712,10,83,712,249,303,720,0,76,720,241,303,728,14,72,728,250,303,736,10,65,736,247,303,744,14,50,744,250,302,752,17,48,752,59,65,752,257,301,760,25,68,760,255,277,760,281,303,768,28,78,768,245,302,776,8,14,776,19,79,776,236,301,784,14,94,784,230,303,792,13,94,792,226,303,800,10,94,800,230,303,808,4,101,808,232,303,816,0,99,816,224,303,824,0,98,824,225,303,832,0,100,832,227,303,840,0,101,840,224,303,848,1,102,848,221,303,856,0,104,856,226,303,864,0,105,864,222,303,872,0,111,872,218,303,880,0,109,880,216,303,888,0,104,888,221,303,896,0,107,896,219,303,904,0,108,904,215,303,912,0,101,912,219,303,920,0,103,920,221,303,928,0,98,928,103,108,928,219,303,936,2,105,936,226,303,944,0,102,944,225,303,952,0,99,952,234,303]},
+  albardon:{ax:"x",st:8,s:[88,31,46,96,26,50,104,25,52,112,26,56,120,26,57,128,21,57,136,22,58,144,20,59,152,22,58,160,24,56,168,19,58,176,21,58,184,21,58,192,21,57,200,28,57,208,28,57,216,29,49,224,29,55,232,34,50,240,37,48,304,256,271,312,251,269,320,253,272,328,249,276,336,245,284,344,241,282,352,246,287,360,240,282,368,234,289,376,235,286,384,236,288,392,235,290,400,234,291,408,234,290,416,234,290,424,238,291,432,239,287,440,232,285,448,240,285,456,239,288,464,236,289,472,238,285,480,240,283,488,244,286,496,239,277,504,246,281,512,252,271,520,245,268,528,257,266,536,258,263,912,116,131,912,147,157,920,97,102,920,112,132,920,140,177,928,101,205,928,211,227,936,69,223,944,52,68,944,73,230,952,59,232,952,236,256,960,42,255,968,41,255,976,36,41,976,45,258,984,33,265,992,29,266,1000,43,258,1008,25,261,1016,41,269,1024,40,260,1032,37,250,1032,256,264,1040,51,248,1048,60,247,1056,66,238,1064,75,221,1064,239,256,1064,266,278,1072,42,48,1072,68,195,1072,202,222,1072,241,288,1080,42,52,1080,56,66,1080,104,111,1080,121,166,1080,230,256,1080,266,280,1088,48,69,1088,76,93,1088,158,174,1088,224,250,1088,263,280,1096,40,78,1096,225,287,1104,24,101,1104,223,231,1104,236,299,1112,16,102,1112,221,296,1120,13,102,1120,220,296,1128,12,105,1128,223,302,1136,6,109,1136,221,302,1144,4,106,1144,213,303,1152,5,107,1152,216,303,1160,5,114,1160,207,303,1168,1,115,1168,212,303,1176,0,116,1176,211,303,1184,0,111,1184,210,303,1192,0,106,1192,207,303,1200,0,102,1200,210,303,1208,0,99,1208,213,303,1216,2,96,1216,216,303,1224,1,94,1224,218,303,1232,0,92,1232,220,303,1240,0,91,1240,221,303,1248,0,90,1248,222,303,1256,0,89,1256,223,303,1264,0,89,1264,223,303,1272,0,89,1272,223,303,1280,0,89,1280,223,303,1288,0,89,1288,223,303,1296,1,90,1296,222,303,1304,0,91,1304,221,303,1312,0,93,1312,219,303,1320,0,95,1320,217,303,1328,2,98,1328,214,303,1336,5,101,1336,214,303,1344,10,104,1344,208,302,1352,12,108,1352,208,300,1360,14,108,1360,210,301,1368,13,112,1368,213,303,1376,27,104,1376,229,301,1384,13,98,1384,228,298,1392,27,101,1392,224,298,1400,31,89,1400,234,291,1408,26,87,1408,239,286,1416,27,50,1416,56,84,1416,243,259,1416,272,284,1424,56,72,1424,75,81,1424,233,248,1424,285,290,1432,58,73,1432,269,280]},
+  aldea:{ax:"x",st:4,s:[656,450,455,660,445,455,664,442,455,668,439,451,672,435,449,676,432,443,680,426,439,684,422,435,688,419,433,692,414,429,696,412,425,700,409,421,704,405,417,708,400,414,712,396,410,716,393,406]},
+  puente:{ax:"y",st:4,s:[92,603,625,96,604,624,100,604,624,104,604,625,108,604,626,112,604,628,116,604,631,120,604,633,124,604,635,128,605,637,132,606,638,136,608,638,140,610,638,144,612,637,148,614,637,152,615,636,156,616,636,160,616,636,164,615,636,168,613,637,172,611,638,176,609,638,180,607,638,184,605,637,188,604,636,192,604,634,196,604,632,200,604,630,204,604,627,208,604,626,212,604,625,216,604,624,220,603,625,224,603,626,228,602,627,232,601,629,236,601,631,240,601,633,244,602,634,248,603,635,252,606,635,256,608,635,260,610,635,264,613,634,268,614,635,272,615,635,276,615,636,280,615,637,284,614,638,288,612,640,292,610,640,296,609,640,300,608,640]}};
+
+/* ---------- geometría del agua ---------- */
+function geo(f){ if(f._g) return f._g; const c=f.cauce, s=c.s, st=c.st, ax=c.ax; const seg=[]; let tot=0;
+  for(let i=0;i<s.length;i+=3){ const a=s[i], lo=s[i+1], hi=s[i+2]; tot+=(hi-lo)*st; seg.push({a,lo,hi,cum:tot}); }
+  let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9; for(const g of seg){ const A0=g.a-st/2, A1=g.a+st/2; if(ax==='x'){ x0=Math.min(x0,A0); x1=Math.max(x1,A1); y0=Math.min(y0,g.lo); y1=Math.max(y1,g.hi); } else { y0=Math.min(y0,A0); y1=Math.max(y1,A1); x0=Math.min(x0,g.lo); x1=Math.max(x1,g.hi); } }
+  // vecinos (misma masa de agua en la columna siguiente) para interpolar el borde por píxel
+  const byA=new Map(); seg.forEach(g=>{ let l=byA.get(g.a); if(!l) byA.set(g.a,l=[]); l.push(g); });
+  seg.forEach(g=>{ const nx=byA.get(g.a+st)||[]; g.nx=nx.find(o=>o.lo<=g.hi&&o.hi>=g.lo)||null; });
+  return f._g={seg,tot,st,ax,bb:[Math.floor(x0)-2,Math.floor(y0)-2,Math.ceil(x1-x0)+4,Math.ceil(y1-y0)+4]}; }
+function inSkip(f,x,y){ const S=f.skip; if(!S) return false; for(const r of S) if(x>=r[0]&&x<r[0]+r[2]&&y>=r[1]&&y<r[1]+r[3]) return true; return false; }
+// punto al azar dentro del agua (con márgenes: m0 arriba/izq., m1 abajo/der.)
+function pick(f,G,R,m0,m1,out){ for(let k=0;k<6;k++){ const u=R()*G.tot; let lo=0, hi=G.seg.length-1; while(lo<hi){ const m=(lo+hi)>>1; if(G.seg[m].cum<u) lo=m+1; else hi=m; } const g=G.seg[lo];
+    const span=g.hi-g.lo-m0-m1; if(span<2) continue; const al=g.a+(R()-0.5)*G.st, ac=g.lo+m0+R()*span; const x=G.ax==='x'?al:ac, y=G.ax==='x'?ac:al;
+    if(inSkip(f,x,y)) continue; out.x=x; out.y=y; out.d0=ac-g.lo; out.d1=g.hi-ac; return true; } return false; }
+// reflejo horneado (coordenadas del mundo, escala 1): orilla lejana, cielo, borde mojado, nenúfares
+function bake(f){ if(f._bk) return f._bk; const G=geo(f), [bx,by,bw,bh]=G.bb; const k=mk(bw,bh), x=k.getContext('2d'); x.translate(-bx,-by); const R=mkRng(f.seed||7);
+  const dk=f.dark||'#0a1410', sky=f.sky||'#cfe0e8', rim=f.rim||'#e8f0e0';
+  G.seg.forEach(g=>{ if(g.nx) g.nx.pv=1; });
+  for(const g of G.seg){ const n=g.nx; for(let i=(g.pv?0:-G.st/2);i<(n?G.st:G.st/2);i++){ const q=n&&i>=0?i/G.st:0, lo=g.lo+(n?(n.lo-g.lo)*q:0), hi=g.hi+(n?(n.hi-g.hi)*q:0), a=g.a+i; const L=hi-lo; if(L<3) continue;
+      if(G.ax==='x'){ // orilla lejana (arriba) reflejada: banda oscura que se aclara
+        const d=Math.min(9,L*0.35); let gr=x.createLinearGradient(0,lo,0,lo+d); gr.addColorStop(0,rgba(dk,f.darkA||0.34)); gr.addColorStop(1,rgba(dk,0)); x.fillStyle=gr; x.fillRect(a,lo,1,d);
+        // cielo: velo claro en el centro del cauce
+        gr=x.createLinearGradient(0,lo,0,hi); gr.addColorStop(0,rgba(sky,0)); gr.addColorStop(0.45,rgba(sky,f.skyA||0.12)); gr.addColorStop(1,rgba(sky,(f.skyA||0.12)*0.3)); x.fillStyle=gr; x.fillRect(a,lo+d*0.6,1,L-d*0.6);
+        // borde mojado (abajo, la orilla cercana) y línea fina de luz arriba
+        x.fillStyle=rgba(rim,f.rimA||0.26); x.fillRect(a,hi-1.2,1,1.2); x.fillStyle=rgba(rim,(f.rimA||0.26)*0.5); x.fillRect(a,lo+0.3,1,0.8); }
+      else { // cauce vertical (abismo del puente): paredes reflejadas a los costados, brillo al centro
+        const d=Math.min(6,L*0.3); let gr=x.createLinearGradient(lo,0,lo+d,0); gr.addColorStop(0,rgba(dk,f.darkA||0.34)); gr.addColorStop(1,rgba(dk,0)); x.fillStyle=gr; x.fillRect(lo,a,d,1);
+        gr=x.createLinearGradient(hi,0,hi-d,0); gr.addColorStop(0,rgba(dk,(f.darkA||0.34)*0.8)); gr.addColorStop(1,rgba(dk,0)); x.fillStyle=gr; x.fillRect(hi-d,a,d,1);
+        gr=x.createLinearGradient(lo,0,hi,0); gr.addColorStop(0,rgba(sky,0)); gr.addColorStop(0.5,rgba(sky,f.skyA||0.12)); gr.addColorStop(1,rgba(sky,0)); x.fillStyle=gr; x.fillRect(lo+d,a,L-2*d,1); } } }
+  // E · nenúfares cerca de las orillas (planos, en el agua)
+  const P={}; for(let i=0;i<(f.lily||0);i++){ if(!pick(f,G,R,3,4,P)) continue; if(Math.min(P.d0,P.d1)>16) { i--; if(R()<0.15) i++; continue; }
+    const r=2.2+R()*2.6, n=1+(R()*3|0); for(let j=0;j<n;j++){ const lx=P.x+(R()-0.5)*r*3, ly=P.y+(R()-0.5)*r*1.4, rr=r*(0.6+R()*0.5), a0=R()*TAU;
+      x.fillStyle='rgba(10,20,10,.35)'; x.beginPath(); x.ellipse(lx+0.5,ly+0.8,rr,rr*0.55,0,0,TAU); x.fill();
+      x.fillStyle=['#3e6a2a','#4e7a30','#5a8a36'][(R()*3)|0]; x.beginPath(); x.moveTo(lx,ly); x.ellipse(lx,ly,rr,rr*0.55,0,a0+0.35,a0+TAU-0.05); x.closePath(); x.fill();
+      x.fillStyle='rgba(220,240,170,.45)'; x.fillRect(lx-rr*0.5,ly-rr*0.35,rr*0.7,0.7);
+      if(R()<0.22){ x.fillStyle=R()<0.5?'#f4f0e8':'#f0b8c8'; x.beginPath(); x.arc(lx+rr*0.2,ly-0.6,1.1,0,TAU); x.fill(); x.fillStyle='#f6d860'; x.fillRect(lx+rr*0.2-0.4,ly-1,0.8,0.8); } } }
+  return f._bk=k; }
+FX.agua={
+  under(c,f,ctx,E){ const G=geo(f), q=E.q; const ox=E.ox, oy=E.oy; const [bx,by,bw,bh]=G.bb;
+    // reflejo horneado: solo la parte visible
+    const x0=Math.max(bx,ox), y0=Math.max(by,oy), x1=Math.min(bx+bw,ox+W), y1=Math.min(by+bh,oy+H); if(x1<=x0||y1<=y0) return;
+    const k=bake(f); (K.blit1||((c,...a)=>c.drawImage(...a)))(c,k,x0-bx,y0-by,x1-x0,y1-y0,x0,y0,x1-x0,y1-y0); // copia a escala del dispositivo (sin remuestrear por cuadro)
+    // estelas de luz que corren con la corriente (D) y destellos
+    const S=E.st, R=E.R; const N=Math.max(6,Math.round((f.n||40)*E.pk)); if(!S.p){ S.p=[]; const P={}; for(let i=0;i<(f.n||40);i++){ const p={l:R(),v:0.5+R()*0.6,len:3+R()*(f.len||10),ph:R()*TAU,gl:R()<(f.glint||0.3)}; if(pick(f,G,R,f.m0||3,f.m1||(G.ax==='x'?10:3),P)){ p.x=P.x; p.y=P.y; } else { p.x=-999; p.y=-999; } S.p.push(p); } }
+    const fl=f.flow||[6,0], dt=E.RED?E.dt*0.3:E.dt, col=f.col||'#f4fbff', gcol=f.gcol||'#fff2c8'; const P={}; let gs=null;
+    for(let i=0;i<N;i++){ const p=S.p[i]; p.l+=dt*0.33*p.v; if(p.l>=1){ p.l-=1; if(pick(f,G,R,f.m0||3,f.m1||(G.ax==='x'?10:3),P)){ p.x=P.x; p.y=P.y; } }
+      p.x+=fl[0]*p.v*dt; p.y+=fl[1]*p.v*dt; const sx=p.x-ox, sy=p.y-oy; if(sx<-20||sx>W+20||sy<-20||sy>H+20) continue; if(inSkip(f,p.x,p.y)) continue;
+      const a=Math.sin(p.l*Math.PI); if(a<0.05) continue; const tw=0.6+0.4*Math.sin(E.t*3.1+p.ph);
+      if(G.ax==='x'){ c.globalAlpha=a*tw*(f.sa||0.5); c.fillStyle=col; c.fillRect(p.x-p.len/2,p.y,p.len,0.8); if(p.len>7){ c.globalAlpha*=0.5; c.fillRect(p.x-p.len*0.3+2,p.y+1.6,p.len*0.5,0.6); } }
+      else { c.globalAlpha=a*tw*(f.sa||0.5); c.fillStyle=col; c.fillRect(p.x,p.y-p.len/2,0.8,p.len); }
+      if(p.gl&&q.part>=0.5){ const on=Math.sin(E.t*2.6+p.ph*3); if(on>0.55){ const kk=(on-0.55)/0.45; if(!gs) gs=glow(gcol); c.globalCompositeOperation='lighter'; c.globalAlpha=0.5*kk*a; const r=1.6+p.v*1.6; c.drawImage(gs,p.x-r*2,p.y-r*2,r*4,r*4); c.globalAlpha=0.85*kk*a; c.fillStyle='#ffffff'; c.fillRect(p.x-r*1.1,p.y-0.3,r*2.2,0.6); c.fillRect(p.x-0.3,p.y-r*0.7,0.6,r*1.4); c.globalCompositeOperation='source-over'; } } }
+    c.globalAlpha=1; } };
+
+/* ---------- juncos que se mecen (D + E): en la orilla real (pies sondeados), ordenados por y, se aclaran si alguien pasa detrás ---------- */
+function reedSpr(seed,h){ const kk='_jr'+seed+'_'+h; if(FX._c[kk]) return FX._c[kk]; const R=mkRng(4000+seed*13); const w=22, S=2; const L=[];
+  for(let i=0;i<9;i++) L.push({x:w/2+(R()-0.5)*14,h:h*(0.55+R()*0.45),lean:(R()-0.5)*0.5,c:['#2e3a1c','#3c4a22','#4e5a2a','#62682e'][(R()*4)|0],head:R()<0.4,ph:R()*9});
+  return FX._c[kk]={w,h,L}; }
+FX._c={};
+function drawReeds(c,p,t,RED){ const s=reedSpr(p.seed,p.h); const wind=RED?0.2:1; c.lineCap='round';
+  for(const b of s.L){ const sw=(Math.sin(t*1.5+b.ph+p.x*0.03)*2+Math.sin(t*3.7+b.ph)*0.5)*wind*(b.h/24); const bx=p.x-s.w/2+b.x, by=p.y, tx=bx+b.lean*b.h+sw, ty=by-b.h;
+    c.strokeStyle=b.c; c.lineWidth=1.05; c.beginPath(); c.moveTo(bx,by); c.quadraticCurveTo(bx+b.lean*b.h*0.3,by-b.h*0.6,tx,ty); c.stroke();
+    if(b.head){ c.fillStyle='#5a3a1e'; c.beginPath(); c.ellipse(bx+(tx-bx)*0.82,by+(ty-by)*0.82,1.25,3,(tx-bx)/b.h,0,TAU); c.fill(); c.fillStyle='rgba(255,220,150,.35)'; c.fillRect(bx+(tx-bx)*0.82-1,by+(ty-by)*0.82-2,0.7,2.4); }
+    else { c.strokeStyle='rgba(240,220,140,.55)'; c.lineWidth=0.5; c.beginPath(); c.moveTo(bx+(tx-bx)*0.6,by+(ty-by)*0.6); c.lineTo(tx,ty); c.stroke(); } } }
+FX.juncos={
+  ents(list,f,ctx,E){ if((E.q.props||0)<2) return; /* juncos que se mecen: no en 'min' */ const S=E.st; if(!S.it){ if(K.objsReady&&!K.objsReady(ctx)) return; /* M1: ni debajo de copas ni de techos que están delante */ S.it=f.at.map((a,i)=>({y:a[1],p:{x:a[0],y:a[1],seed:i+(f.seed||0),h:a[2]||(18+((i*7)%9))},bx:a[0]-12,by:a[1]-30,bw:24,bh:30})).filter(it=>{ const c=!!(K.covered&&K.covered(ctx,it.p.x-11,it.p.y-it.p.h-2,22,it.p.h+2,it.p.y)); if(c&&K.skip) K.skip(E.key,'juncos@'+it.p.x+','+it.p.y+' (bajo copa/techo)'); return !c; }); }
+    for(const it of S.it){ const p=it.p; if(p.x<E.ox-20||p.x>E.ox+W+20||p.y<E.oy-4||p.y>E.oy+H+36) continue;
+      if(!it.draw){ it.draw=c=>{ const fa=K.fadeFor(it,ctx,0.3); c.save(); c.globalAlpha=fa; K.drawFramed(c,'_jrf'+p.seed+'_'+p.x,12,TAU/1.5,p.x-16,p.y-p.h-6,32,p.h+8,(x,t)=>drawReeds(x,p,t,E.RED)); c.restore(); }; }
+      list.push(it); } } };
+
+/* ---------- humo (varias fuentes): volutas grandes que suben y se abren con el viento ---------- */
+FX.humo={
+  over(c,f,ctx,E){ const S=E.st, R=E.R; const ox=E.ox, oy=E.oy, t=E.t, dt=E.RED?E.dt*0.4:E.dt; const k=Math.max(0.5,E.pk);
+    if(!S.src){ S.src=f.src.map(s=>({s,p:Array.from({length:s.n||8},()=>({l:R(),ph:R()*TAU,j:(R()-0.5)}))})); }
+    const boxes=[]; for(const a of ctx.actors()){ if(!a||a.hidden) continue; boxes.push([a.x-14,a.y-64,a.x+14,a.y+2]); }
+    for(const so of S.src){ const s=so.s; if(s.when&&!s.when()) continue; if(s.x-ox<-140||s.x-ox>W+140||s.y-oy<-40||s.y-oy>H+200) continue; const gs=glow(s.col||'#8a8480'); const n=Math.round(so.p.length*k);
+      for(let i=0;i<n;i++){ const p=so.p[i]; p.l+=dt*(s.speed||0.09); if(p.l>=1) p.l-=1; const l=p.l; const rise=s.rise||70, wind=(f.wind||8)*(s.drift==null?1:s.drift);
+        const x=s.x+p.j*6+wind*l*l*3+Math.sin(t*0.5+p.ph)*4*l, y=s.y-l*rise, r=(s.size||1)*(3+l*14);
+        let a=(s.a||0.2)*Math.sin(Math.min(1,l*1.15)*Math.PI)*(l<0.12?l/0.12:1); for(const b of boxes){ if(x+r*0.5>b[0]&&x-r*0.5<b[2]&&y+r*0.5>b[1]&&y-r*0.5<b[3]){ a*=0.35; break; } }
+        if(a<0.01) continue; c.globalAlpha=a; c.drawImage(gs,x-ox-r,y-oy-r,r*2,r*2); } }
+    c.globalAlpha=1; } };
+
+/* ---------- hollín: copos oscuros que caen alrededor de la carbonera (con alguna chispa) + manchas de carbón en el suelo ---------- */
+FX.hollin={
+  under(c,f,ctx,E){ if(!f.manchas) return; const kk='_hm'+E.key; let k=FX._c[kk]; const [cx,cy,rx,ry]=f.manchas;
+    if(!k){ k=FX._c[kk]=mk(rx*2+8,ry*2+8); const x=k.getContext('2d'); const R=mkRng(77); const bl=K.tinted(K.blobSpr(),'#141010','_hmb');
+      for(let i=0;i<70;i++){ const a=R()*TAU, d=Math.sqrt(R()); const px=rx+4+Math.cos(a)*d*rx, py=ry+4+Math.sin(a)*d*ry, r=2+R()*7; x.globalAlpha=0.12+R()*0.22*(1-d*0.6); x.drawImage(bl,px-r,py-r*0.5,r*2,r); }
+      x.globalAlpha=1; for(let i=0;i<90;i++){ const a=R()*TAU, d=Math.sqrt(R()); x.fillStyle=R()<0.5?'#1a1614':'#2a2420'; x.fillRect(rx+4+Math.cos(a)*d*rx,ry+4+Math.sin(a)*d*ry*0.9,1+(R()*2|0),1); } }
+    if(cx+rx<E.ox||cx-rx>E.ox+W||cy+ry<E.oy||cy-ry>E.oy+H) return; c.drawImage(k,cx-rx-4,cy-ry-4); },
+  over(c,f,ctx,E){ const S=E.st, R=E.R, t=E.t, dt=E.RED?E.dt*0.4:E.dt; const [ax,ay,aw,ah]=f.area; if(ax+aw<E.ox-10||ax>E.ox+W+10||ay+ah<E.oy-10||ay>E.oy+H+10) return;
+    if(!S.p){ S.p=Array.from({length:f.n||40},()=>({x:ax+R()*aw,y:ay+R()*ah,v:5+R()*9,ph:R()*TAU,s:0.7+R()*1.1,e:R()<(f.ember||0.12)})); }
+    const n=Math.round(S.p.length*Math.max(0.4,E.pk)); let gs=null;
+    for(let i=0;i<n;i++){ const p=S.p[i]; p.y+=p.v*dt*(p.e?-0.9:1); p.x+=(Math.sin(t*0.9+p.ph)*7+(f.wind||4))*dt; if(p.y>ay+ah){ p.y=ay; p.x=ax+R()*aw; } if(p.y<ay){ p.y=ay+ah; p.x=ax+aw*(0.3+R()*0.4); } if(p.x>ax+aw) p.x-=aw; if(p.x<ax) p.x+=aw;
+      const sx=p.x-E.ox, sy=p.y-E.oy; if(sx<-4||sx>W+4||sy<-4||sy>H+4) continue; const fl=Math.sin(t*2.3+p.ph);
+      if(p.e){ if(!gs) gs=glow('#ff8a30'); const a=0.4+0.4*fl; c.globalCompositeOperation='lighter'; c.globalAlpha=a; c.drawImage(gs,sx-3,sy-3,6,6); c.globalAlpha=1; c.fillStyle='#ffd090'; c.fillRect(sx-0.5,sy-0.5,1,1); c.globalCompositeOperation='source-over'; }
+      else { c.globalAlpha=0.7+0.25*fl; c.fillStyle=f.col||'#2a2420'; c.save(); c.translate(sx,sy); c.rotate(Math.sin(t*2+p.ph)*0.8); c.fillRect(-p.s,-0.7,p.s*2,1.4); c.restore(); } }
+    c.globalAlpha=1; } };
+
+/* ---------- polvo: velos a ras del piso que arrastra el viento (debajo de actores) y arenilla que cae de las rocas ---------- */
+FX.polvo={
+  under(c,f,ctx,E){ const S=E.st, R=E.R, t=E.t, dt=E.RED?E.dt*0.3:E.dt; const ox=E.ox, oy=E.oy;
+    if(f.velos){ const [ax,ay,aw,ah]=f.velos.area; if(!S.v){ S.v=Array.from({length:f.velos.n||10},()=>({x:ax+R()*aw,y:ay+R()*ah,l:R(),len:40+R()*70,v:0.6+R()*0.8,ph:R()*TAU})); }
+      const gs=glow(f.velos.col||'#e8d8b0'); const n=Math.round(S.v.length*Math.max(0.5,E.pk));
+      for(let i=0;i<n;i++){ const p=S.v[i]; p.l+=dt*0.12*p.v; p.x+=(f.wind||14)*p.v*dt; if(p.l>=1||p.x>ax+aw+60){ p.l=0; p.x=ax-30+R()*aw*0.7; p.y=ay+R()*ah; }
+        const sx=p.x-ox, sy=p.y-oy; if(sx<-p.len||sx>W+p.len||sy<-12||sy>H+12) continue; const a=Math.sin(p.l*Math.PI)*(f.velos.a||0.16);
+        c.globalAlpha=a; c.drawImage(gs,p.x-p.len/2,p.y-4+Math.sin(t*0.8+p.ph)*1.5,p.len,8); c.globalAlpha=a*0.6; c.drawImage(gs,p.x-p.len*0.2,p.y-7,p.len*0.5,5); } c.globalAlpha=1; }
+    if(f.arenilla){ if(!S.g){ S.g=[]; for(const L of f.arenilla) for(let i=0;i<(L[3]||5);i++) S.g.push({L,u:R(),l:R(),v:0.5+R()*0.8,ph:R()*TAU}); }
+      for(const p of S.g){ p.l+=dt*0.7*p.v; if(p.l>=1){ p.l=0; p.u=R(); } const [x0,x1,y,n,fall]=p.L; const x=x0+(x1-x0)*p.u, yy=y+p.l*p.l*(fall||16); if(x<ox-4||x>ox+W+4||yy<oy-4||yy>oy+H+4) continue;
+        c.globalAlpha=(1-p.l)*0.75; c.fillStyle='#d8c8a0'; c.fillRect(x,yy,1,1); if(p.l>0.85){ c.globalAlpha=(1-p.l)*2; c.fillStyle='rgba(230,215,180,.6)'; c.fillRect(x-1.5,y+(fall||16)-0.5,3,1); } } c.globalAlpha=1; } } };
+
+/* ---------- primeros planos propios (B) ---------- */
+function reedClump(R,w,h,pal,rim){ const S=2, k=mk(w*S,h*S), x=k.getContext('2d'); x.setTransform(S,0,0,S,0,0); x.lineCap='round';
+  for(let i=0;i<Math.round(w/2.2);i++){ const bx=w*(0.08+R()*0.84), L=h*(0.45+R()*0.55), lean=(R()-0.5)*0.7; const tx=bx+lean*L, ty=h-L;
+    x.strokeStyle=pal[(R()*pal.length)|0]; x.lineWidth=1+R()*0.9; x.beginPath(); x.moveTo(bx,h); x.quadraticCurveTo(bx+lean*L*0.25,h-L*0.6,tx,ty); x.stroke();
+    if(R()<0.28){ x.fillStyle='#24160c'; x.beginPath(); x.ellipse(bx+(tx-bx)*0.8,h-L*0.8,1.6,4,lean,0,TAU); x.fill(); }
+    if(R()<0.4){ x.strokeStyle=rim; x.globalAlpha=0.5; x.lineWidth=0.6; x.beginPath(); x.moveTo(bx+(tx-bx)*0.55,h-L*0.55); x.lineTo(tx,ty); x.stroke(); x.globalAlpha=1; } }
+  k.lw=w; k.lh=h; return k; }
+function strands(R,w,h,pal,rim){ const S=2, k=mk(w*S,h*S), x=k.getContext('2d'); x.setTransform(S,0,0,S,0,0); x.lineCap='round';
+  x.fillStyle=pal[0]; x.beginPath(); x.ellipse(w*0.5,-4,w*0.55,10,0,0,TAU); x.fill();
+  for(let i=0;i<16;i++){ const sx=w*(0.05+R()*0.9), L=h*(0.4+R()*0.6), cv=(R()-0.5)*8; x.strokeStyle=pal[1]; x.lineWidth=0.8; x.beginPath(); x.moveTo(sx,0); x.quadraticCurveTo(sx+cv,L*0.5,sx+cv*0.4,L); x.stroke();
+    for(let j=2;j<L;j+=3){ const q=j/L, px=sx+cv*(1-(1-q)*(1-q))*0.9; x.fillStyle=pal[2+((R()*2)|0)]; x.beginPath(); x.ellipse(px+(j%2?1.2:-1.2),j,0.9,2.2,(j%2?0.4:-0.4),0,TAU); x.fill(); if(R()<0.12){ x.fillStyle=rim; x.globalAlpha=0.55; x.fillRect(px,j-1,0.8,1.6); x.globalAlpha=1; } } }
+  k.lw=w; k.lh=h; return k; }
+function rockOut(R,w,h,pal,rim){ const S=2, k=mk(w*S,h*S), x=k.getContext('2d'); x.setTransform(S,0,0,S,0,0);
+  const pts=[]; const n=9; for(let i=0;i<=n;i++){ const q=i/n; pts.push([q*w,h*(0.15+R()*0.35)+Math.sin(q*Math.PI)*-h*0.05]); }
+  x.fillStyle=pal[0]; x.beginPath(); x.moveTo(0,h); pts.forEach(p=>x.lineTo(p[0],p[1])); x.lineTo(w,h); x.closePath(); x.fill();
+  x.strokeStyle=rim; x.globalAlpha=0.5; x.lineWidth=1.2; x.beginPath(); pts.forEach((p,i)=>i?x.lineTo(p[0],p[1]):x.moveTo(p[0],p[1])); x.stroke(); x.globalAlpha=1;
+  for(let i=0;i<10;i++){ x.fillStyle=pal[1+((R()*2)|0)]; x.fillRect(R()*w,h*(0.45+R()*0.5),3+R()*8,1); }
+  k.lw=w; k.lh=h; return k; }
+function riberaSet(pal,rim,top){ return (R,KT)=>{ const L=[];
+  for(let i=0;i<6;i++){ const w=50+R()*36, h=32+R()*18; const s=reedClump(R,w,h,pal,rim); L.push({src:s,blur:2.2,ax:'s',u:i*(W*2/6)+R()*40,y:H+6,par:1.35,sway:1.6+R()*1.6,ph:R()*9}); }
+  if(top) for(const side of ['l','r']){ const s=strands(R,92+R()*20,54+R()*12,top,rim); L.push({src:s,blur:2.4,ax:side,y:-4,par:0.2,sway:1.4,ph:R()*9,dir:-1}); } return L; }; }
+FG.ribera=riberaSet(['#141c0c','#1c2610','#253216','#2e3c1a'],'#ffcf78',['#18240f','#22301a','#2c3e1e','#3a4e24']);
+FG.riberaNiebla=riberaSet(['#1a2018','#222a1e','#2a3424','#34402a'],'#f0dca8',null);
+FG.desfiladero=(R,KT)=>{ const L=[]; const pal=['#3a2a22','#4a3628','#5a4430'], rim='#ffc8a0';
+  for(const [side,x0] of [['l',-18],['r',22]]){ const s=rockOut(R,96+R()*24,28+R()*8,pal,rim); L.push({src:s,blur:3.2,ax:side,x0,y:H+10,par:0.25,sway:0,ph:0,still:1});
+    const f=KT.fernClump(R,60,30,['#1c2410','#26301a','#34401f','#46522a'],rim); L.push({src:f,blur:2.4,ax:side,x0:x0+(side==='l'?40:-30),y:H+6,par:0.3,sway:1.4,ph:R()*9}); }
+  const s=KT.leafClump(R,100,44,['#0e140e','#141e14','#1c2a1a','#24361e'],'#ffb890',-1); L.push({src:s,blur:2.6,ax:'r',y:-6,par:0.2,sway:1.4,ph:R()*9,dir:-1}); return L; };
+FG.seco=(R,KT)=>{ const L=[]; const pal=['#2a2010','#3a2c16','#4a3a1e','#5e4a26','#76603a'], rim='#ffd890';
+  for(let i=0;i<6;i++){ const w=52+R()*30, h=28+R()*16; const s=R()<0.5?KT.fernClump(R,w,h,pal,rim):reedClump(R,w,h,pal,rim); L.push({src:s,blur:2.2,ax:'s',u:i*(W*2/6)+R()*40,y:H+5,par:1.35,sway:1.2+R()*1.4,ph:R()*9}); }
+  const s=KT.leafClump(R,96,40,['#1a140c','#241c10','#30261a','#3c3020'],rim,-1); L.push({src:s,blur:2.6,ax:'l',y:-6,par:0.2,sway:1.6,ph:R()*9,dir:-1}); return L; };
+
+/* ---------- utilería (E) sondeada: pasto y flores en suelo libre fuera de caminos, lejos de cofres / marcas / salidas ---------- */
+const SEL={
+  puente:{pasto:[[32,152],[104,128],[140,224],[176,128],[260,128],[320,104],[356,200],[752,176]],flores:[[764,116],[812,176],[896,176],[908,56]]},
+  sirga:{pasto:[[20,224],[92,32],[128,224],[152,80],[224,20],[236,224],[248,104],[272,164],[284,44],[332,80],[344,164],[344,224],[416,32],[500,104]],flores:[[512,224],[560,140],[632,80],[716,44],[740,152],[824,116],[944,104]],juncos:[[136,231],[160,302],[216,301],[224,231],[272,233],[320,237],[384,239],[440,241],[576,235],[752,237],[840,241],[896,241]]},
+  juncal:{pasto:[[8,200],[152,116],[212,128],[212,200],[428,200],[440,104],[524,200],[584,128],[608,188],[668,128]],flores:[[716,188],[752,104],[836,188],[920,176],[944,116]],juncos:[[88,213],[136,108],[144,210],[232,111],[384,80],[456,95],[464,229],[512,221],[528,106],[576,107],[624,98],[672,96],[720,80],[720,238],[808,105],[880,213]]},
+  albardon:{pasto:[[8,248],[32,92],[128,200],[188,284],[236,92],[248,188],[296,80],[380,188],[500,176],[524,80],[536,296],[560,188],[644,248],[680,68],[692,296],[716,212],[728,116],[752,296],[776,44],[812,176],[812,260],[824,92]],flores:[[896,272],[908,92],[908,188],[980,272],[1040,272],[1064,32],[1112,176],[1172,128],[1196,200],[1400,116]],juncos:[[96,54],[152,62],[208,61],[320,276],[368,231],[400,295],[424,235],[480,237],[536,267],[944,49],[968,259],[1032,268],[1072,52],[1080,284],[1088,97],[1160,118],[1224,215],[1232,96],[1312,97],[1328,211],[1352,112],[1424,85]]},
+  aldea:{pasto:[[20,176],[32,92],[92,56],[152,416],[164,44],[188,176],[188,368],[212,296],[248,368],[284,152],[356,356],[368,296],[392,140],[416,200],[428,392],[440,56]],flores:[[476,356],[488,200],[512,296],[512,428],[620,176],[632,284],[644,44],[656,380],[680,152]]},
+  carboneros:{pasto:[[20,296],[44,32],[44,176],[152,224],[164,92],[200,32],[224,188],[260,80],[356,56],[392,236],[404,92],[476,104],[500,260],[560,224],[608,140],[632,44]],flores:[[644,260],[704,80],[764,188],[776,68],[812,248],[896,56],[932,104],[944,176]]},
+  granja_vieja:{pasto:[[8,440],[44,152],[56,56],[92,308],[92,428],[176,44],[272,140],[272,212],[320,92],[356,188],[356,368],[380,56],[416,356],[488,20],[500,116],[512,440]],flores:[[572,236],[584,32],[632,68],[668,176],[692,92],[692,428]]},
+  zorro:{pasto:[[20,236],[32,92],[68,20],[80,188],[104,68],[164,56],[164,248],[212,116],[224,44],[284,32]],flores:[[308,224],[392,32],[392,92],[404,284],[464,224]]}};
+const YARD={aldea:[360,262,236,102],granja_vieja:[360,262,226,116]}; // patio de tierra (T_YARD) de su layout: ahí no va pasto
+function flat(z,extra){ const S=SEL[z]||{}; const out=[]; const Y=YARD[z], dirt=p=>Y&&((p[0]-Y[0])/Y[2])**2+((p[1]-Y[1])/Y[3])**2<1;
+  (S.pasto||[]).forEach((p,i)=>{ if(!dirt(p)) out.push({t:'pasto',x:p[0],y:p[1],n:4+(i%3),seed:i+1}); });
+  (S.flores||[]).forEach((p,i)=>{ if(!dirt(p)) out.push({t:'flores',x:p[0],y:p[1],n:5+(i%3),r:7+(i%3),seed:i+1}); }); return out.concat(extra||[]); }
+const reeds=z=>(SEL[z]&&SEL[z].juncos||[]).map(p=>[p[0],p[1]]);
+
+/* ---------- perfiles de zona ---------- */
+// el Puente Viejo al amanecer: rosa y oro sobre el desfiladero, el río del abismo con estelas que bajan rápido
+ZN.puente={ seed:31, grade:['#ffbe96','#3a2a58',0.32], tone:'#fff0e4', haze:{col:'#ffd8c0',a:0.18,h:0.3}, shafts:{kind:'sun',n:5,col:'#ffd2a8',a:0.13,ang:0.5,par:0.25},
+  bloom:{a:0.34,tint:'#ffb880'}, vig:{a:0.5,col:'#160c10'}, dof:{far:0.2,near:0.12}, ao:{obj:0.4,actor:0.34,col:'#1c1010'},
+  fg:'desfiladero', parts:{motes:16,leaves:3},
+  fx:[{k:'agua',cauce:CAUCE.puente,seed:31,flow:[0,46],n:46,len:9,sa:0.55,glint:0.35,dark:'#10161c',darkA:0.4,sky:'#ffe0d0',skyA:0.14,rim:'#ffffff',m0:2,m1:2,skip:[[530,126,180,96]]}],
+  props:flat('puente') };
+// la Orilla del Varne de tarde: río ancho y marrón con el sol bajo, juncos y sauces
+ZN.sirga={ seed:32, grade:['#ffbc68','#2a3656',0.4], tone:'#fff0d8', haze:{col:'#ffe0a8',a:0.2,h:0.32}, shafts:{kind:'sun',n:6,col:'#ffd890',a:0.14,ang:0.66,par:0.25},
+  bloom:{a:0.32,tint:'#ffcf90'}, vig:{a:0.48,col:'#1a1008'}, dof:{far:0.22,near:0.12}, ao:{obj:0.42,actor:0.34,col:'#1e160a'},
+  fg:'ribera', parts:{motes:22,pollen:10,leaves:5},
+  fx:[{k:'agua',cauce:CAUCE.sirga,seed:32,flow:[9,0],n:70,len:12,sa:0.5,glint:0.3,col:'#fff2d0',gcol:'#ffe6a8',dark:'#1a1408',darkA:0.42,sky:'#ffd8a0',skyA:0.17,rim:'#f8e8c0',lily:10},
+      {k:'juncos',at:reeds('sirga'),seed:5}],
+  props:flat('sirga') };
+// el Paso del Juncal: lagunas negras y niebla de tarde; luciérnagas tempranas sobre los juncos
+ZN.juncal={ seed:33, grade:['#e8d8a0','#22343a',0.3], tone:'#f4f0e0', haze:{col:'#e8e2c8',a:0.26,h:0.36}, shafts:{kind:'sun',n:4,col:'#f0e0b0',a:0.08,ang:0.6,par:0.25},
+  bloom:{a:0.26,tint:'#f0e0b0'}, vig:{a:0.52,col:'#0c1010'}, dof:{far:0.24,near:0.12}, ao:{obj:0.4,actor:0.34,col:'#101410'},
+  fg:'riberaNiebla', parts:{motes:12,flies:8},
+  fx:[{k:'agua',cauce:CAUCE.juncal,seed:33,flow:[4,0],n:80,len:9,sa:0.4,glint:0.22,col:'#eef4e8',gcol:'#f6f0d0',dark:'#060a08',darkA:0.4,sky:'#e8ecd8',skyA:0.12,rim:'#dce8d0',lily:22},
+      {k:'juncos',at:reeds('juncal'),seed:9}],
+  props:flat('juncal') };
+// el Albardón de tarde: camino alto entre charcos y el juncal del este, con el vado y la isla
+ZN.albardon={ seed:34, grade:['#ffcf88','#2a3646',0.32], tone:'#fff2dc', haze:{col:'#f0e4c0',a:0.22,h:0.34}, shafts:{kind:'sun',n:6,col:'#ffe0a0',a:0.12,ang:0.64,par:0.25},
+  bloom:{a:0.3,tint:'#ffd8a0'}, vig:{a:0.48,col:'#141008'}, dof:{far:0.22,near:0.12}, ao:{obj:0.42,actor:0.34,col:'#1a140a'},
+  fg:'ribera', parts:{motes:18,pollen:10,flies:5},
+  fx:[{k:'agua',cauce:CAUCE.albardon,seed:34,flow:[5,0],n:90,len:10,sa:0.45,glint:0.28,col:'#fff6e0',gcol:'#ffeab8',dark:'#0a0c08',darkA:0.4,sky:'#f8e4b8',skyA:0.12,rim:'#f0e4c8',lily:26,skip:[[900,140,288,38]]},
+      {k:'juncos',at:reeds('albardon'),seed:13}],
+  props:flat('albardon') };
+// la Aldea Bosque Antiguo al alba: frío azul con el primer sol rosado, humo de leña de las tres chimeneas, ventana encendida y el arroyo
+ZN.aldea={ seed:35, grade:['#ffd2a8','#283462',0.32], tone:'#f4f0f4', haze:{col:'#d8e0f0',a:0.22,h:0.34}, shafts:{kind:'sun',n:5,col:'#ffd8b8',a:0.11,ang:0.58,par:0.25},
+  bloom:{a:0.3,tint:'#ffc890'}, vig:{a:0.5,col:'#080c16'}, dof:{far:0.22,near:0.12}, ao:{obj:0.44,actor:0.34,col:'#10121c'},
+  lights:[{x:494,y:118,r:46,col:'#ffb860',a:0.2,flick:0.6},{x:568,y:118,r:46,col:'#ffb860',a:0.2,flick:0.6}],
+  fg:'bosque', parts:{motes:16,leaves:4},
+  fx:[{k:'agua',cauce:CAUCE.aldea,seed:35,flow:[-10,9],n:16,len:6,sa:0.5,glint:0.3,col:'#f4f8ff',gcol:'#fff0e0',dark:'#0a1018',darkA:0.36,sky:'#e0e8f8',skyA:0.12,rim:'#eef4ff',m1:3},
+      {k:'humo',wind:9,src:[{x:99,y:30,n:9,size:1.25,a:0.18,rise:80,col:'#b8bcc8',speed:0.08},{x:267,y:12,n:9,size:1.25,a:0.18,rise:80,col:'#b8bcc8',speed:0.08},{x:533,y:22,n:10,size:1.35,a:0.2,rise:84,col:'#c0c0c8',speed:0.085}]},
+      {k:'polvo',wind:6,velos:{area:[120,190,520,200],n:8,a:0.1,col:'#e0e4f0'}}],
+  props:flat('aldea',[{t:'barril',x:211,y:137,seed:2},{t:'saco',x:223,y:137,seed:1},{t:'cajon',x:303,y:137,seed:3,load:'apple'},
+    {t:'barril',x:479,y:147,seed:4},{t:'maceta',x:495,y:147,seed:2},{t:'maceta',x:559,y:147,seed:5},{t:'cajon',x:575,y:147,seed:6,load:'cabbage'},
+    {t:'saco',x:43,y:155,seed:3},{t:'barril',x:139,y:155,seed:5}]) };
+// la Senda de los carboneros al mediodía: la carbonera humea, cae hollín y el claro de ceniza queda manchado
+ZN.carboneros={ seed:36, grade:['#fff0c0','#203628',0.28], tone:'#fffaf0', haze:{col:'#d8d0c0',a:0.2,h:0.34}, shafts:{kind:'sun',n:7,col:'#fff0c0',a:0.16,ang:0.5,par:0.25},
+  bloom:{a:0.3,tint:'#ffe0a8'}, vig:{a:0.48,col:'#10140c'}, dof:{far:0.22,near:0.12}, ao:{obj:0.42,actor:0.34,col:'#141a10'},
+  fg:'bosque', parts:{motes:20,leaves:5,embers:{x:482,y:150,w:22,n:10}},
+  fx:[{k:'hollin',manchas:[482,176,86,44],area:[340,20,300,260],n:70,ember:0.1,wind:5,col:'#1c1816'},
+      {k:'humo',wind:11,src:[{x:482,y:142,n:20,size:2,a:0.42,rise:140,col:'#d4d0c8',speed:0.06},{x:478,y:146,n:10,size:1.2,a:0.34,rise:80,col:'#8a8480',speed:0.09,drift:0.6}]},
+      {k:'polvo',wind:8,velos:{area:[380,140,220,100],n:6,a:0.12,col:'#a8a098'}}],
+  props:flat('carboneros') };
+// la Granja abandonada de tarde: polvo dorado en el aire, velos de tierra que arrastra el viento sobre el patio
+ZN.granja_vieja={ seed:37, grade:['#ffc880','#3a2a3a',0.34], tone:'#fff0dc', haze:{col:'#f0d8a8',a:0.24,h:0.36}, shafts:{kind:'sun',n:6,col:'#ffd890',a:0.15,ang:0.7,par:0.25},
+  bloom:{a:0.3,tint:'#ffd090'}, vig:{a:0.52,col:'#140c08'}, dof:{far:0.22,near:0.12}, ao:{obj:0.44,actor:0.34,col:'#1c140c'},
+  fg:'seco', parts:{motes:34,leaves:4},
+  fx:[{k:'polvo',wind:16,velos:{area:[100,200,560,200],n:12,a:0.14,col:'#e8d0a0'}}],
+  props:flat('granja_vieja',[{t:'barril',x:431,y:177,seed:7},{t:'cajon',x:447,y:177,seed:9},{t:'saco',x:543,y:177,seed:5},{t:'barril',x:557,y:177,seed:1},
+    {t:'saco',x:93,y:187,seed:6},{t:'cajon',x:161,y:187,seed:2}]) };
+// el Paso del Zorro de tarde: grieta entre rocas, arenilla que se desprende de las paredes y motas al sol
+ZN.zorro={ seed:38, grade:['#ffd090','#24302a',0.32], tone:'#fff4e0', haze:{col:'#f0e0b8',a:0.2,h:0.34}, shafts:{kind:'sun',n:5,col:'#ffe0a0',a:0.15,ang:0.6,par:0.25},
+  bloom:{a:0.28,tint:'#ffd8a0'}, vig:{a:0.56,col:'#0e100a'}, dof:{far:0.24,near:0.12}, ao:{obj:0.46,actor:0.36,col:'#141a10'},
+  fg:'bosque', parts:{motes:24,leaves:4},
+  fx:[{k:'polvo',wind:10,velos:{area:[0,130,480,50],n:5,a:0.1,col:'#e8dcc0'},arenilla:[[10,470,118,5,14],[10,470,124,4,10],[10,470,222,5,8]]}],
+  props:flat('zorro') };
+})();
+
+/* ============================================================
+   AMBIENTACIÓN · INTERIORES, ESCENAS Y COMBATE (Hefesto · amb-int) — perfiles de AMBI (js/ambiente.js)
+   Se carga después de ambiente.js y solo registra datos: AMBI.zones.<id>={…} y AMBI.fg.<juego>=(R,K)=>[…].
+   · Interiores de Hollin (coordenadas del cuarto): herreria, capilla, casa, pieza (la taberna es del piloto).
+   · Escenas sobre fondos pintados 480×300 (coordenadas de pantalla): esc_<fondo> para taberna, calle, noche,
+     campamento, puente, prados, pantano, sauces, ruinas y ruinasLuz. Los combates usan el mismo perfil
+     (AMBI.battle: solo velo, neblina, viñeta y partículas de pantalla, debajo de las unidades).
+   Nada de esto cambia colisiones ni consume el azar del juego (el primer plano usa el RNG propio de AMBI).
+   ============================================================ */
+(()=>{ if(typeof AMBI==='undefined') return; const Z=AMBI.zones, FG=AMBI.fg;
+  const S2=2; const mk=(w,h)=>{ const k=document.createElement('canvas'); k.width=Math.ceil(w*S2); k.height=Math.ceil(h*S2); const x=k.getContext('2d'); x.setTransform(S2,0,0,S2,0,0); k.lw=w; k.lh=h; return [k,x]; };
+  const TAU=Math.PI*2;
+
+  /* ---------- piezas de primer plano dibujadas por código (en silueta, con borde de luz) ---------- */
+  // cadena colgando de la viga con gancho (herrería)
+  function chainSpr(len,rim){ const [k,x]=mk(14,len+14); x.strokeStyle='#0c0806'; x.lineWidth=1.3;
+    for(let y=0;y<len;y+=4.2){ x.beginPath(); x.ellipse(7,y+2,1.6,2.3,0,0,TAU); x.stroke(); }
+    x.lineWidth=2.2; x.beginPath(); x.moveTo(7,len); x.lineTo(7,len+5); x.arc(4,len+6,3,0,Math.PI*0.9); x.stroke();
+    x.strokeStyle=rim; x.globalAlpha=0.45; x.lineWidth=0.6; x.beginPath(); x.moveTo(8.2,0); x.lineTo(8.2,len); x.stroke(); x.globalAlpha=1; return k; }
+  // tenazas y martillo colgados (silueta)
+  function toolsSpr(rim){ const [k,x]=mk(30,44); x.fillStyle='#0c0806'; x.fillRect(0,0,30,2.4);
+    x.save(); x.translate(8,2); x.rotate(0.06); x.fillRect(-0.8,0,1.6,26); x.fillRect(-4,26,8,5); x.restore(); // martillo
+    x.save(); x.translate(21,2); x.rotate(-0.05); x.fillRect(-0.6,0,1.2,4); x.beginPath(); x.moveTo(-1,4); x.lineTo(-3.4,40); x.lineTo(-2,40.6); x.lineTo(0.4,6); x.lineTo(2,40.6); x.lineTo(3.4,40); x.lineTo(1,4); x.closePath(); x.fill(); x.restore(); // tenazas
+    x.fillStyle=rim; x.globalAlpha=0.4; x.fillRect(0,0,30,0.7); x.fillRect(7.6,2,0.6,25); x.globalAlpha=1; return k; }
+  // enjuta de arco de piedra en la esquina de arriba (capilla): side 1 = izquierda, -1 = derecha
+  function archSpr(side,rim){ const w=92, h=78; const [k,x]=mk(w,h); x.save(); if(side<0){ x.translate(w,0); x.scale(-1,1); }
+    const g=x.createLinearGradient(0,0,w,h); g.addColorStop(0,'#08070c'); g.addColorStop(1,'#16141e'); x.fillStyle=g;
+    x.beginPath(); x.moveTo(0,0); x.lineTo(w,0); x.lineTo(w,6); x.quadraticCurveTo(14,10,10,h); x.lineTo(0,h); x.closePath(); x.fill();
+    x.strokeStyle='rgba(0,0,0,.5)'; x.lineWidth=0.8; for(let i=1;i<6;i++){ x.beginPath(); x.moveTo(i*16,0); x.lineTo(i*15,7); x.stroke(); } for(let j=1;j<5;j++){ x.beginPath(); x.moveTo(0,j*15); x.lineTo(9,j*15); x.stroke(); }
+    x.strokeStyle=rim; x.globalAlpha=0.5; x.lineWidth=1; x.beginPath(); x.moveTo(w,6.5); x.quadraticCurveTo(14.5,10.5,10.5,h); x.stroke(); x.restore(); return k; }
+  // candelero alto en silueta con su vela (capilla, primer plano de abajo)
+  function candleSpr(rim){ const [k,x]=mk(22,96); x.fillStyle='#0a080c'; x.fillRect(9.6,16,2.8,74); x.beginPath(); x.moveTo(2,96); x.lineTo(20,96); x.lineTo(11,86); x.closePath(); x.fill(); x.fillRect(4,14,14,2.6);
+    x.fillStyle='#e8dcc0'; x.fillRect(9,4,4,10); x.fillStyle='#ffd060'; x.beginPath(); x.ellipse(11,1.6,1.4,2.6,0,0,TAU); x.fill();
+    x.fillStyle=rim; x.globalAlpha=0.45; x.fillRect(9.6,16,0.8,70); x.globalAlpha=1; return k; }
+  // cabio del tejado (pieza de arriba): viga diagonal en la esquina
+  function rafterSpr(side){ const w=120, h=70; const [k,x]=mk(w,h); x.save(); if(side<0){ x.translate(w,0); x.scale(-1,1); }
+    x.fillStyle='#0e0905'; x.beginPath(); x.moveTo(0,0); x.lineTo(w,0); x.lineTo(0,h); x.closePath(); x.fill();
+    x.strokeStyle='#22150a'; x.lineWidth=7; x.beginPath(); x.moveTo(w+4,-4); x.lineTo(-4,h+2); x.stroke(); x.strokeStyle='rgba(255,200,130,.22)'; x.lineWidth=1; x.beginPath(); x.moveTo(w-2,-1); x.lineTo(-2,h-4); x.stroke(); x.restore(); return k; }
+  // guirnalda de banderines de feria cruzando arriba (calle)
+  function garlandSpr(R,w){ const h=30; const [k,x]=mk(w,h); const n=Math.round(w/11), sag=14; const cols=['#b8323a','#e2b44c','#2e5a9a','#f0e6d0','#3a7a4a'];
+    x.strokeStyle='rgba(30,20,12,.9)'; x.lineWidth=0.9; x.beginPath(); for(let i=0;i<=n;i++){ const q=i/n, X=q*w, Y=4+Math.sin(q*Math.PI)*sag; if(i) x.lineTo(X,Y); else x.moveTo(X,Y); } x.stroke();
+    for(let i=1;i<n;i++){ const q=i/n, X=q*w, Y=4+Math.sin(q*Math.PI)*sag; x.fillStyle=cols[(i+((R()*2)|0))%cols.length]; x.beginPath(); x.moveTo(X-3.4,Y); x.lineTo(X+3.4,Y); x.lineTo(X+(R()-0.5),Y+8.6); x.closePath(); x.fill(); x.fillStyle='rgba(255,240,200,.35)'; x.fillRect(X-3.4,Y,6.8,0.7); }
+    return k; }
+  const PALD=['#0c1a0e','#132616','#1b331c','#244224','#2f5430'], PALN=['#05080e','#0a1018','#101a24','#182634','#22344a'], PALS=['#0e120a','#161c0e','#1e2612','#283216','#323e1a'], PALP=['#140c18','#1e1222','#2a1a2c','#3a2236','#4a2c40'];
+  const strip=(R,K,pal,rim,n,o)=>{ const L=[]; o=o||{}; for(let i=0;i<n;i++){ const fern=R()<0.45, w=fern?54+R()*20:64+R()*40, h=(fern?30+R()*10:26+R()*20)*(o.k||1); const s=fern?K.fernClump(R,w,h,pal,rim):K.leafClump(R,w,h,pal,rim,1);
+      L.push({src:s,blur:2.2,ax:'s',u:i*(W*2/n)+R()*40,y:H+4,par:1.35,sway:1.4+R()*1.6,ph:R()*9}); } return L; };
+  const corners=(R,K,pal,rim)=>['l','r'].map(side=>({src:K.leafClump(R,96+R()*30,46+R()*14,pal,rim,-1),blur:2.6,ax:side,y:-6,par:0.2,sway:1.8,ph:R()*9,dir:-1}));
+  const prop=(K,spr,sc,rim,o)=>Object.assign({src:K.fgProp(spr,sc,'#1a0c05',rim),blur:2.4,par:0.12,sway:0,ph:0,still:1},o);
+
+  /* ---------- juegos de primer plano ---------- */
+  // herrería (cuarto de 416: márgenes de 32 px a cada lado)
+  FG.herreria=(R,K)=>{ const L=[]; const bm=K.beamSpr(W+40,12); L.push({src:bm,blur:1.6,ax:'c',y:12,par:0,sway:0,ph:0,dir:-1,still:1});
+    L.push({src:chainSpr(46,'#ffae5a'),blur:1.4,ax:'l',x0:58,y:20,par:0.15,sway:0.7,ph:1,dir:-1,swing:1});
+    L.push({src:toolsSpr('#ffae5a'),blur:1.6,ax:'r',x0:-52,y:20,par:0.15,sway:0.5,ph:2.4,dir:-1,swing:1});
+    const M=K.MATS; if(M){ try{ L.push(prop(K,M.barrel(2,31),2.4,'#ff9a48',{ax:'l',x0:14,y:H+10}));
+      L.push(prop(K,M.crate(2,33,{}),2.2,'#ff9a48',{ax:'r',x0:-6,y:H+8})); }catch(e){} } return L; };
+  // capilla (cuarto de 352: márgenes de 64)
+  FG.capilla=(R,K)=>{ const L=[]; const rim='#d8c8ff';
+    L.push({src:archSpr(1,rim),blur:2.2,ax:'l',x0:40,y:10,par:0.1,sway:0,ph:0,dir:-1,still:1}); L.push({src:archSpr(-1,rim),blur:2.2,ax:'r',x0:-40,y:10,par:0.1,sway:0,ph:0,dir:-1,still:1});
+    L.push({src:candleSpr('#ffcf80'),blur:1.8,ax:'l',x0:48,y:H-4,par:0.12,sway:0,ph:0,still:1,glow:'#ffc060',glowY:0.02});
+    L.push({src:candleSpr('#ffcf80'),blur:1.8,ax:'r',x0:-48,y:H-4,par:0.12,sway:0,ph:0,still:1,glow:'#ffc060',glowY:0.02}); return L; };
+  // casa del viejo soldado (352)
+  FG.casa=(R,K)=>{ const L=[]; const bm=K.beamSpr(W+40,12); L.push({src:bm,blur:1.6,ax:'c',y:18,par:0,sway:0,ph:0,dir:-1,still:1});
+    L.push({src:K.herbsSpr(R),blur:1.8,ax:'r',x0:-96,y:26,par:0.15,sway:0.8,ph:1,dir:-1,swing:1});
+    const M=K.MATS; if(M){ try{ L.push(prop(K,M.sack(2,71),2.4,'#ffae5a',{ax:'l',x0:50,y:H-6})); L.push(prop(K,M.barrel(2,29),2.4,'#ffae5a',{ax:'r',x0:-50,y:H-4})); }catch(e){} } return L; };
+  // pieza de arriba (320: márgenes de 80): cabios del tejado y un saco
+  FG.pieza=(R,K)=>{ const L=[]; L.push({src:rafterSpr(1),blur:2,ax:'l',x0:62,y:28,par:0.1,sway:0,ph:0,dir:-1,still:1}); L.push({src:rafterSpr(-1),blur:2,ax:'r',x0:-62,y:28,par:0.1,sway:0,ph:0,dir:-1,still:1});
+    const M=K.MATS; if(M){ try{ L.push(prop(K,M.sack(2,77),2.2,'#ffcf8a',{ax:'l',x0:84,y:H-32})); }catch(e){} } return L; };
+  // escenas pintadas
+  FG.escTaberna=(R,K)=>{ const L=[]; L.push({src:K.herbsSpr(R),blur:1.8,ax:'l',x0:2,y:2,par:0.15,sway:0.8,ph:1,dir:-1,swing:1}); L.push({src:K.lanternSpr(),blur:1.4,ax:'r',x0:-18,y:2,par:0.15,sway:0.6,ph:2,dir:-1,swing:1,glow:'#ffb050'});
+    const M=K.MATS; if(M){ try{ L.push(prop(K,M.barrel(2,9),2.5,'#ffae5a',{ax:'l',x0:-18,y:H+14})); L.push(prop(K,M.crate(2,47,{load:'cabbage'}),2.3,'#ffae5a',{ax:'r',x0:18,y:H+12})); }catch(e){} } return L; };
+  FG.calle=(R,K)=>[{src:garlandSpr(R,W*0.62),blur:1.6,ax:'l',x0:-8,y:-2,par:0.15,sway:0.6,ph:1,dir:-1,swing:1},{src:garlandSpr(R,W*0.5),blur:1.8,ax:'r',x0:10,y:-6,par:0.15,sway:0.6,ph:3,dir:-1,swing:1}].concat(strip(R,K,PALD,'#e8c060',4,{k:0.8}));
+  FG.matas=(R,K)=>strip(R,K,PALD,'#e8c060',6);
+  FG.matasPantano=(R,K)=>strip(R,K,PALS,'#c8d080',6).concat([{src:K.leafClump(R,110,50,PALS,'#a8b870',-1),blur:2.6,ax:'l',y:-6,par:0.2,sway:1.6,ph:2,dir:-1}]);
+  FG.matasPrado=(R,K)=>strip(R,K,PALP,'#ffb0d0',6);
+  FG.bosqueEsc=(R,K)=>strip(R,K,PALD,'#e8c060',6).concat(corners(R,K,PALD,'#e8c060'));
+  FG.nocheEsc=(R,K)=>strip(R,K,PALN,'#7c9ad0',6).concat(corners(R,K,PALN,'#7c9ad0'));
+  FG.campEsc=(R,K)=>strip(R,K,PALN,'#ff9a50',6);
+
+  /* ---------- interiores de Hollin (coordenadas del cuarto) ---------- */
+  Z.herreria={ seed:31, grade:['#ff9a48','#1c2238',0.36], tone:'#ffe6cc', wash:[0.08,0.2], haze:{col:'#ffb070',a:0.1,h:0.36},
+    shafts:{kind:'window',rects:[[128,22,22,26]],dx:40,dy:150,spread:18,col:'#dfe8ff',a:0.2},
+    bloom:{a:0.42,tint:'#ff9a50'}, vig:{a:0.6,col:'#0a0503'}, dof:{far:0.2,near:0}, ao:{obj:0.5,actor:0.42,col:'#140a04',walls:1},
+    lights:[{x:206,y:80,r:170,col:'#ff7a20',a:0.2,flick:1},{x:206,y:150,r:90,col:'#ff9a40',a:0.08,flick:0.6},{x:140,y:40,r:50,col:'#e8f0ff',a:0.1}],
+    fg:'herreria', parts:{dust:22,dustCol:'#e8eeff',embers:[{x:206,y:84,w:40,n:22,h:76},{x:206,y:62,w:16,n:8,h:50,col:'#ffcf70'}],smoke:{x:206,y:44,n:6,col:'#5a4a40',a:0.18}} };
+  Z.capilla={ seed:32, grade:['#ffe0a0','#1e2048',0.34], tone:'#f0eaff', wash:[0.08,0.18], haze:{col:'#c8c0ff',a:0.12,h:0.42},
+    shafts:{kind:'window',rects:[[150,24,52,52],[64,30,14,46],[274,30,14,46]],dx:26,dy:170,spread:16,col:'#fff0c8',a:0.16},
+    bloom:{a:0.4,tint:'#ffe0b0'}, vig:{a:0.6,col:'#06050c'}, dof:{far:0.22,near:0}, ao:{obj:0.46,actor:0.4,col:'#0a0a14',walls:1},
+    lights:[{x:114,y:62,r:50,col:'#ffc060',a:0.2,flick:1},{x:238,y:62,r:50,col:'#ffc060',a:0.2,flick:1},{x:176,y:50,r:70,col:'#c8b8ff',a:0.12},{x:71,y:52,r:34,col:'#a8c0ff',a:0.12},{x:281,y:52,r:34,col:'#a8c0ff',a:0.12}],
+    fg:'capilla', parts:{dust:34,dustCol:'#fff2d0',smoke:[{x:114,y:58,n:4,col:'#b8b0a8',a:0.12},{x:238,y:58,n:4,col:'#b8b0a8',a:0.12}]} };
+  Z.casa={ seed:33, grade:['#ffb860','#24203a',0.34], tone:'#ffeedd', wash:[0.09,0.18], haze:{col:'#ffd09a',a:0.1,h:0.36},
+    shafts:{kind:'window',rects:[[290,26,26,32]],dx:-46,dy:140,spread:20,col:'#ffeec0',a:0.22},
+    bloom:{a:0.36,tint:'#ffbf70'}, vig:{a:0.58,col:'#0c0604'}, dof:{far:0.2,near:0}, ao:{obj:0.5,actor:0.4,col:'#1a0e06',walls:1},
+    lights:[{x:53,y:84,r:110,col:'#ff9a40',a:0.17,flick:1},{x:172,y:166,r:50,col:'#ffd88a',a:0.1,flick:0.5}],
+    fg:'casa', parts:{dust:24,embers:{x:53,y:92,w:18,n:10,h:46},smoke:{x:53,y:60,n:5}} };
+  Z.pieza={ seed:34, grade:['#ffd890','#1c2440',0.34], tone:'#f4ecdc', wash:[0.08,0.2], haze:{col:'#e0d8c0',a:0.08,h:0.36},
+    shafts:{kind:'window',rects:[[152,24,16,22]],dx:30,dy:130,spread:16,col:'#fff2c8',a:0.24},
+    bloom:{a:0.36,tint:'#ffc880'}, vig:{a:0.64,col:'#08060a'}, dof:{far:0.18,near:0}, ao:{obj:0.5,actor:0.42,col:'#120a06',walls:1},
+    lights:[{x:118,y:94,r:70,col:'#ffb050',a:0.18,flick:1}],
+    fg:'pieza', parts:{dust:20,smoke:{x:118,y:90,n:3,col:'#b0a898',a:0.1}} };
+
+  /* ---------- escenas sobre fondos pintados (coordenadas de pantalla 480×300) ---------- */
+  // en los combates del mismo fondo se usan solo el velo (grade/wash + neblina + viñeta) y las partículas de pantalla
+  Z.esc_taberna={ seed:41, grade:['#ffb35c','#2a1630',0.3], tone:'#ffeedd', wash:[0.08,0.16], haze:{col:'#ffcf8a',a:0.1,h:0.3},
+    bloom:{a:0.34,tint:'#ffbf70'}, vig:{a:0.56,col:'#0c0604'}, dof:{far:0.1,near:0}, ao:{actor:0.36,col:'#1a0e06'},
+    lights:[{x:252,y:130,r:120,col:'#ff9a40',a:0.18,flick:1},{x:252,y:18,r:60,col:'#ffd88a',a:0.12,flick:0.4},{x:403,y:30,r:44,col:'#ffc060',a:0.14,flick:0.6},{x:100,y:30,r:40,col:'#ffc060',a:0.1,flick:0.6}],
+    fg:'escTaberna', parts:{motes:16,embers:{x:252,y:134,w:22,n:12,h:56},smoke:{x:252,y:112,n:4,a:0.12}} };
+  Z.esc_calle={ seed:42, grade:['#ffd890','#34406e',0.28], tone:'#fff2de', wash:[0.08,0.12], haze:{col:'#ffe8c0',a:0.16,h:0.3}, shafts:{kind:'sun',n:5,col:'#ffe6a6',a:0.12,ang:-0.5,par:0},
+    bloom:{a:0.26,tint:'#ffd9a0'}, vig:{a:0.42,col:'#1c1208'}, dof:{far:0.14,near:0}, ao:{actor:0.32,col:'#24180c'},
+    lights:[{x:28,y:108,r:26,col:'#ffd070',a:0.1,flick:0.4},{x:455,y:108,r:26,col:'#ffd070',a:0.1,flick:0.4}],
+    fg:'calle', parts:{motes:16,pollen:10,leaves:3} };
+  Z.esc_noche={ seed:43, grade:['#7e9ee0','#0e1430',0.34], tone:'#c8d0f0', wash:[0.06,0.2], haze:{col:'#7890c8',a:0.12,h:0.34}, shafts:{kind:'sun',n:4,col:'#a8c0ff',a:0.08,ang:0.28,par:0},
+    bloom:{a:0.36,tint:'#a8d0ff'}, vig:{a:0.64,col:'#03050c'}, dof:{far:0.2,near:0}, ao:{actor:0.36,col:'#04060e'},
+    fg:'nocheEsc', parts:{flies:20,motes:8,motesCol:'#a8c8ff'} };
+  Z.esc_campamento={ seed:44, grade:['#ffa860','#0e1430',0.32], tone:'#e0d8f0', wash:[0.06,0.2], haze:{col:'#5a6898',a:0.1,h:0.3},
+    bloom:{a:0.42,tint:'#ffb070'}, vig:{a:0.62,col:'#03050c'}, dof:{far:0.16,near:0}, ao:{actor:0.4,col:'#04060e'},
+    lights:[{x:240,y:142,r:130,col:'#ff8a30',a:0.2,flick:1},{x:97,y:45,r:40,col:'#c8d8ff',a:0.12}],
+    fg:'campEsc', parts:{flies:10,embers:{x:240,y:140,w:16,n:16,h:80},smoke:{x:240,y:118,n:6,a:0.14}} };
+  Z.esc_puente={ seed:45, grade:['#ffc070','#3a2048',0.32], tone:'#ffeedd', wash:[0.1,0.14], haze:{col:'#ffd0a0',a:0.18,h:0.4}, shafts:{kind:'sun',n:6,col:'#ffd8a0',a:0.12,ang:0.08,par:0},
+    bloom:{a:0.4,tint:'#ffc080'}, vig:{a:0.5,col:'#1a0c08'}, dof:{far:0.14,near:0}, ao:{actor:0.34,col:'#22120a'},
+    lights:[{x:240,y:78,r:90,col:'#ffe0a0',a:0.14},{x:78,y:160,r:70,col:'#ff8a30',a:0.18,flick:1}],
+    fg:'matas', parts:{motes:18,embers:{x:78,y:158,w:40,n:18,h:70},smoke:{x:78,y:130,n:8,col:'#3a3030',a:0.24}} };
+  Z.esc_prados={ seed:46, grade:['#ffb8a0','#3a2a5a',0.3], tone:'#fff0ee', wash:[0.09,0.14], haze:{col:'#f0c0d8',a:0.16,h:0.4}, shafts:{kind:'sun',n:5,col:'#ffd0b0',a:0.1,ang:0.4,par:0},
+    bloom:{a:0.3,tint:'#ffc0b0'}, vig:{a:0.48,col:'#140a18'}, dof:{far:0.16,near:0}, ao:{actor:0.32,col:'#1a1020'},
+    fg:'matasPrado', parts:{motes:16,pollen:14,pollenCol:'rgba(255,220,240,.85)',leaves:4} };
+  Z.esc_pantano={ seed:47, grade:['#d8e0a0','#142424',0.32], tone:'#eef0dc', wash:[0.1,0.18], haze:{col:'#c8d8b0',a:0.2,h:0.46},
+    bloom:{a:0.3,tint:'#e0f0a0'}, vig:{a:0.58,col:'#060a06'}, dof:{far:0.2,near:0}, ao:{actor:0.36,col:'#0a100a'},
+    fg:'matasPantano', parts:{flies:16,fliesCol:'#e8ff80',motes:8,motesCol:'#e0f0c0'} };
+  Z.esc_sauces={ seed:48, grade:['#f0f0a0','#143024',0.3], tone:'#f0f6e0', wash:[0.08,0.14], haze:{col:'#e0f0c8',a:0.16,h:0.42}, shafts:{kind:'sun',n:5,col:'#f6f0c0',a:0.12,ang:0.3,par:0},
+    bloom:{a:0.3,tint:'#f0f0b0'}, vig:{a:0.48,col:'#06100a'}, dof:{far:0.18,near:0}, ao:{actor:0.34,col:'#0a140c'},
+    fg:'bosqueEsc', parts:{motes:16,pollen:12,leaves:6} };
+  Z.esc_ruinas={ seed:49, grade:['#c8a8ff','#120c28',0.34], tone:'#e8e0ff', wash:[0.06,0.2], haze:null,
+    bloom:{a:0.4,tint:'#c8a0ff'}, vig:{a:0.66,col:'#04020a'}, dof:{far:0.14,near:0}, ao:{actor:0.42,col:'#06040e'},
+    lights:[{x:240,y:46,r:60,col:'#b080ff',a:0.16,flick:0.5},{x:240,y:258,r:120,col:'#9a70ff',a:0.08,flick:0.3}],
+    parts:{motes:14,motesCol:'#c8b0ff',flies:8,fliesCol:'#b890ff'} };
+  Z.esc_ruinasLuz={ seed:50, grade:['#ffd890','#22180e',0.32], tone:'#f4eadc', wash:[0.07,0.2], haze:null,
+    shafts:{kind:'window',rects:[[226,0,28,40]],dx:0,dy:180,spread:30,col:'#ffe6b0',a:0.2},
+    bloom:{a:0.42,tint:'#ffd8a0'}, vig:{a:0.62,col:'#080402'}, dof:{far:0.14,near:0}, ao:{actor:0.42,col:'#100a04'},
+    parts:{dust:30,motes:8} };
+})();
+
+/* ============================================================
    MUNDO EXPLORABLE (Etapa 15) — motor WORLD (Hefesto · motor)
    Zonas recorribles contiguas (cámara, colisión, oclusión por y, grupo en fila, caravana, cofres, mojones,
    personajes, examinables, disparadores de historia, rivales visibles, fijos de lugar, bordes con need/deny),
@@ -24405,7 +25404,7 @@ function drawWorld(c,dt){ const Z=S.Z, P=S.P, cam=S.cam; if(!Z||!P) return;
   S.fixed.forEach(f=>f.as.forEach(a=>{ if(vis(a.x,a.y)) ents.push(actorEnt(a)); }));
   S.rivals.forEach(r=>{ if(vis(r.a.x,r.a.y)){ const e=actorEnt(r.a); if(!e._aura){ e._aura=true; const d0=e.draw; const rk=r.def.rank==='secreto'?'rgba(170,120,230,.55)':'rgba(240,200,90,.55)'; e.draw=cc=>{ cc.globalAlpha=0.5+0.2*Math.sin(T*3); ellipse(cc,r.a.x,r.a.y,16,5,rk); cc.globalAlpha=1; d0(cc); }; } ents.push(e); } });
   try{ POSADAS.zoneEnts(Z,ents,vis); }catch(e){} // posadas: esferas de guardado y campamentos
-  if(Z._z){ if(Z.fx&&'carruaje' in Z.fx) Z.fx.carruaje=!flag('jefe'); if(Z.id==='hondo'||Z.dark) Z.light={x:P.x,y:P.y-18}; ents.sort((a,b)=>a.y-b.y); Z.draw(c,cam,dt,ents); }
+  if(Z._z){ if(Z.fx&&'carruaje' in Z.fx) Z.fx.carruaje=!flag('jefe'); if(Z.id==='hondo'||Z.dark) Z.light={x:P.x,y:P.y-18}; ambW.ents(ents,Z); ents.sort((a,b)=>a.y-b.y); Z.draw(c,cam,dt,ents); }
   else { Z.draw(c,cam,T); if(Z.ents) for(const e of Z.ents()){ if(vis(e.x,e.y)) ents.push({y:e.y,e}); } if(S.cart&&vis(S.cart.x,S.cart.y)) ents.push({y:S.cart.y,e:S.cart});
     Z.props.forEach(p=>{ if(p.nosprite||!can(p.need)||!vis(p.x,p.y)) return; if(p.kind==='cofre'){ const CF=(typeof ENV!=='undefined'&&ENV&&ENV.cofre)||null; if(CF){ const st=p._cst||(p._cst={}); if(p._crar==null) p._crar=CF.rar(Object.keys(p.items||{}).concat(p.gear||[])); ents.push({y:p.y,draw:cc=>CF.draw(cc,p.x,p.y,!!w.chests[p.id],st,p._crar)}); } else ents.push({y:p.y,draw:cc=>{ const im=chestImg(!!w.chests[p.id]); cc.save(); cc.translate(p.x,p.y); cc.scale(1.6,1.6); cc.drawImage(im,-8,-13); cc.restore(); }}); } /* v27: cofre chico de v15, ×1,6 */ else if(p.kind==='mojon') ents.push({y:p.y,e:Object.assign({x:p.x,y:p.y},OBJ.mojon())}); else if(p.kind==='cartel') ents.push({y:p.y,e:Object.assign({x:p.x,y:p.y},OBJ.post())}); });
     ents.sort((a,b)=>a.y-b.y); c.save(); c.translate(-cam.x,-cam.y); for(const it of ents){ if(it.e){ const e=it.e; c.drawImage(e.img,Math.round(e.x-e.ox),Math.round(e.y-e.oy)); } else it.draw(c); } c.restore(); }
@@ -24516,7 +25515,16 @@ S.draw=(c,dt)=>{ const sl=S.slide;
     if(sl.kind==='slide'){ c.save(); c.translate(Math.round((1-p)*e[0]*W),Math.round((1-p)*e[1]*H)); drawWorld(c,dt); c.restore(); c.drawImage(sl.snap,Math.round(-p*e[0]*W),Math.round(-p*e[1]*H),W,H); }
     else { drawWorld(c,dt); c.save(); c.globalAlpha=1-p; const s=1+(S.global?-0.4:0.6)*p; c.translate(W/2,H/2); c.scale(s,s); c.drawImage(sl.snap,-W/2,-H/2,W,H); c.restore(); }
     if(p>=1) S.slide=null; return; }
-  drawWorld(c,dt); if(!S.global&&!(S.Z&&S.Z._z)) ambDraw(c,S.zone,dt); drawHud(c); };
+  drawWorld(c,dt); if(!S.global&&!(S.Z&&S.Z._z)) ambDraw(c,S.zone,dt); ambW.over(c,dt); drawHud(c); };
+/* escenarios fase 1 (js/ambiente.js): las zonas de zones.js que figuren en la tabla de AMBI reciben la misma ambientación que Hollin
+   (hoy ninguna: el piloto es Hollin + taberna; extender = sumar la zona a la tabla). Sin entrada en la tabla, no hace nada. */
+const ambW=(()=>{ const MK=[]; // marcas quietas que el primer plano de AMBI no debe tapar: flechas/rótulos de salida (como drawExitMarks), cofres y examinables
+  const marks=()=>{ MK.length=0; const Z=S.Z, P=S.P; if(!Z||!P) return MK; for(const ex of Z.exits){ if(exitHid(ex)) continue; let x=ex.x+ex.w/2, y=ex.y+ex.h/2; const e=edgeOf(ex,Z); if(e){ x=clamp(x,6,Z.w-6); y=clamp(y,8,Z.h-8); if(e[1]&&ex.w>40) x=clamp(P.x,ex.x+8,ex.x+ex.w-8); } MK.push({x,y,hw:e&&e[1]?52:30,up:e&&e[1]?28:24}); }
+    for(const p of Z.props){ if(p.nosprite&&!p.escena) continue; MK.push({x:p.x,y:p.y,hw:16,up:40}); } return MK; };
+  const X={ox:0,oy:0,P:null,actors:()=>list().filter(a=>a&&!a.hidden&&!a.noDraw),near:null,coll:null,objs:null,room:null,ww:0,wh:0,marks}; let key=null;
+  const prep=Z=>{ key=null; try{ if(typeof AMBI==='undefined'||!Z||S.global||!Z._z) return false; const k=(Z.hour==='noche'&&AMBI.has(Z.id+'_noche'))?Z.id+'_noche':Z.id; if(!AMBI.has(k)) return false; key=k;
+    X.ox=Z.w<=W?Math.round((Z.w-W)/2):Math.round(clamp(S.cam.x,0,Z.w-W)); X.oy=Z.h<=H?Math.round((Z.h-H)/2):Math.round(clamp(S.cam.y,0,Z.h-H)); X.P=S.P; X.near=S.near; X.coll=(x,y)=>Z.solid(x,y); X.objs=Z._objs||null; X.ww=Z.w; X.wh=Z.h; return true; }catch(e){ return false; } };
+  return { ents(ents,Z){ if(prep(Z)) try{ AMBI.ents(ents,key,X); }catch(e){} }, over(c,dt){ if(key&&S.Z&&!S.global) try{ X.ov=!S.slide&&!S.plate&&!S.vtrip&&!S.overlay; /* velo en la capa del compositor salvo que el HUD dibuje algo grande encima (cartel de zona, viaje, mapa) */ AMBI.over(c,key,dt,X); }catch(e){} } }; })();
 
 /* ---------- escena en el lugar (decisión 4a): mkStage sobre la zona actual ---------- */
 function stage(name,opt){ opt=opt||{}; const Z=S.Z; const st=mkStage(Z.bgZone==='prados_m'?'prados':(Z.bgZone||'prados'),name,opt); const at=opt.at||{x:S.P.x,y:S.P.y};
@@ -24529,15 +25537,21 @@ function stage(name,opt){ opt=opt||{}; const Z=S.Z; const st=mkStage(Z.bgZone===
   const mv=Z.marks&&(Z.marks.cornisa_valdris||Z.marks.cornisa);
   const figV=()=>{ if(!ENV.flags.valdris||!mv||st.actors.valdris) return null; if(!valdris.home){ valdris.x=mv.x-cam.x; valdris.y=mv.y-cam.y; valdris.home={x:valdris.x,y:valdris.y}; } return valdris; };
   st.figura=id=>id==='valdris'?figV():null;
+  // escenarios (js/ambiente.js): la escena en el lugar lleva la ambientación de su zona (mismas coordenadas del mundo que al explorar)
+  const ak=(()=>{ try{ if(typeof AMBI==='undefined'||!Z._z) return null; const k=(Z.hour==='noche'&&AMBI.has(Z.id+'_noche'))?Z.id+'_noche':Z.id; return AMBI.has(k)?k:null; }catch(e){ return null; } })(), AP=[];
+  const AX={ox:cam.x,oy:cam.y,P:null,actors:()=>AP,near:null,coll:(x,y)=>Z.solid(x,y),objs:Z._objs||null,room:null,ww:Z.w,wh:Z.h,z:1,tx:0,ty:0};
   st.draw=(c,dt)=>{ const K=st.cam; camStep(K,dt); const zc=K.z!==1||K.x!==W/2||K.y!==H/2; if(zc){ c.save(); c.translate(W/2,H/2); c.scale(K.z,K.z); c.translate(-K.x,-K.y); }
     ENT2.length=0; const vis=st.list.filter(a=>!a.hidden); vis.forEach(a=>{ moveActor(a,dt); ENT2.push(vEnt(a)); });
     if(figV()){ moveActor(valdris,dt); ENT2.push(vEnt(valdris,true)); }
+    if(ak){ AP.length=0; vis.forEach(a=>{ const q=a._wsa||(a._wsa={}); q.x=a.x+cam.x; q.y=a.y+cam.y; AP.push(q); }); try{ AMBI.ents(ENT2,ak,AX); }catch(e){} }
     if(Z._z){ if(Z.id==='hondo'||Z.dark){ const il=st.actors.ilian||vis[0]; if(il) Z.light={x:il.x+cam.x,y:il.y+cam.y-18}; } ENT2.sort((a,b)=>a.y-b.y); Z.draw(c,cam,dt,ENT2); if(st.under) st.under(c,dt); }
     else { Z.draw(c,cam,T); if(st.under) st.under(c,dt); if(Z.ents) for(const e of Z.ents()){ const sx=e.x-cam.x, sy=e.y-cam.y; if(sx>-80&&sx<W+80&&sy>-20&&sy<H+110) ENT2.push({y:e.y,img:e}); } if(S.cart) ENT2.push({y:S.cart.y,img:S.cart}); ENT2.sort((a,b)=>a.y-b.y);
       for(const it of ENT2){ if(it.img){ c.drawImage(it.img.img,Math.round(it.img.x-it.img.ox-cam.x),Math.round(it.img.y-it.img.oy-cam.y)); } else it.draw(c); } }
     if(st.olafProxy) drawProxy(c,st.olafProxy); if(st.mark) drawHeadMark(c,st.mark.x,st.mark.y,'#ffe9a8');
-    if(st.over) st.over(c,dt); drawOnos(c,st); if(zc) c.restore();
-    if(Z.drawOver) Z.drawOver(c,cam,dt); if(!Z._z){ S.stageCam=cam; const il=st.actors.ilian||st.list[0]; hourTint(c,Z,il?il.x:W/2,il?il.y-18:H/2); S.stageCam=null; ambDraw(c,st.zone,dt); } drawDirOver(c,st,dt); };
+    if(st.over) st.over(c,dt); if(!ak) drawOnos(c,st); if(zc) c.restore();
+    if(Z.drawOver) Z.drawOver(c,cam,dt);
+    if(ak){ try{ const z=K.z||1; AX.z=z; AX.tx=W/2-K.x*z; AX.ty=H/2-K.y*z; AX.barH=K.bars>0.01?Math.round(24*K.bars):0; AMBI.over(c,ak,dt,AX); }catch(e){} if(zc){ c.save(); c.translate(W/2,H/2); c.scale(K.z,K.z); c.translate(-K.x,-K.y); } drawOnos(c,st); if(zc) c.restore(); } // las onomatopeyas, sobre la ambientación
+    if(!Z._z){ S.stageCam=cam; const il=st.actors.ilian||st.list[0]; hourTint(c,Z,il?il.x:W/2,il?il.y-18:H/2); S.stageCam=null; ambDraw(c,st.zone,dt); } drawDirOver(c,st,dt); };
   return st; }
 async function sceneIn(name,opt){ opt=opt||{}; hideDialog(); clearBubs(); UI.pad.hidden=true; const st=stage(name,opt); warmArt(null,st.list.map(a=>a.spr)); setScene(st);
   if(opt.music) try{ playMusic(opt.music); }catch(e){} st.cam.tvig=st.cam.vigBase=0.25; await fadeTo(0,SP(opt.ms||200)); return st; }
@@ -24574,7 +25588,7 @@ window.addEventListener('pagehide',()=>{ try{ if(scene===S&&S.Z&&!S.busy&&!AUTO)
 // pruebas automáticas y guiadas
 window.WORLDT={get zid(){ return S.Z&&S.Z.id; },zapi:()=>zonesApi(),get S(){ return S; },get P(){ return S.P&&{x:S.P.x,y:S.P.y}; },zone,enter,flag,can,go,
   viaje:VIAJE, walkTo(x,y,spd){ S.autoTo={x,y}; S.autoSpd=spd||2.2; S.auto=true; }, stopAuto(){ S.autoTo=null; S.auto=AUTO||!!S.forceAuto; }, near:()=>S.near&&S.near.label, act:()=>S.onAction(), tryExit,
-  checks:()=>CHECKS.slice(), path:(z,a,b,c,d)=>pathTo(zone(z),a,b,c,d), nav:z=>navGrid(zone(z)), okPos:()=>okPos(S.Z,S.P.x,S.P.y), prewarmNow:ids=>prewarmNow(ids), addRival(def){ S.Z.rivals.push(def); buildActors(S.Z); }, overlay(v){ S.overlay=v; }, interactables, objective, autoTarget:()=>autoTarget(), music:()=>{ try{ return AU.cur?AU.cur.name:null; }catch(e){ return null; } }, battleTest:cfg=>sideBattle(cfg), encTable:z=>{ const E=encApi(); try{ const r=E&&E.zinfo?E.zinfo(z,{}):null; return r&&r.table; }catch(e){ return String(e); } }, autoGoal(v){ S.forceAuto=v; S.auto=v||AUTO; }, prewarm, stats:()=>{ const ZS=zonesApi(); return ZS&&ZS.stats?ZS.stats():null; } };
+  checks:()=>CHECKS.slice(), path:(z,a,b,c,d)=>pathTo(zone(z),a,b,c,d), nav:z=>navGrid(zone(z)), okPos:()=>okPos(S.Z,S.P.x,S.P.y), prewarmNow:ids=>prewarmNow(ids), addRival(def){ S.Z.rivals.push(def); buildActors(S.Z); }, overlay(v){ S.overlay=v; }, interactables, objective, autoTarget:()=>autoTarget(), music:()=>{ try{ return AU.cur?AU.cur.name:null; }catch(e){ return null; } }, battleTest:cfg=>sideBattle(cfg), sceneTest:(name,opt)=>sceneIn(name,opt), encTable:z=>{ const E=encApi(); try{ const r=E&&E.zinfo?E.zinfo(z,{}):null; return r&&r.table; }catch(e){ return String(e); } }, autoGoal(v){ S.forceAuto=v; S.auto=v||AUTO; }, prewarm, stats:()=>{ const ZS=zonesApi(); return ZS&&ZS.stats?ZS.stats():null; } };
 return {vm:VM,_i:{S,enter,zone,ensure,can,flag,fogReveal,fogOpen,placesView,navGrid,pathTo,buildSoft,edgeOf,updCam,nowS,interactables,useNode,linesOf,sayL,talkLines,transition,exitOk,okPos,nearestOk,gZoom},viaje:VIAJE,prewarmNow,go,run:()=>go(G.cp),enter,stage,sceneIn,back,flag,can,caravan,done,finish,zone,mark,place,prewarm,story:STORY,addStory,sideBattle,get scene(){ return S; },ensure,zid,partyIds,leaderId};
 })();
 
