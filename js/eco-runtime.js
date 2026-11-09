@@ -5,6 +5,9 @@
   var registry=Object.create(null), adapter=null, active=false, raf=0, startedAt=0, demo=null;
   var reducedMotion=!!(w.matchMedia&&w.matchMedia('(prefers-reduced-motion: reduce)').matches);
   var ROOT='art/ref/ashvael/';
+  var summonSheet=new Image(),portraitAsset=new Image(),idleSheet=new Image(),fxSheet=new Image();
+  summonSheet.src=ROOT+'summon.png';portraitAsset.src=ROOT+'retrato-px.png';
+  idleSheet.src=ROOT+'idle.png';fxSheet.src=ROOT+'efectos.png';
   var ashvael={
     id:'ashvael',name:'Ashvael',title:'El Ave que Arde Dos Veces',kind:'eco_principal',
     description:'Ave inmensa de plumas de brasa.',
@@ -53,7 +56,7 @@
     c.restore();
   }
   function makeCanvas(w,h){var cv=el('canvas');cv.width=w;cv.height=h;cv.style.imageRendering='pixelated';return cv;}
-  function drawPortrait(cv){var c=cv.getContext('2d');c.imageSmoothingEnabled=false;c.fillStyle='#1a1017';c.fillRect(0,0,192,192);for(var i=0;i<9;i++){c.fillStyle=i%2?'#762526':'#b83224';c.beginPath();c.moveTo(18+i*18,174);c.lineTo(8+i*18,96);c.lineTo(20+i*18,38);c.lineTo(30+i*18,105);c.closePath();c.fill();}c.save();c.scale(3,3);drawPhoenix(c,2,false,1);c.restore();}
+  function drawPortrait(cv){var c=cv.getContext('2d');c.imageSmoothingEnabled=false;c.clearRect(0,0,192,192);if(portraitAsset.complete&&portraitAsset.naturalWidth){c.drawImage(portraitAsset,0,0,192,192);return;}c.fillStyle='#1a1017';c.fillRect(0,0,192,192);for(var i=0;i<9;i++){c.fillStyle=i%2?'#762526':'#b83224';c.beginPath();c.moveTo(18+i*18,174);c.lineTo(8+i*18,96);c.lineTo(20+i*18,38);c.lineTo(30+i*18,105);c.closePath();c.fill();}c.save();c.scale(3,3);drawPhoenix(c,2,false,1);c.restore();}
   function mount(){
     if(d.getElementById('ldcEcoBtn'))return;
     var top=d.querySelector('.topbar');if(!top)return;
@@ -86,7 +89,7 @@
     for(var y=0;y<cv.height;y+=24){c.fillStyle='rgba(255,190,80,.035)';c.fillRect(0,y,cv.width,1);}
     var cx=240,cy=142,pulse=1+Math.sin((t%32)/32*Math.PI*2)*.035;c.save();c.translate(cx,cy);c.scale(pulse,pulse);c.strokeStyle='rgba(255,184,83,.48)';c.lineWidth=2;c.beginPath();c.ellipse(0,64,105,17,0,0,Math.PI*2);c.stroke();c.strokeStyle='rgba(255,226,164,.24)';c.beginPath();c.ellipse(0,64,78,12,0,0,Math.PI*2);c.stroke();c.restore();
     for(var i=0;i<18;i++){var a=i*2.399+t*.045,rr=44+(i%5)*15,x=cx+Math.cos(a)*rr,y=cy+Math.sin(a)*rr;c.fillStyle=i%3?'#e45b27':'#ffc65b';c.fillRect(Math.round(x),Math.round(y),2+(i%2),2+(i%2));}
-    var frame=(t%48<34)?Math.floor(t/2)%4:4+Math.floor(t/3)%4;c.save();c.translate(cx-112,cy-112);c.scale(3.5,3.5);drawPhoenix(c,frame,frame>=6,1);c.restore();
+    var frame=(t%48<34)?Math.floor(t/2)%4:4+Math.floor(t/3)%4;c.imageSmoothingEnabled=false;if(summonSheet.complete&&summonSheet.naturalWidth>=256&&summonSheet.naturalHeight>=128){var sx=(frame%4)*64,sy=Math.floor(frame/4)*64;c.drawImage(summonSheet,sx,sy,64,64,cx-112,cy-112,224,224);}else{c.save();c.translate(cx-112,cy-112);c.scale(3.5,3.5);drawPhoenix(c,frame,frame>=6,1);c.restore();}
     if(!reducedMotion)raf=requestAnimationFrame(drawLoop);
   }
   function writeLog(msg){var n=d.getElementById('ldcEcoLog');if(n)n.textContent=msg;}
