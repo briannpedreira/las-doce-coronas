@@ -1,0 +1,134 @@
+{
+  "schemaVersion": 1,
+  "id": "ashvael",
+  "name": "Ashvael",
+  "title": "El Ave que Arde Dos Veces",
+  "kind": "eco_principal",
+  "description": "Ave inmensa de plumas de brasa.",
+  "lore": {
+    "canonicalDescription": "Ave inmensa de plumas de brasa.",
+    "expandedConcept": "La idea de la primera combustión destructora y la segunda regeneradora es una propuesta de diseño, no lore confirmado.",
+    "loreStatus": "propuesta_pendiente_de_validacion"
+  },
+  "visual": {
+    "silhouette": "Ave colosal de alas amplias, cresta incandescente, pico curvo y cola de plumas largas.",
+    "palette": [
+      "#24151B",
+      "#762526",
+      "#B83224",
+      "#E45B27",
+      "#F49A39",
+      "#FFC65B"
+    ],
+    "secondCombustionPalette": [
+      "#FFF8E8",
+      "#FFE6B5",
+      "#FFC65B",
+      "#F49A39"
+    ],
+    "signature": [
+      "brasas ascendentes",
+      "plumas incandescentes",
+      "anillos de fuego",
+      "ceniza luminosa"
+    ]
+  },
+  "combat": {
+    "role": [
+      "magia_de_fuego",
+      "recuperacion",
+      "resurreccion"
+    ],
+    "summonCost": {
+      "impetusSegments": 3,
+      "mp": 20,
+      "usesPerBattle": 1,
+      "status": "provisional"
+    },
+    "abilities": [
+      {
+        "id": "llama_eterna",
+        "name": "Llama Eterna",
+        "type": "fire_aoe",
+        "target": "all_enemies",
+        "power": 1.35,
+        "burnChance": 0.25,
+        "burnTurns": 2
+      },
+      {
+        "id": "renacer_igneo",
+        "name": "Renacer Ígneo",
+        "type": "party_heal_revive",
+        "target": "all_allies",
+        "healRatio": 0.22,
+        "reviveRatio": 0.18,
+        "maxRevives": 1
+      },
+      {
+        "id": "plumas_crepusculares",
+        "name": "Plumas Crepusculares",
+        "type": "multi_hit_fire",
+        "target": "all_enemies",
+        "hits": 3,
+        "powerPerHit": 0.52,
+        "speedDown": 0.15,
+        "duration": 2
+      },
+      {
+        "id": "fenix_eterno",
+        "name": "Fénix Eterno",
+        "type": "two_phase_ultimate",
+        "target": "all_enemies_and_all_allies",
+        "enemyPower": 2.2,
+        "healRatio": 0.38,
+        "reviveRatio": 0.35,
+        "maxRevives": 1
+      }
+    ],
+    "affinities": {
+      "strength": [
+        "fuego"
+      ],
+      "resistance": [
+        "fuego",
+        "quemadura"
+      ],
+      "weakness": [
+        "agua",
+        "hielo"
+      ]
+    },
+    "balanceNote": "Multiplicadores y costes iniciales provisionales; adaptar a la escala real del motor."
+  },
+  "assets": {
+    "portrait": "art/ref/ashvael/retrato-px.png",
+    "icon": "art/ref/ashvael/icono.png",
+    "idle": {
+      "src": "art/ref/ashvael/idle.png",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "columns": 3,
+      "rows": 2,
+      "frames": 6,
+      "fps": 6
+    },
+    "summon": {
+      "src": "art/ref/ashvael/summon.png",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "columns": 4,
+      "rows": 2,
+      "frames": 8,
+      "fps": 10
+    },
+    "effects": {
+      "src": "art/ref/ashvael/efectos.png",
+      "frameWidth": 32,
+      "frameHeight": 32,
+      "columns": 3,
+      "rows": 2,
+      "frames": 6,
+      "fps": 12
+    }
+  }
+}
