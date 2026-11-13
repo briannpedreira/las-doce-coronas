@@ -11481,7 +11481,7 @@ const LINES = {
   //   '§1A' solo con la decisión 1 = A · '§3' / '§!3' Regente sí / no · '§4fardo' '§4camino' '§4hora' '§4cartel' pistas de la trampa · '§5' / '§!5' Lina de Molle sí / no
   cast: {
     prologo:    { prologo_a: ['pim','rasa','ilianNino','olafNino'], prologo_b: ['ilianNino','olafNino'], prologo_b1: ['ilianNino','olafNino'], prologo_b2: ['ilianNino','olafNino'], prologo_c: ['ilianNino','olafNino'],
-                  prologo_d: ['olaf','ilianNinoV','hagen','bertramJ','capataz'], prologo_e: ['olaf','ilianNinoV','hagen'] },
+                  prologo_d: ['olaf','ilianNinoV','hagen','bertramJ','capataz'], prologo_e: ['nachNino','olaf','ilianNinoV','hagen'] },
     hollin:     { hollin_intro: ['ilian','nach'], hollin_peregrino: ['peregrino','ilian','nach'] },
     contrato:   { contrato: ['peregrino','maela','encap','ilian','nach'], escalera: ['maela','ilian','nach'], alba: ['merc_ruy','merc_quina','maela','lina','ilian','nach','bertram'] },
     prados:     { prados: ['maela','lina','ilian','nach','bertram'] },
@@ -11618,7 +11618,7 @@ const LINES = {
       ['sepia',1], ['vig',0.6], ['bars',1],
       ['title','La carpa de Hagen','Esa misma noche',1.2],
       ['anim','ilianNinoV','sit'],
-      ['narr','Una carpa con un farol. Afuera arrancan estacas y ensillan caballos. En una manta duerme un bulto chico con un pie afuera: Nach, de tres años.'],
+      ['narr','La carpa de Hagen, ya a medio desarmar, y el fuego. Alrededor arrancan estacas y ensillan caballos. En una manta duerme un bulto chico con un pie afuera: Nach, de tres años.'], // fix27 M1: el fondo es el claro frente a la carpa
       ['say','hagen','¿Te duele?','n'],
       ['say','ilianNinoV','Arde. Como cuando mirás el sol.','s'],
       ['say','hagen','Entonces no lo mires. Ni al sol ni a nadie que pregunte por él.','n'],
@@ -13139,6 +13139,7 @@ LINES.sqToast = { nuevo:'Encargo nuevo · Diario', entregar:'Hay algo para entre
    c3_hollin: '_' (las dos), 'bram', 'carro' · c3_capilla: 'botas' → 'odo' → 'agnes' → 'capilla' · c4_isla: 'huellas' → 'isla'.
    Solo nombran lugares que el grupo ya conoce en ese momento. */
 LINES.objetivo = {
+  hollin:       'Buscar a Maela en la puerta de la taberna. Antes, si querés, una vuelta por Hollin.', // fix27 M6: el Hollin del Cap. 1 también tiene meta
   c2_senda:     'Salir de la aldea por el norte, por la senda de los carboneros.',
   c2_rezagados: 'Cruzar la senda sin hacer ruido. Por el bosque andan caballos.',
   c2_orilla:    'Bajar por la pendiente hacia el río, antes de que extrañen a los dos.',
@@ -19191,10 +19192,12 @@ function open(a,ms){ const h=TR.h; if(!h||a>=1) return null; /* a negro: ya lo e
   if(ph.open&&I.fx.t<ph.open) h.seek(ph.open);
   const real=Math.max(0.12,(ms||0)/1000+(EXTRA[TR.code]||0.15)); I.speed=Math.max(0.2,(ph.end-I.fx.t)/real);
   if(fade.done){ const f=fade.done; fade.done=null; f(); } fade.a=0; fade.target=0;
+  TR.op=h; // fix27 B4: mientras la quemada se abre, la botonera del combate espera (covering)
   return new Promise(res=>{ const st=stall(I);
-    const tick=()=>{ if(h.done||I.dead||I.fx.t>=ph.end||st()){ res(); return; } raf(tick); };
+    const tick=()=>{ if(h.done||I.dead||I.fx.t>=ph.end||st()){ if(TR.op===h) TR.op=null; res(); return; } raf(tick); };
     raf(tick); }); }
 const held=()=>!!TR.h&&!TR.h.done;
+const covering=()=>held()||!!(TR.op&&!TR.op.done);
 // puente.js borra un efecto que nadie dibujó en 2 s; una tarea larga entre dos cuadros (armar el combate o una zona) no debe llevarse la
 // transición ni un cofre: antes de cada update se marcan como dibujados
 if(typeof PFX!=='undefined'&&PFX.ok){ const u0=PFX.update; PFX.update=function(dt){ try{ const now=performance.now(); if(TR.I&&!TR.I.dead) TR.I.drawn=now; }catch(e){} return u0.call(PFX,dt); }; }
@@ -19307,7 +19310,7 @@ function keyIcon(w,png){ if(!STRIP.C5||!w) return w; if(png) w.classList.add('pf
 
 // al empezar un combate: fuera lo que quedó de la victoria anterior (C6 en las tarjetas)
 function reset(){ for(const q of CARDS.values()){ try{ if(q.h&&!q.h.done) q.h.stop(true); q.cv.remove(); }catch(e){} } CARDS.clear(); }
-return {reset,cover,open,held,can,drawUi,chest,chestBusy,chestEnts,coinAt,collect,mark,got,bangFx,alert,ambush,victory,boot,coinEl,keyIcon,get strips(){ return Object.keys(STRIP); },_tr:TR};
+return {reset,cover,open,held,covering,can,drawUi,chest,chestBusy,chestEnts,coinAt,collect,mark,got,bangFx,alert,ambush,victory,boot,coinEl,keyIcon,get strips(){ return Object.keys(STRIP); },_tr:TR};
 })();
 // para capturas y pruebas (no se usa en el juego): window.LDC_PFXI.api = PFXI; .t = accesos a lo que dispara cada efecto
 try{ window.LDC_PFXI={api:PFXI,t:{lootPop:ids=>lootPop(ids),exp:()=>EXP_TABLE,enc:(g,z)=>ENC.start(g,z),arc:()=>ARC,world:()=>WORLD,shop:k=>openShop(k||'hollin'),get fade(){ return fade.a; },get scene(){ return scene; }}}; }catch(e){}
@@ -19383,12 +19386,14 @@ const SPR={
 // ids de escena/retrato → id de sprite
 const SPRMAP={ilianNinoV:'ilianNinoV',olafNino:'olafNino'}; // prólogo: Ilian de 10 años con hoja propia antes (ilianNino, ojos verdes) y después del derrumbe (ilianNinoV, ojo violeta)
 // sprites de arte (ref-art.js, LDC_PL128) que no tienen par en PXS: mientras la hoja no llegó (o si falta), se dibuja este de PXS
-const PXFB={ilianNinoV:'ilianNino',olafNino:'olaf',rasa:'tessa',gaspar:'comerciante',cabo_jinetes:'rc_oficial_ceniza',sargento:'rc_oficial',cabo_taberna:'rc_oficial_brasa',montero:'rc_caballero',ambros:'aldeano',matias:'encap',hagenViejo:'hagen',severoPreso:'severo',simonaC3:'simona',jinete:'rc_lancero'};
+const PXFB={nachNino:'nino',ilianNinoV:'ilianNino',olafNino:'olaf',rasa:'tessa',gaspar:'comerciante',cabo_jinetes:'rc_oficial_ceniza',sargento:'rc_oficial',cabo_taberna:'rc_oficial_brasa',montero:'rc_caballero',ambros:'aldeano',matias:'encap',hagenViejo:'hagen',severoPreso:'severo',simonaC3:'simona',jinete:'rc_lancero'};
 const sprId=id=>SPRMAP[id]||id;
 // retratos: siempre por la API de PXP (paint/head/name), así el módulo se puede reemplazar por otro con la misma API
 const NPCNAME={aldeano:'Aldeano',aldeana:'Aldeana',anciano:'Anciano',nino:'Niño',gallina:'Gallina'};
 const hasPortrait=id=>PXP.ids.includes(id);
 function nameOf(id){ return NPCNAME[id]||(PXP.name?PXP.name(id):id)||id; }
+// fix27 A1: ¿el nombre visible de este hablante sería un id crudo («carv_merc_mudo_albardon»)? Red de seguridad en say(): eso se muestra como narración y queda anotado en RAWSPK
+const RAWSPK=[]; function rawName(id){ if(!id) return false; let s; try{ s=nameOf(id); }catch(e){ s=id; } return !s||/_/.test(String(s)); }
 // Arte del usuario (window.LDC_ART, ver ref-art.js): bustos de ~120 px escalados CON suavizado
 /* expresiones: n h a s o m t + d (determinación) y x (herido); si falta una, cae en su pariente (d→a, x→s) y después en n */
 const EXPRFB={d:'a',x:'s'};
@@ -19725,7 +19730,7 @@ function pxCard(g,id,w,h,cv){ const im=pxPortraitImg(id); if(cv) pxTag(cv);
   const k=Math.max(1,Math.floor(ih/128)), sw=Math.min(128,iw/k), dh=128*k; // ×3 en 300×420: entra entero de alto y corta ~17 px de hombro por lado
   pxBlit(g,im,(128-sw)/2,0,sw,128,ix+(iw-sw*k)/2,iy+ih-dh,sw*k,dh);
   g.strokeStyle='#8a6a3a'; g.lineWidth=3; g.strokeRect(ix-1.5,iy-1.5,iw+3,ih+3); g.strokeStyle='rgba(255,236,190,.35)'; g.lineWidth=1; g.strokeRect(ix+1.5,iy+1.5,iw-3,ih-3); }
-function say(who,text,expr='n',style){ // v26-fix: si el retrato pixel del que habla todavía viene en camino (carga diferida, b757efa), se lo pide ya y se espera hasta 2,5 s
+function say(who,text,expr='n',style){ if(who&&rawName(who)){ RAWSPK.push(who); who=null; } // v26-fix: si el retrato pixel del que habla todavía viene en camino (carga diferida, b757efa), se lo pide ya y se espera hasta 2,5 s
   const w=(who&&!NOPORT[who]&&!AUTO&&!SKIP.on)?dlgNeed(who,expr):null;
   if(w) return w.then(()=>sayNow(who,text,expr,style));
   return sayNow(who,text,expr,style); }
@@ -19823,7 +19828,7 @@ function choose(opts,title,mode){
     opts.forEach(o=>{ const b=document.createElement('button'); b.type='button'; b.className='mi'+(o.cls?' '+o.cls:''); b.setAttribute('role','menuitem'); b._o=o;
       let ic=null; if(o.itemId){ try{ const I=(typeof ICONOS!=='undefined')?ICONOS:null; if(I&&I.pngReady&&I.pngReady(o.itemId)){ ic=I.el(o.itemId,32); ic.classList.add('ic','ic-png'); } }catch(e){ ic=null; } } // íconos PNG de objetos (combate)
       if(!ic){ ic=document.createElement('i'); ic.className='ic'+(o.icon?' ic-'+o.icon:''); } b.appendChild(ic);
-      const t=document.createElement('span'); t.className='ml'; t.textContent=o.label; b.appendChild(t);
+      const t=document.createElement('span'); t.className='ml'; if(o.tag){ /* fix27 M2: letra del campo (A/B/C) al lado del nombre; se acorta el nombre, nunca la letra */ t.classList.add('mlt'); const n=document.createElement('span'); n.className='mln'; n.textContent=o.label; const g=document.createElement('b'); g.className='mtag'; g.textContent=o.tag; t.appendChild(n); t.appendChild(g); b.setAttribute('aria-label',o.label+' '+o.tag+(o.cost?', '+o.cost:'')); } else t.textContent=o.label; b.appendChild(t);
       const c=document.createElement('span'); c.className='mc'; c.textContent=o.cost!=null?o.cost:''; b.appendChild(c);
       if(o.sub && !cmd){ const s=document.createElement('small'); s.textContent=o.sub; b.appendChild(s); }
       if(o.sub) b.setAttribute('aria-description',o.sub);
@@ -19866,7 +19871,30 @@ function menuNav(dir){
   return true;
 }
 let toastT=null;
-function toast(msg,ms=1800){ UI.toast.textContent=msg; UI.toast.classList.add('on'); clearTimeout(toastT); toastT=setTimeout(()=>UI.toast.classList.remove('on'),ms*Math.max(SPEED,0.05)); }
+/* fix27 M5 · el hueco del teléfono vertical (#gapinfo, entre el escenario y el pad): mientras se explora sin diálogo ni menú encima, ahí van los avisos
+   (#toast se muda a #gtoast), el capítulo, la zona, el objetivo («Ahora», de Diario › Pendientes) y el minimapa a ×2 (drawHud y el de Hollin pintan
+   en #gmini en vez de arriba a la derecha del escenario). Solo interfaz: no toca la lógica ni el azar. En ancho y en apaisado no hace nada. */
+const GAP={on:false,mini:false,el:$('#gapinfo'),slot:$('#gtoast'),cv:$('#gmini'),cap:$('#gcap'),zone:$('#gzone'),obj:$('#gobj'),ctx:null,k:2,sig:''};
+function gapPortrait(){ return !WIDE&&!LAND; }
+function gapToast(){ const want=GAP.on?GAP.slot:UI.stage; if(UI.toast.parentNode!==want) want.appendChild(UI.toast); }
+// lienzo del minimapa en el hueco: coordenadas lógicas 108 × 66 (el minimapa de 94 × 62 con su marco y el farol a la izquierda) a escala entera
+function gapMiniCtx(){ const cv=GAP.cv, k=(cv.clientWidth||216)/108, dpr=Math.min(3,window.devicePixelRatio||1), w=Math.round(108*k*dpr), h=Math.round(66*k*dpr);
+  if(cv.width!==w||cv.height!==h){ cv.width=w; cv.height=h; } const c=GAP.ctx||(GAP.ctx=cv.getContext('2d')); c.setTransform(k*dpr,0,0,k*dpr,0,0); c.imageSmoothingEnabled=false; c.clearRect(0,0,108,66); return c; }
+function gapTick(){ try{
+  const ex=document.body.classList.contains('explore'), por=gapPortrait();
+  GAP.mini=por&&ex; // el minimapa se pinta en el hueco aunque un diálogo lo tape (no salta de lugar)
+  const free=GAP.mini&&UI.dialog.hidden&&UI.menuBox.hidden&&!document.body.classList.contains('pzon')&&!document.body.classList.contains('cine');
+  if(free!==GAP.on){ GAP.on=free; GAP.el.classList.toggle('on',free); gapToast(); }
+  if(!free) return;
+  GAP.cv.style.visibility=(performance.now()-(GAP.drawn||0)<400)?'':'hidden'; // ninguna escena pinta minimapa (p. ej. la guía del prólogo): no queda uno viejo
+  const br=document.querySelector('.brand span'); let zn='', ob='';
+  try{ const S=WORLD._i.S; if(CUR.town&&scene===CUR.town) zn='Hollin'; else if(S&&S.Z&&scene===S) zn=S.global?(S.Z.name||'Brenmoor del Sur'):(S.Z.name||''); }catch(e){}
+  try{ ob=(window.__LDC_OBJ&&__LDC_OBJ.text())||''; }catch(e){}
+  const sig=(br?br.textContent:'')+'|'+zn+'|'+ob; if(sig!==GAP.sig){ GAP.sig=sig; GAP.cap.textContent=br?br.textContent:''; GAP.zone.textContent=zn; GAP.obj.textContent=''; if(ob){ const b=document.createElement('b'); b.textContent='★ Ahora'; GAP.obj.appendChild(b); GAP.obj.appendChild(document.createTextNode(ob)); } }
+  }catch(e){} }
+setInterval(gapTick,150);
+GAP.cv.addEventListener('click',()=>{ try{ const S=WORLD._i.S; if(scene===S&&S.onTap) S.onTap(W-40,20,true); }catch(e){} });
+function toast(msg,ms=1800,cls){ UI.toast.classList.toggle('tut',cls==='tut'); gapToast(); UI.toast.textContent=msg; UI.toast.classList.add('on'); clearTimeout(toastT); toastT=setTimeout(()=>UI.toast.classList.remove('on'),ms*Math.max(SPEED,0.05)); }
 // versión que no bloquea (paso {cutin:true} de las coreografías de FX)
 let CUTT=null;
 function cutInNB(ids,title,sub){ if(REDUCED) return; UI.cutin.innerHTML=''; const band=document.createElement('div'); band.className='band';
@@ -20012,11 +20040,30 @@ function setScene(s){ scene=s; clearBubs(); document.body.classList.toggle('batt
 function fadeTo(a,ms=500){ { const o=typeof PFXI!=='undefined'?PFXI.open(a,ms):null; if(o) return o; } /* pixelfx (js/pfx/interfaz.js): una transición quieta en negro se abre con su efecto */ return new Promise(r=>{ if(fade.done){ const f=fade.done; fade.done=null; f(); } fade.target=a; fade.speed=1000/Math.max(1,ms*SPEED); fade.done=r; if(AUTO){ fade.a=a; r(); } }); }
 function shake(v){ if(!REDUCED) shakeAmt=Math.max(shakeAmt,v); else shakeAmt=Math.max(shakeAmt,Math.min(1.2,v*0.15)); }
 const PERF={n:0,sum:0,max:0,tag:''}; const PERFM={n:0,sum:0}; const FXW={done:false};
+/* fix27 M3 · red de seguridad: un error sin atrapar (en un tramo, en una promesa o en el cuadro) ya no deja el juego colgado y mudo.
+   Sale un aviso con «Volver al último autoguardado» (recarga y entra directo a esa ranura, como «Cargar») o «Seguir igual». Nunca en #prueba:
+   ahí el error sigue fallando la prueba como siempre (pageerror o promesa rechazada sin atrapar). */
+let CRASHED=false;
+function crashNotice(e){ if(AUTO) return; try{ console.error(e); }catch(_){} if(CRASHED) return; CRASHED=true;
+  try{ const hasAuto=(()=>{ try{ return !!SAVES.read('auto'); }catch(_){ return false; } })();
+    const d=document.createElement('div'); d.id='crash'; d.setAttribute('role','alertdialog'); d.setAttribute('aria-modal','true'); d.setAttribute('aria-labelledby','crashT');
+    const w=document.createElement('div'); w.className='win'; d.appendChild(w);
+    const h=document.createElement('h2'); h.id='crashT'; h.textContent='Algo falló en el juego'; w.appendChild(h);
+    const p=document.createElement('p'); p.textContent=hasAuto?'La partida se trabó por un error. Podés volver al último autoguardado (se pierde lo que pasó desde ahí) o seguir y ver si responde.':'La partida se trabó por un error. Podés volver al título o seguir y ver si responde.'; w.appendChild(p);
+    const bx=document.createElement('div'); bx.className='cr-b'; w.appendChild(bx);
+    const mk=(t,cls,fn)=>{ const b=document.createElement('button'); b.type='button'; b.className='mi '+cls; b.textContent=t; b.addEventListener('click',fn); bx.appendChild(b); return b; };
+    const b1=mk(hasAuto?'Volver al último autoguardado':'Volver al título','primary',()=>{ try{ if(hasAuto) store.set('boot','auto'); }catch(_){} location.reload(); });
+    mk('Seguir igual','back',()=>{ d.remove(); CRASHED=false; });
+    const sm=document.createElement('small'); sm.textContent=String((e&&(e.message||e.reason))||e||'').slice(0,160); w.appendChild(sm);
+    document.body.appendChild(d); try{ b1.focus(); }catch(_){} }catch(_){} }
+window.addEventListener('error',ev=>{ if(AUTO) return; if(!ev||(!ev.error&&!ev.message)) return; if(/ResizeObserver/i.test(ev.message||'')) return; crashNotice(ev.error||ev.message); });
+window.addEventListener('unhandledrejection',ev=>{ if(AUTO) return; crashNotice(ev&&ev.reason); });
 function frame(now){
   const dt=Math.min(0.05,(now-last)/1000); last=now; T+=dt;
-  if(fade.a!==fade.target){ const d=fade.target-fade.a; const st=fade.speed*dt; if(Math.abs(d)<=st){ fade.a=fade.target; if(fade.done){const f=fade.done; fade.done=null; f();} } else fade.a+=Math.sign(d)*st; }
-  else if(fade.done){ const f=fade.done; fade.done=null; f(); }
-  if(!document.body.classList.contains('pzon')){ RUNS.forEach(r=>r.update(dt)); FX.update(dt); try{ PFX.update(dt); }catch(e){} } // pixelfx (js/pfx/puente.js): con la pausa abierta no corre
+  // fix27 M3: lo que corría fuera del try (fundido, coreografías y FX) ya no corta el requestAnimationFrame: avisa y sigue. En #prueba el error sigue igual que antes (se relanza)
+  try{ if(fade.a!==fade.target){ const d=fade.target-fade.a; const st=fade.speed*dt; if(Math.abs(d)<=st){ fade.a=fade.target; if(fade.done){const f=fade.done; fade.done=null; f();} } else fade.a+=Math.sign(d)*st; }
+  else if(fade.done){ const f=fade.done; fade.done=null; f(); } }catch(e){ if(AUTO) throw e; crashNotice(e); }
+  if(!document.body.classList.contains('pzon')){ try{ RUNS.forEach(r=>r.update(dt)); FX.update(dt); }catch(e){ if(AUTO) throw e; crashNotice(e); } try{ PFX.update(dt); }catch(e){} } // pixelfx (js/pfx/puente.js): con la pausa abierta no corre
   const t0=performance.now();
   cx.setTransform(DPR,0,0,DPR,0,0); cx.imageSmoothingEnabled=false;
   cx.fillStyle='#000'; cx.fillRect(0,0,W,H);
@@ -20572,7 +20619,7 @@ async function pickTarget(B,kind,u,itemKey){
   if(!list.length){ toast('No hay objetivos válidos'); return null; }
   return new Promise(res=>{
     B.targeting={list,resolve:res};
-    choose(list.map(v=>({label:v.name,sub:(v.row==='back'?'2.ª línea':'1.ª línea')+(v.side==='e'&&v.weak&&v.weak.length?'':''),value:v,icon:v.side==='e'?'target':'ally',cost:v.side==='e'?codexHpLabel(v):'PV '+v.pv+'/'+v.pvMax,disabled:itemKey==='pocion'&&v.pv>=v.pvMax,focus:()=>{B.hover=v;}})).concat([{label:'Volver',value:null,cls:'back',icon:'back'}]),'Elegí el objetivo').then(v=>{ B.targeting=null; B.hover=null; res(v); });
+    choose(list.map(v=>({label:v.name,tag:letterOf(B,v)||null,sub:(v.row==='back'?'2.ª línea':'1.ª línea')+(v.side==='e'&&v.weak&&v.weak.length?'':''),value:v,icon:v.side==='e'?'target':'ally',cost:v.side==='e'?codexHpLabel(v):'PV '+v.pv+'/'+v.pvMax,disabled:itemKey==='pocion'&&v.pv>=v.pvMax,focus:()=>{B.hover=v;}})).concat([{label:'Volver',value:null,cls:'back',icon:'back'}]),'Elegí el objetivo').then(v=>{ B.targeting=null; B.hover=null; res(v); });
   });
 }
 async function playerTurn(B,u){
@@ -21544,7 +21591,7 @@ function ensureBar(){ if(CB.el) return CB.el; const d=document.createElement('di
   q('.cb-mode').addEventListener('click',e=>{ e.stopPropagation(); setAutoMode(CAUTO.mode==='atk'?'full':'atk'); });
   q('.cb-fi').addEventListener('click',e=>{ e.stopPropagation(); if(FICHA.open) closeFicha(); else openFicha(); });
   d.addEventListener('pointerdown',e=>e.stopPropagation()); UI.stage.appendChild(d); CB.el=d; return d; }
-function cmbUI(B){ const el=ensureBar(); const show=cmbLive()&&CUR.B===B&&!B.victory&&!AUTO&&B.units.some(v=>v.side==='p'&&alive(v));
+function cmbUI(B){ const el=ensureBar(); let cov=false; try{ cov=fade.a>0.5||!!(PFXI.covering&&PFXI.covering()); }catch(e){} /* fix27 B4: no sobre el negro de la quemada C8 */ const show=cmbLive()&&CUR.B===B&&!B.victory&&!AUTO&&!cov&&B.units.some(v=>v.side==='p'&&alive(v));
   if(el.hidden===show) el.hidden=!show; document.body.classList.toggle('cauto',show&&CAUTO.on);
   if(!show){ document.body.style.setProperty('--cspd','1'); if(FICHA.open) closeFicha(); if(PEEK.el&&!PEEK.el.hidden) PEEK.el.hidden=true; return; }
   const blk=autoBlock(B); const sig=[CSP.k,CAUTO.on,CAUTO.mode,!!blk,FICHA.open,WIDE,keyLbl('cmbVelocidad','V'),keyLbl('cmbAuto','C'),keyLbl('cmbAutoModo','X'),keyLbl('cmbFicha','I')].join('|');
@@ -21813,11 +21860,15 @@ function layoutCast(ids,name){
 }
 const FIGPUENTE={x:348,y:68};
 function drawFigura(c,a){ moveActor(a,0); const k=a.k||1; if(k===1){ drawActor(c,a); return; } c.save(); c.translate(a.x,a.y); c.scale(k,k); c.translate(-a.x,-a.y); drawActor(c,a); c.restore(); }
+// fix27 M1: manta de lana bajo Nach dormido (prólogo, «La carpa de Hagen»): pixel a mano, sin arte nuevo ni azar
+function mantaNach(c,a){ if(!a||a.hidden) return; const x=Math.round(a.x-9*(a.face<0?-1:1)), y=Math.round(a.y); c.save(); c.fillStyle='rgba(14,10,20,.4)'; /* centrada bajo el cuerpo tendido (no bajo los pies) */ c.fillRect(x-22,y-2,46,7);
+  c.fillStyle='#4e3324'; c.fillRect(x-21,y-5,44,8); c.fillStyle='#6d4a30'; c.fillRect(x-21,y-5,44,2); c.fillStyle='#93643a'; for(let i=-17;i<22;i+=9) c.fillRect(x+i,y-5,2,8); c.fillStyle='#3a2519'; c.fillRect(x-21,y+2,44,1); c.restore(); }
 function mkStage(zone,name,opt){
   opt=opt||{}; const ids=findCast(name); const ps=layoutCast(ids,name);
   const st={zone,name,actors:{},list:[],under:opt.under||null,over:opt.over||null,explore:false,cam:mkCam(),onos:[],title:null,faceLock:!!FACE[name]};
   ids.forEach(id=>{ if(!(ENTER[name]||[]).includes(id)) markMet(id); });
-  ids.forEach((id,i)=>{ const a=mkActor(id,ps[i].x,ps[i].y); if(id==='olaf'||id==='olafNino') a.base='sit'; st.actors[id]=a; st.list.push(a); });
+  ids.forEach((id,i)=>{ const a=mkActor(id,ps[i].x,ps[i].y); if(id==='olaf'||id==='olafNino') a.base='sit'; if(id==='nachNino') a.base='ko'; /* fix27 M1: Nach chico, dormido (tendido) */ st.actors[id]=a; st.list.push(a); });
+  if(st.actors.nachNino){ const u0=st.under, nn=st.actors.nachNino; st.under=(c,dt)=>{ mantaNach(c,nn); if(u0) u0(c,dt); }; } // fix27 M1: la manta donde duerme Nach chico
   const il=st.actors.ilian; if(il && !st.actors.olaf) il.olaf=true;
   facing(st,name);
   (ENTER[name]||[]).forEach(id=>{ if(st.actors[id]) st.actors[id].hidden=true; });
@@ -22222,8 +22273,8 @@ function townExplore(cfg){ cfg=cfg||null;
       const d=DOORS.find(q=>q.room===pl); return d?{x:d.x,y:d.y,bx:d.x,by:d.y-50,place:'town',label:lb,via:'puerta',n}:null; }).filter(Boolean);
     const MINI={}; const miniOf=()=>{ const k=S.place; if(MINI[k]) return MINI[k]; const R=S.room, w=R?R.w:TW.w, h=R?R.h:TW.h, col=R?R.collide.bind(R):TW.collide.bind(TW); const mm=document.createElement('canvas'); mm.width=88; mm.height=56; const mx=mm.getContext('2d'), id=mx.createImageData(88,56);
       for(let y=0;y<56;y++) for(let x=0;x<88;x++){ const q=(y*88+x)*4, c=col((x+0.5)*w/88,(y+0.5)*h/56)?[120,98,70]:[214,196,156]; id.data[q]=c[0]; id.data[q+1]=c[1]; id.data[q+2]=c[2]; id.data[q+3]=235; } mx.putImageData(id,0,0); return MINI[k]={cv:mm,w,h}; };
-    function goalHud(c){ const G0=goalPts(); if(!cfg||!cfg.goal) return; const M=miniOf(), mx=W-92, my=4; c.save(); c.fillStyle='rgba(40,26,14,.85)'; c.fillRect(mx-3,my-3,94,62); c.strokeStyle='#c99b45'; c.lineWidth=1; c.strokeRect(mx-2.5,my-2.5,93,61); c.drawImage(M.cv,mx,my);
-      const sx=88/M.w, sy=56/M.h; for(const g of G0) gStar(c,mx+g.x*sx,my+g.y*sy); const px=mx+P.x*sx, py=my+P.y*sy; c.fillStyle='#1a1008'; c.fillRect(Math.round(px)-2,Math.round(py)-2,4,4); c.fillStyle='#fff6c0'; c.fillRect(Math.round(px)-1,Math.round(py)-1,2,2); c.restore();
+    function goalHud(c0){ const G0=goalPts(); if(!cfg||!cfg.goal) return; const M=miniOf(); let c=c0, mx=W-92, my=4; if(GAP.mini){ c=gapMiniCtx(); mx=16; my=5; GAP.drawn=performance.now(); } c.save(); /* fix27 M5: en vertical, al hueco */ c.fillStyle='rgba(40,26,14,.85)'; c.fillRect(mx-3,my-3,94,62); c.strokeStyle='#c99b45'; c.lineWidth=1; c.strokeRect(mx-2.5,my-2.5,93,61); c.drawImage(M.cv,mx,my);
+      const sx=88/M.w, sy=56/M.h; for(const g of G0) gStar(c,mx+g.x*sx,my+g.y*sy); const px=mx+P.x*sx, py=my+P.y*sy; c.fillStyle='#1a1008'; c.fillRect(Math.round(px)-2,Math.round(py)-2,4,4); c.fillStyle='#fff6c0'; c.fillRect(Math.round(px)-1,Math.round(py)-1,2,2); c.restore(); c=c0;
       for(const g of G0){ const ex=g.x-S.cam.x, ey=g.y-S.cam.y; if(ex>=0&&ex<=W&&ey>=0&&ey<=H) continue; const cx=W/2, cy=H/2, ang=Math.atan2(ey-cy,ex-cx); const k=Math.min((W/2-14)/Math.abs(Math.cos(ang)||1e-3),(H/2-14)/Math.abs(Math.sin(ang)||1e-3)); const pu=1+0.15*Math.max(0,Math.sin(T*Math.PI));
         c.save(); c.translate(cx+Math.cos(ang)*k,cy+Math.sin(ang)*k); c.rotate(ang); c.scale(pu,pu); c.fillStyle='rgba(20,8,8,.6)'; c.beginPath(); c.moveTo(7,0); c.lineTo(-5,-6); c.lineTo(-5,6); c.closePath(); c.fill(); c.fillStyle='#9e2f37'; c.beginPath(); c.moveTo(6,0); c.lineTo(-4,-5); c.lineTo(-4,5); c.closePath(); c.fill(); c.fillStyle='#e0b860'; c.fillRect(-2,-1,2,2); c.restore(); } }
     // pulido A08: de noche los faroles del pueblo tienen luz (los mismos 8 de env.js: TOWN, «LAMPHD»)
@@ -22291,7 +22342,7 @@ function townExplore(cfg){ cfg=cfg||null;
         else { const e=S.room.exit; if(vn>0.35&&Math.abs(P.x-e.x)<11&&P.y>=e.y-3){ const dn=downTo(S.place); if(dn) dn(); else goRoom(null,DOORS.find(q=>q.room===S.place)); return; } } }
       let near=null,nd=30; talkers.forEach(n=>{ if(n.hidden||!here(n)) return; const d=Math.hypot(n.x-P.x,n.y-P.y); if(d<nd){nd=d;near=n;} });
       if(near!==S.near){ S.near=near; UI.act.disabled=!near; UI.act.textContent=near?near.label:'Acercate a alguien'; }
-      if(!cfg && !G.flags.peregrino && !S.busy && !S.room && Math.hypot(P.x-pere.x,P.y-pere.y)<60) peregrinoEvent();
+      if((!cfg||cfg.cap1) && !G.flags.peregrino && !S.busy && !S.room && Math.hypot(P.x-pere.x,P.y-pere.y)<60) peregrinoEvent();
       // globos de ambiente
       S.ambT-=dt; if(S.ambT<=0){ S.ambT=rnd(3.2,5.8); ambient(); }
     };
@@ -22343,7 +22394,7 @@ function townExplore(cfg){ cfg=cfg||null;
       try{ await n.onTalk(n); } finally { n.talking=false; S.busy=false; if(!S.ended){ UI.pad.hidden=false; hideDialog(); } S.near=null; } };
     updCam(); setScene(S); fadeTo(0,500); UI.pad.hidden=false; UI.act.disabled=true; UI.act.textContent='Acercate a alguien';
     CUR.sayStage=S; CUR.sayGet=id=>actors[id]||(id==='olaf'?olafProxy:null);
-    if(cfg) S.tapi=TAPI;
+    if(cfg&&!cfg.cap1) S.tapi=TAPI; // fix27 M6: el Hollin del Cap. 1 lleva cfg solo por la meta; sigue siendo el de siempre
     CUR.town=S; S.P=P; S.go=goRoom; S.doors=DOORS; S.talkers=talkers; S.coll=coll; S.TW=TW; S.goalPts=goalPts; S.lampsLit=()=>cfg&&cfg.tint?LIT:0; // para pruebas automáticas (arco-colision.js camina con S.coll)
     S.visActors=()=>{ const L=[P,F]; for(const n of npcs) if(!n.hidden&&!n.nosprite&&here(n)) L.push(n); if(!S.room) for(const w of wanderers) if(!w.hidden&&here(w)) L.push(w); return L; }; // v24 · placeMenu: el menú no tapa a nadie
     // modo prueba: recorre cada interior (entra y sale) y termina; así el flujo automático pasa por las puertas sin trabarse
@@ -22367,7 +22418,7 @@ function guideScene(cfg){
       S.bellT-=dt; const d=Math.hypot(cfg.goal.x-p.x,cfg.goal.y-p.y);
       if(S.bellT<=0){ S.bellT=1.1; const pan=clamp((cfg.goal.x-p.x)/160,-1,1); const vol=clamp(1-d/520,0.15,1); sfx('bell',{pan,vol}); S.ring.push({t:0}); }
       S.ring.forEach(r=>r.t+=dt); S.ring=S.ring.filter(r=>r.t<1.2);
-      if(d<18 || AUTO){ S.done=true; setTimeout(()=>res(),AUTO?5:200); }
+      if(d<18 || AUTO){ S.done=true; setTimeout(()=>{ UI.act.textContent='Acercate'; UI.act.disabled=true; /* fix27 B8: el rótulo de la guía («Seguí el cascabel») no pasa a la escena siguiente */ res(); },AUTO?5:200); }
     };
     S.draw=(c,dt)=>{
       c.fillStyle='#030305'; c.fillRect(0,0,W,H);
@@ -23179,7 +23230,8 @@ if(BTNFS){ BTNFS.addEventListener('click',e=>{ toggleFullscreen(); setTimeout(up
    El guardado viejo 'ldc_save' se migra al autoguardado (o a una ranura libre si el autoguardado ya existe).
    ============================================================ */
 const SLOTS=['auto','1','2','3'];
-const SAVES={ st:{cp:null,idx:0,done:0}, play:0, t0:performance.now(),
+const SAVEVER=2; // fix27 M4: versión del registro de guardado (v1: hasta v27.5; v2: + ver y tramos con alias, CPALIAS en p6_steps.js)
+const SAVES={ st:{cp:null,idx:0,done:0}, play:0, t0:performance.now(), block:false, minIdx:null,
   read(id){ const r=store.get('slot_'+id,null); return (r&&r.g&&r.cp)?r:null; },
   any(){ return SLOTS.some(id=>this.read(id)); },
   latest(){ let b=null; SLOTS.forEach(id=>{ const r=this.read(id); if(r&&r.cp!=='prologo'&&r.cp!=='titulo'&&(!b||(r.ts||0)>(b.rec.ts||0))) b={id,rec:r}; }); return b; },
@@ -23189,16 +23241,18 @@ const SAVES={ st:{cp:null,idx:0,done:0}, play:0, t0:performance.now(),
     if(sc&&sc.explore&&sc.place){ if(sc.place==='town') p='Hollin · el pueblo'; else { const r=LINES.hollin&&LINES.hollin.rooms&&LINES.hollin.rooms[sc.place]; p='Hollin · '+((r&&r.name)||sc.place); } }
     else if(sc&&sc.battle) p+=' · combate'; return p; },
   mk(reason,o){ const g=JSON.parse(JSON.stringify(G)); g.playMs=Math.round(this.playNow()); const ld=this.leaderOf(g);
-    return Object.assign({v:1,ts:Date.now(),cp:g.cp,bdone:this.st.cp===g.cp?this.st.done:0,place:PZ.place||this.placeNow(),lvl:(g.party[ld]&&g.party[ld].lvl)||1,playMs:g.playMs,leader:ld,oro:g.oro,reason:reason||'',g},o||{}); },
+    return Object.assign({v:SAVEVER,ts:Date.now(),cp:g.cp,bdone:this.st.cp===g.cp?this.st.done:0,place:PZ.place||this.placeNow(),lvl:(g.party[ld]&&g.party[ld].lvl)||1,playMs:g.playMs,leader:ld,oro:g.oro,reason:reason||'',g},o||{}); },
   write(id,reason){ if(!G) return false; let rec; try{ rec=this.mk(reason); }catch(e){ console.error(e); return false; }
     const ok=store.set('slot_'+id,rec)&&!!this.read(id); if(!ok&&id!=='auto') toast('No se pudo guardar: el navegador no deja escribir (¿modo privado o sin espacio?)',3200); return ok; },
-  auto(reason){ if(!G||!G.cp||['prologo','titulo'].includes(G.cp)) return false; return this.write('auto',reason); },
+  auto(reason){ if(!G||!G.cp||['prologo','titulo'].includes(G.cp)) return false;
+    // fix27 M4: nunca pisar el autoguardado bueno: ni con un guardado de tramo desconocido a la vista (block) ni con un tramo anterior al que se cargó
+    if(this.block) return false; const k=ORDER.indexOf(G.cp); if(this.minIdx!=null&&k>=0&&k<this.minIdx) return false; return this.write('auto',reason); },
   clear(id){ store.del('slot_'+id); },
   // D1 (Brian): Guardar en ranura solo en posadas, campamentos, esferas de guardado y el castillo; desde la pausa común, Cargar sí y Guardar no
   canSlot(){ return ['posada','campamento','castillo','esfera'].includes(PZ.mode)||!!PZ.saveReason; },
   beginStep(step,rec){ this.st={cp:step,idx:0,done:(rec&&rec.cp===step)?(rec.bdone||0):0}; },
-  loaded(rec){ this.play=(rec&&rec.g&&rec.g.playMs)||0; this.t0=performance.now(); },
-  fresh(){ this.play=0; this.t0=performance.now(); this.st={cp:null,idx:0,done:0}; },
+  loaded(rec){ this.play=(rec&&rec.g&&rec.g.playMs)||0; this.t0=performance.now(); this.block=false; const k=rec?ORDER.indexOf(rec.cp):-1; this.minIdx=k>=0?k:null; },
+  fresh(){ this.play=0; this.t0=performance.now(); this.st={cp:null,idx:0,done:0}; this.block=false; this.minIdx=null; },
   migrate(){ const old=store.get('save',null); if(!old||!old.cp||!old.party){ if(store.has('save')) store.del('save'); return null; }
     const g=old; const ld=this.leaderOf(g); const rec={v:1,ts:Date.now(),cp:g.cp,bdone:0,place:(typeof STEPNAME!=='undefined'&&STEPNAME[g.cp])||g.cp,lvl:(g.party[ld]&&g.party[ld].lvl)||1,playMs:null,leader:ld,oro:g.oro,reason:'migrado',g};
     let to=null; if(!this.read('auto')) to='auto'; else { const a=this.read('auto'); if(JSON.stringify(a.g)===JSON.stringify(g)) to='same'; else to=['1','2','3'].find(id=>!this.read(id))||null; }
@@ -24006,6 +24060,7 @@ async function tutAviso(k,modo){ if(AUTO||!G||!G.flags) return false; const L=(L
 const TUTQ=[]; let TUTSHOW=null, TUTFREE=0, TUTNEXT=0;
 function tutLibre(){ const d=UI.dialog; if(d&&!d.hidden) return false; if(UI.cutin&&!UI.cutin.hidden) return false;
   const b=document.body.classList; if(b.contains('cine')) return false; if(SKIP.ok) return false;
+  try{ if(scene&&scene.battle) return false; }catch(e){} if(document.querySelector('.vict')) return false; // fix27 A2: nunca en combate ni en la victoria: quedan en la cola para después
   if(fade.a>0.02||fade.target>0) return false;
   try{ const S=WORLD._i.S; if(S&&(S.global||S.overlay||S.trans||S.vtrip)) return false; }catch(e){}
   return true; }
@@ -24015,7 +24070,7 @@ function tutPump(){ if(AUTO) return; const now=Date.now(); const libre=tutLibre(
   if(!TUTQ.length){ TUTFREE=0; return; } if(!libre){ TUTFREE=0; return; } if(!TUTFREE) TUTFREE=now;
   if(now-TUTFREE<800||now<TUTNEXT) return;
   const q=TUTQ.shift(); if(q.first){ const F=G.flags.tut||(G.flags.tut={}); F[q.k]=F[q.k]||now; }
-  try{ toast(q.l,3600); }catch(e){} TUTSHOW={q,until:now+3600*Math.max(SPEED,0.05)}; TUTNEXT=now+3800*Math.max(SPEED,0.05); }
+  try{ toast(q.l,3600,'tut'); /* fix27 A2: cartel de hasta 3 renglones (clase tut) */ }catch(e){} TUTSHOW={q,until:now+3600*Math.max(SPEED,0.05)}; TUTNEXT=now+3800*Math.max(SPEED,0.05); }
 setInterval(()=>{ try{ tutPump(); }catch(e){} },200);
 const TUT_AUTO=[ // [clave, condición]: se muestran de a uno, con 9 s entre avisos
   ['clave',  ()=>!!(G.keyItems&&Object.keys(G.keyItems).length)],
@@ -25988,15 +26043,17 @@ async function useProp(p){ const w=ensure(); S.busy=true; S.P.walking=false; if(
     if(p.save||p.kind==='mojon'){ sfx('seal'); S.seal=T; let ok=false; try{ ok=SAVES.auto('mojon'); }catch(e){} toast(ok?WL('mojon','Mojón del cuervo · partida guardada'):'No se pudo guardar',2200); try{ await POSADAS.mojon(S.Z&&S.Z.name); }catch(e){} } // posadas: «Guardar en ranura · Seguir»
     if(typeof p.once==='string') flag(p.once,true); (Array.isArray(p.sets)?p.sets:p.sets?[p.sets]:[]).forEach(f=>flag(f,true)); if(p.diary) flag('diario_'+p.diary,true); if(p.place||p.diary) done(p.place||p.diary); if(p.run) await p.run(apiFor()); }
   finally{ hideDialog(); if(!meta) S.busy=false; } }
+// fix27 A1: una línea sin «who» la dice el NPC solo si el NPC tiene nombre visible; los de la caravana (El Mudo) y los que no tienen nombre quedan como narración, nunca con el id crudo
+function npcSid(a,n){ if(n.hidden||n.inCart||n.caravan) return null; const sid=a.speakId; if(!sid) return null; return (n.name||!rawName(sid))?sid:null; }
 async function useNpc(a){ const n=a.def||{}, w=ensure(); S.busy=true; S.P.walking=false; if(Math.abs(a.x-S.P.x)>2){ S.P.face=a.x>S.P.x?1:-1; if(!a.noDraw) a.face=S.P.x>a.x?1:-1; } a.talking=true; let meta=false;
   try{ const g=S.goal; if(g&&(g.trig||[]).includes(n.id)){ reachGoal({id:n.id,npc:n}); meta=true; return; }
     { const esc=escenaDe(a); if(esc){ await playEscena(esc,{at:{x:a.x,y:a.y}}); return; } if(n.escena) return; // escenas v2: hablar con el NPC/figura con «!»
-      const E=(LINES.escenas||[]).find(q=>q.trigger==='npc'&&q.where&&q.where.spot===n.id&&q.preTalk&&!escenaSeen(q.id)&&!escenaLost(q.id)); if(E){ const L=linesOf(E.preTalk); if(L){ for(const l of L){ const [who,text,ex,name]=l; await sayL([who||(name?null:a.speakId),text,ex,name||(who?null:n.name)]); } return; } } }
+      const E=(LINES.escenas||[]).find(q=>q.trigger==='npc'&&q.where&&q.where.spot===n.id&&q.preTalk&&!escenaSeen(q.id)&&!escenaLost(q.id)); if(E){ const L=linesOf(E.preTalk); if(L){ for(const l of L){ const [who,text,ex,name]=l; await sayL([who||(name?null:npcSid(a,n)),text,ex,name||(who||!npcSid(a,n)?null:n.name)]); } return; } } }
     if(a.car&&chatsAvail().length){ S.busy=false; await chatMenu(); return; }
     if(n.sceneId&&LINES.scenes[n.sceneId]){ await playScene(n.sceneId,{get:sayGet,hooks:n.hooks||{}}); }
     else { const k='npc:'+n.id; let L=linesOf(n.talk)||[]; if((n.after&&can(n.after))||(n.doneIf&&can(n.doneIf))) L=linesOf(n.afterTalk||n.talkDone)||L; if(w.seen[k]&&n.again) L=linesOf(n.again)||L;
       if(!n.id&&a.car){ L=w.seen.car1?[[a.id,WL('caravana2','Acá esperamos. Adelante está lo que te toca batir.'),'n']]:[['maela',WL('caravana','No tardes, batidor. La paga no espera, pero yo sí.'),'m']]; w.seen.car1=1; }
-      const sid=(n.hidden||n.inCart)?null:a.speakId; // v26-fix: lo que no se ve (Severo en la carreta sellada) habla como narración, sin nombre crudo ni retrato
+      const sid=npcSid(a,n); // fix27 A1 · v26-fix: lo que no se ve (Severo en la carreta sellada) habla como narración, sin nombre crudo ni retrato
       w.seen[k]=1; for(const l of L){ const [who,text,ex,name]=l; await sayL([who||(name?null:sid),text,ex,name||(who||!sid?null:n.name)]); } }
     if(n.run) await n.run(apiFor()); }
   finally{ a.talking=false; hideDialog(); if(!meta) S.busy=false; } }
@@ -26029,7 +26086,7 @@ async function fixedFight(f,t){ const w=ensure(); const d=f.def; S.busy=true; S.
 S.onAction=async()=>{ if(S.overlay){ S.overlay=null; return; } if(S.busy||S.trans||!S.near||advanceFn) return; const n=S.near; S.target=null; UI.pad.hidden=true;
   try{ if(n.node) await useNode(n.node); else if(n.prop) await useProp(n.prop); else if(n.npc) await useNpc(n.npc); else if(n.fol) await useFollower(n.fol); else if(n.rival){ S.busy=true; const v=AUTO?1:await choose([{label:'Pelear',value:1,cls:'primary',icon:'go'},{label:'Dejarlo',value:0,icon:'back'}],(n.rival.def.name||'Rival')+' · Nv. '+(n.rival.def.lvl||'?')); hideDialog(); S.busy=false; if(v) await rivalFight(n.rival,'normal'); } }
   catch(e){ console.error(e); } finally{ S.near=null; if(!S.busy) UI.pad.hidden=false; } };
-S.onTap=(x,y)=>{ if(S.vtrip){ S.vtrip.skip=true; return; } if(S.overlay){ if(!S.viajeMenu) S.overlay=null; return; } if(S.busy||S.trans) return; if(x>W-96&&y<64){ if(G&&(G.chap||1)>=2) VIAJE.open(); else S.overlay='map'; return; }
+S.onTap=(x,y,force)=>{ if(S.vtrip){ S.vtrip.skip=true; return; } if(S.overlay){ if(!S.viajeMenu) S.overlay=null; return; } if(S.busy||S.trans) return; if(x>W-96&&y<64&&(!GAP.mini||force)){ /* fix27 M5: en vertical el minimapa está en el hueco (#gmini) */ if(G&&(G.chap||1)>=2) VIAJE.open(); else S.overlay='map'; return; }
   const zm=gZoom(); const wx=x/zm+S.cam.x, wy=y/zm+S.cam.y; const it=interactables().find(n=>Math.hypot(n.x-wx,(n.y-12)-wy)<22);
   if(it&&it.node&&S.global&&G&&(G.chap||1)>=2&&Math.hypot(it.x-S.P.x,it.y-S.P.y)>160&&(it.node.closed||VIAJE.dests().includes(it.node))){ VIAJE.open(it.node); return; }
   if(it&&Math.hypot(it.x-S.P.x,it.y-S.P.y)<(it.r||26)+8){ S.near=it; S.onAction(); return; } S.target={x:wx,y:wy,auto:it||null}; };
@@ -26199,9 +26256,9 @@ function drawIcon(c,n,st){ const x=Math.round(n.x), y=Math.round(n.y); const gra
   if(st>=3){ c.fillStyle='#e0b860'; c.beginPath(); c.arc(8,-8,3.5,0,TAU); c.fill(); c.fillStyle='#9e7a30'; c.fillRect(7,-9,2,2); }
   c.restore(); if(!n.sub||st>1){ c.font='600 '+FSZ(9)+'px "Alegreya Sans SC", system-ui, sans-serif'; c.textAlign='center'; c.lineWidth=3; c.strokeStyle='rgba(20,14,8,.6)'; c.strokeText(n.label,x,y+14); c.fillStyle=gray?'#d0c6ae':'#f4e8c8'; c.fillText(n.label,x,y+14); } }
 function globalImg(){ const g=zone('global'); if(g._z){ if(!g._thumb){ buildNow(g); const k=mkCv(480,300); g.draw(k.getContext('2d'),{x:0,y:0,zoom:W/g.w},0,{places:{},fog:null}); g._thumb=k; } return g._thumb; } GM.build(g); return GM.img; }
-function drawHud(c){ const Z=S.Z; if(!Z) return;
-  // minimapa (88 × 56) con brújula y farol de peligro
-  const mx=W-92, my=4; c.save(); c.fillStyle='rgba(40,26,14,.85)'; c.fillRect(mx-3,my-3,94,62); c.strokeStyle='#c99b45'; c.lineWidth=1; c.strokeRect(mx-2.5,my-2.5,93,61);
+function drawHud(c0){ const Z=S.Z; if(!Z) return;
+  // minimapa (88 × 56) con brújula y farol de peligro · fix27 M5: en el teléfono vertical va al hueco de abajo (#gmini, ×2), no arriba a la derecha
+  let c=c0, mx=W-92, my=4; if(GAP.mini){ c=gapMiniCtx(); mx=16; my=5; GAP.drawn=performance.now(); } c.save(); c.fillStyle='rgba(40,26,14,.85)'; c.fillRect(mx-3,my-3,94,62); c.strokeStyle='#c99b45'; c.lineWidth=1; c.strokeRect(mx-2.5,my-2.5,93,61);
   if(S.global){ c.imageSmoothingEnabled=true; c.drawImage(globalImg(),mx,my,88,56); c.drawImage(fogCanvas(),mx,my,88,56); c.imageSmoothingEnabled=false; try{ POSADAS.ESFG.forEach(o=>{ if(!fogOpen(o.x,o.y)) return; const ex=mx+o.x/Z.w*88, ey=my+o.y/Z.h*56; POSADAS.miniHalo(c,ex,ey); dot(c,ex,ey,'#8fd0ff'); }); }catch(e){} /* v27: Lumbres del mapa en el minimapa */ dot(c,mx+S.P.x/Z.w*88,my+S.P.y/Z.h*56,'#fff6c0'); if(S.goal){ const gz=zid(S.goal.zone), gn=Z.nodes.find(n=>n.zone===gz&&!n.sub); if(gn) star(c,mx+gn.x/Z.w*88,my+gn.y/Z.h*56); } } // pulido A02/A05: en el mapa, la ★ marca el lugar de la meta
   else { c.drawImage(miniOf(Z),mx,my); const sx=88/Z.w, sy=56/Z.h;
     Z.exits.forEach(ex=>{ if(exitHid(ex)) return; c.fillStyle=exitOk(ex)?'#3a8a3a':'#b02a30'; c.fillRect(mx+ex.x*sx-1,my+ex.y*sy-1,Math.max(3,ex.w*sx+2),Math.max(3,ex.h*sy+2)); });
@@ -26212,12 +26269,13 @@ function drawHud(c){ const Z=S.Z; if(!Z) return;
   c.fillStyle='#f4e8c8'; c.font='700 9px "Alegreya Sans SC", system-ui, sans-serif'; c.textAlign='center'; c.fillText('N',mx+44,my+8);
   const E=encApi(); if(E&&E.dangerLevel){ let lv=0; try{ lv=E.dangerLevel(Z.id,encInfo()); }catch(e){} if(typeof lv==='object'&&lv) lv=lv.level; if(typeof lv==='string') lv=({off:0,apagado:0,ambar:1,amber:1,rojo:2,red:2})[lv]||0; lv=lv|0;
     const fx=mx-12, fy=my+6; c.fillStyle='#3a2414'; c.fillRect(fx-4,fy-6,8,2); c.fillRect(fx-3,fy-4,6,10); c.fillStyle=lv===2?'#ff3a2a':lv===1?'#ffb040':'#4a4038'; c.fillRect(fx-2,fy-3,4,7); if(lv){ c.save(); c.globalAlpha=0.35+0.15*Math.sin(T*4); c.globalCompositeOperation='lighter'; ellipse(c,fx,fy,9,9,lv===2?'#ff3a2a':'#ffb040'); c.restore(); } }
-  c.restore();
+  c.restore(); c=c0;
   // marcador de objetivo (punta de lacre en el borde)
   if(!S.global){ const ob=objective(); if(ob){ const sx=ob.x-S.cam.x, sy=ob.y-S.cam.y; if(sx<0||sx>W||sy<0||sy>H){ const cx=W/2, cy=H/2, ang=Math.atan2(sy-cy,sx-cx); const k=Math.min((W/2-14)/Math.abs(Math.cos(ang)||1e-3),(H/2-14)/Math.abs(Math.sin(ang)||1e-3)); const px=cx+Math.cos(ang)*k, py=cy+Math.sin(ang)*k; const pu=1+0.15*Math.max(0,Math.sin(T*Math.PI));
       c.save(); c.translate(px,py); c.rotate(ang); c.scale(pu,pu); c.fillStyle='rgba(20,8,8,.6)'; c.beginPath(); c.moveTo(7,0); c.lineTo(-5,-6); c.lineTo(-5,6); c.closePath(); c.fill(); c.fillStyle='#9e2f37'; c.beginPath(); c.moveTo(6,0); c.lineTo(-4,-5); c.lineTo(-4,5); c.closePath(); c.fill(); c.fillStyle='#e0b860'; c.fillRect(-2,-1,2,2); c.restore(); } } }
   // nombre de zona: entra 0,4 s, queda 1,6 s, sale 0,4 s (no bloquea)
-  const pl=S.plate; if(pl){ const el=T-pl.t0; if(el>2.4) S.plate=null; else { const a=Math.min(1,el/0.4,(2.4-el)/0.4); c.save(); c.globalAlpha=Math.max(0,a); const y=H*0.24; const g=c.createLinearGradient(0,y-30,0,y+26); g.addColorStop(0,'rgba(0,0,0,0)'); g.addColorStop(0.5,'rgba(6,8,16,.55)'); g.addColorStop(1,'rgba(0,0,0,0)'); c.fillStyle=g; c.fillRect(0,y-30,W,56);
+  const pl=S.plate; if(pl&&WIDE&&!UI.dialog.hidden&&!UI.dialog.classList.contains('low')&&T-pl.t0<2.4) pl.t0=T; // fix27 B3: con el diálogo arriba el título de zona espera (sale entero al cerrarse), no queda detrás
+  if(pl){ const el=T-pl.t0; if(el>2.4) S.plate=null; else { const a=Math.min(1,el/0.4,(2.4-el)/0.4); c.save(); c.globalAlpha=Math.max(0,a); const y=H*0.24; const g=c.createLinearGradient(0,y-30,0,y+26); g.addColorStop(0,'rgba(0,0,0,0)'); g.addColorStop(0.5,'rgba(6,8,16,.55)'); g.addColorStop(1,'rgba(0,0,0,0)'); c.fillStyle=g; c.fillRect(0,y-30,W,56);
     c.textAlign='center'; c.textBaseline='middle'; c.font=FSZ(20)+'px "Marcellus SC", Georgia, serif'; c.lineWidth=3; c.strokeStyle='rgba(10,6,4,.8)'; c.strokeText(pl.name,W/2,y-6); c.fillStyle='#f4e8c8'; c.fillText(pl.name,W/2,y-6);
     if(pl.sub){ c.font='700 '+FSZ(11)+'px "Alegreya Sans SC", system-ui, sans-serif'; c.fillStyle='#e0b860'; c.fillText(pl.sub,W/2,y+14); } c.restore(); } }
   if(S.seal&&T-S.seal<0.8){ c.save(); c.translate(W-18,H-18); c.rotate((T-S.seal)*8); c.fillStyle='#9e2f37'; c.beginPath(); c.arc(0,0,7,0,TAU); c.fill(); c.fillStyle='#e0b860'; c.fillRect(-2,-2,4,4); c.restore(); }
@@ -29599,8 +29657,8 @@ function decApply(){ try{ const S0=LINES.scenes; Object.keys(S0).forEach(k=>{ S0
 decApply();
 // actores nuevos del guion v2 (sprites existentes, sin arte nuevo): id de escena → sprite y nombre
 // Arte de Brian (LDC_PL128): el capataz es Ambrós Lenk y el encapuchado es Matías; Pim y Rasa (chicos del prólogo) usan el modelo NPC «niño» de PixelLab con variante fija (js/npc.js)
-Object.assign(SPRMAP,{pim:'nino',rasa:'nino',capataz:'ambros',encap:'matias',merc_ruy:'guardia',merc_quina:'aldeana',merc_tome:'aldeano',perra:'simona',mila:'nino',oberen:'anciano',lenador:'aldeano',lenadora:'aldeana'});
-Object.assign(NPCNAME,{pim:'Pim',rasa:'Rasa',capataz:'Capataz',bertramJ:'Bertram',merc_ruy:'Ruy',merc_quina:'Quina',merc_tome:'Tomé',perra:'Perra',mila:'Mila',oberen:'Oberen',lenador:'Leñador',lenadora:'Leñadora'});
+Object.assign(SPRMAP,{nachNino:'nachNino',pim:'nino',rasa:'nino',capataz:'ambros',encap:'matias',merc_ruy:'guardia',merc_quina:'aldeana',merc_tome:'aldeano',perra:'simona',mila:'nino',oberen:'anciano',lenador:'aldeano',lenadora:'aldeana'});
+Object.assign(NPCNAME,{pim:'Pim',rasa:'Rasa',capataz:'Capataz',bertramJ:'Bertram',merc_ruy:'Ruy',merc_quina:'Quina',merc_tome:'Tomé',merc_mudo:'El Mudo',perra:'Perra',mila:'Mila',oberen:'Oberen',lenador:'Leñador',lenadora:'Leñadora'});
 Object.assign(NAMECOL,{bertramJ:'#8f7346',capataz:'#55555e',pim:'#9a7a4a',rasa:'#6f9a3a'});
 Object.assign(VOICE,{pim:72,rasa:80,capataz:44,bertramJ:50,merc_ruy:52,merc_quina:62,merc_tome:54,mila:78,oberen:48,lenador:50,lenadora:62});
 Object.assign(POS,{
@@ -29608,7 +29666,7 @@ Object.assign(POS,{
   prologo_b:{ilianNino:[40,250],olafNino:[86,256]},
   prologo_c:{ilianNino:[84,250],olafNino:[118,254]},
   prologo_d:{olaf:[128,254],ilianNinoV:[156,246],hagen:[300,240],bertramJ:[352,238],capataz:[440,240]},
-  prologo_e:{olaf:[176,254],ilianNinoV:[206,246],hagen:[278,240]},
+  prologo_e:{olaf:[176,254],ilianNinoV:[206,246],nachNino:[244,260],hagen:[278,240]}, // fix27 M1: Nach (3 años) duerme en la manta, al lado de Ilian
   escalera:{maela:[200,240],ilian:[280,246],nach:[470,244]},
   alba:{merc_ruy:[44,236],merc_quina:[84,244],maela:[150,238],lina:[208,242],ilian:[266,244],nach:[320,246],bertram:[392,244]},
   sauces:{bandido:[90,240],maela:[220,238],ilian:[276,242],nach:[330,244],lina:[384,240]},
@@ -29749,7 +29807,7 @@ const STEPS={
     await playScene('hollin_intro',stageCtx(st,{
       fardo:async()=>{ (G.flags.hol||(G.flags.hol={})).nach_fardo=true; },
       explorar:async()=>{ hideDialog(); await fadeTo(1,400); warmArt(null,['agnes','maela','bram','tessa','odo','comerciante','guardia','peregrino','aldeano','aldeana','anciano','nino','gallina','gato_pueblo','paloma','cocinera','parroquiano','aprendiz']); if(!WARMED.has('town')){ ENV.town.build(); WARMED.add('town'); }
-        const pr=townExplore(); try{ carretaSellada(CUR.town); }catch(e){ console.error(e); } try{ sqHollin(CUR.town); }catch(e){ console.error(e); } await pr; UI.pad.hidden=true; hideDialog(); }
+        const pr=townExplore({cap1:true,tag:'c1',goal:api=>api.actors.maela}); /* fix27 M6: como desde el Cap. 2, ★ en el minimapa, «!» y punta en el borde hacia Maela */ try{ carretaSellada(CUR.town); }catch(e){ console.error(e); } try{ sqHollin(CUR.town); }catch(e){ console.error(e); } await pr; UI.pad.hidden=true; hideDialog(); }
     }));
     await fadeTo(1,400);
   },
@@ -29886,7 +29944,7 @@ async function endScreen(){
   await fadeTo(0,800);
   await say(null,(LINES.arcoFin&&LINES.arcoFin.gracias)||'Gracias por jugar el Arco I. En el castillo de la niebla se prendió una luz. El Arco II empieza ahí.');
   await choose([{label:'Jugar de nuevo desde el principio',value:1,cls:'primary',icon:'go'}]);
-  newGame(); SAVES.fresh(); await fadeTo(1,500); runFrom('prologo');
+  newGame(); SAVES.fresh(); await fadeTo(1,500); runSafe('prologo');
 }
 /* Fogón del campamento (pedido de Brian, 22/10/2026): Severo ya no aparece de la nada junto al fuego. Desde que arranca la escena, Severo
    (hoja de preso, encadenado: drawActor) y Lina esperan junto a la carreta; con la narración de la cadena (Hermes, 98d9b39) caminan juntos
@@ -29915,15 +29973,26 @@ function presoPuesta(){ const S=LINES.scenes&&LINES.scenes.campamento; if(!Array
     presoLlega:async()=>{ if(walk) await walk; walk=null; },
     presoSienta:async()=>{ if(!sv) return; if(walk){ await walk; walk=null; } sv.base='sit'; sv.at=T; } }; }}; }
 // rec: registro de ranura con el que se retoma (para no repetir combates ya ganados en ese tramo)
+/* fix27 M4 · guardados: alias de tramos renombrados (Arco II: 'viejo':'nuevo') y tramo desconocido sin volver al prólogo en silencio */
+const CPALIAS={};
+function cpOk(cp){ if(ORDER.includes(cp)) return cp; const a=CPALIAS[cp]; return (a&&ORDER.includes(a))?a:null; }
+function lastValid(skip){ let b=null; SLOTS.forEach(id=>{ if(id===skip) return; const r=SAVES.read(id); if(!r||!cpOk(r.cp)||['prologo','titulo'].includes(r.cp)) return; if(!b||(r.ts||0)>(b.rec.ts||0)) b={id,rec:r}; }); return b; }
+async function badSave(id,rec){ SAVES.block=true; hideDialog(); if(id==='auto'&&rec) try{ store.set('slot_auto_aparte',rec); }catch(e){} /* el autoguardado de tramo desconocido queda aparte antes de que otro lo pise */ try{ await fadeTo(0,200); }catch(e){}
+  const v=lastValid(id); const o=[]; if(v) o.push({label:'Cargar el último guardado válido',sub:SLOTNAME(v.id)+' · '+(v.rec.place||STEPNAME[v.rec.cp]||v.rec.cp)+' · '+fmtDate(v.rec.ts),value:'ok',cls:'primary',icon:'go'});
+  o.push({label:'Volver al título',sub:'Sin tocar ningún guardado',value:'tit',icon:'back',cls:v?'':'primary'});
+  const r=await choose(o,'Este guardado es de un tramo que esta versión no conoce («'+String(rec&&rec.cp)+'»). No se cargó nada'+(id==='auto'?' y quedó guardado aparte.':' ni se pisó nada.'));
+  if(r==='ok'&&v){ SAVES.block=false; return loadSlot(v.id,v.rec); } location.reload(); return true; }
+function runSafe(cp,rec){ const p=runFrom(cp,rec); if(!AUTO) p.catch(crashNotice); return p; } // fix27 M3: un throw en un tramo avisa en vez de frenar la historia en silencio
 async function runFrom(cp,rec){
-  let i=Math.max(0,ORDER.indexOf(cp)); const i0=i; migrarEscenas(); // partidas viejas: charlas v1 → escenas v2 (una vez)
+  const cpr=cpOk(cp); if(cpr==null&&!AUTO){ await badSave(null,rec||{cp}); return; }
+  let i=Math.max(0,ORDER.indexOf(cpr)); const i0=i; migrarEscenas(); // partidas viejas: charlas v1 → escenas v2 (una vez)
   for(;i<ORDER.length;i++){ SAVES.beginStep(ORDER[i],i===i0?rec:null); G.cp=ORDER[i]; SAVES.auto('tramo'); prepNext(ORDER[i]); await STEPS[ORDER[i]]();
     if(ORDER[i]==='cierre'&&!CUR.cap1) CUR.cap1={n:(CUR.blog||[]).length,g:snapshot()}; } // regresión: foto del cierre del Cap. 1 (#prueba)
   await endScreen();
 }
 // cargar una ranura (desde el título o al arrancar después de «Cargar» en la pausa)
-async function loadSlot(id,rec){ rec=rec||SAVES.read(id); if(!rec) return false; G=JSON.parse(JSON.stringify(rec.g)); G.cp=rec.cp; ensureEquip(G); G.start=Date.now(); SAVES.loaded(rec); try{ if(typeof ARC!=='undefined') ARC.brand(); }catch(e){} /* B19: el encabezado ya dice el capítulo del guardado */ if(!AUTO) warmPartyArt(); /* B16 */
-  AU.init(); AU.resume(); await fadeTo(1,400); runFrom(rec.cp,rec); return true; }
+async function loadSlot(id,rec){ rec=rec||SAVES.read(id); if(!rec) return false; { const cp=cpOk(rec.cp); if(!cp) return badSave(id,rec); if(cp!==rec.cp) rec=Object.assign({},rec,{cp}); } /* fix27 M4 */ G=JSON.parse(JSON.stringify(rec.g)); G.cp=rec.cp; ensureEquip(G); G.start=Date.now(); SAVES.loaded(rec); try{ if(typeof ARC!=='undefined') ARC.brand(); }catch(e){} /* B19: el encabezado ya dice el capítulo del guardado */ if(!AUTO) warmPartyArt(); /* B16 */
+  AU.init(); AU.resume(); await fadeTo(1,400); runSafe(rec.cp,rec); return true; }
 
 /* ============================================================
    ARRANQUE (con precalentado de arte)
@@ -29956,9 +30025,9 @@ async function start(data){
   if(PXP.warm && !AUTO){ const ex=['n','h','a','s','o','m','t']; setTimeout(()=>{ PXP.warm(['ilian','nach','maela','bertram','lina','agnes','encap','peregrino'].flatMap(id=>ex.map(e=>id+':'+e))); },4000); }
   await preloadArt();
   if(bootRec){ await loadSlot(boot,bootRec); return; } // «Cargar» desde la pausa: directo a la partida
-  const titleOpts=()=>{ const lat=SAVES.latest(), met=lat&&lat.rec.g.flags&&lat.rec.g.flags.met;
+  const titleOpts=()=>{ const lat=lastValid(null), met=lat&&lat.rec.g.flags&&lat.rec.g.flags.met;
     const o=[{label:'Comenzar',sub:'Desde el prólogo',value:'new',cls:'primary',auto:true,icon:'go'}];
-    if(lat && ORDER.includes(lat.rec.cp)) o.push({label:'Continuar',sub:SLOTNAME(lat.id)+' · '+(lat.rec.place||STEPNAME[lat.rec.cp]||lat.rec.cp)+' · '+fmtDate(lat.rec.ts),value:'cont',icon:'go'});
+    if(lat) o.push({label:'Continuar',sub:SLOTNAME(lat.id)+' · '+(lat.rec.place||STEPNAME[lat.rec.cp]||lat.rec.cp)+' · '+fmtDate(lat.rec.ts),value:'cont',icon:'go'});
     if(SAVES.any()) o.push({label:'Cargar partida',sub:'Autoguardado y 3 ranuras',value:'load',icon:'banner'});
     o.push({label:'Opciones',sub:'Texto, sonido, pantalla y teclas',value:'opts',icon:'light'});
     if(met) o.push({label:'Libro de retratos',sub:'Los personajes que ya conociste',value:'book',icon:'chat'});
@@ -29971,23 +30040,25 @@ async function start(data){
     break; }
   AU.init(); AU.resume();
   if(pick&&await loadSlot(pick)) return;
-  SAVES.fresh(); await fadeTo(1,400); runFrom('prologo');
+  SAVES.fresh(); await fadeTo(1,400); runSafe('prologo');
 }
 window.__LDC={get G(){return G}, // stageTest: reproduce una escena suelta (para capturas y pruebas de puesta)
   chatTest:async(ni,id)=>escenaTest(id||'af_hermanos'), escenaTest:(id,zone)=>escenaTest(id,zone), get town(){ return CUR.town; }, esc:{avail:escenaAvail,pend:escenasPendientes,meta:escenaMeta,lost:escenaLost,seen:escenaSeen,play:playEscena,affKey}, migrar:()=>{ migrarEscenas(); return {chats:Object.keys(G.flags.chats||{}),parcial:G.flags.escParcial||{},choice:G.flags.escChoice||{}}; },
   stageTest:async(zone,name,flags)=>{ Object.assign(ENV.flags,flags||{}); const pz=name==='campamento'?presoPuesta():null; const st=await stageIn(zone,name,200); if(name==='emboscada_post'){ PTIRO.dress(st); await PTIRO.tiro(st); } else if(zone==='puente'&&name==='puente') PTIRO.dress(st,'puente'); await playScene(name,stageCtx(st,Object.assign({valdrisVisible:async()=>{ ENV.flags.valdris=true; },silencio:async()=>{},partyChange:async()=>{},battle:async()=>{},derrumbe:async()=>{ await PTIRO.derrumbe(st); }},pz?pz.hooks(st):{}))); hideDialog(); return 'ok'; }, get scene(){return scene}, get B(){return CUR.B}, get bossTurns(){return CUR.bossTurns}, get ended(){return (CUR.endCount||0)>0}, get bossLog(){return CUR.bossLog||[]},
-  openShop:(k)=>openShop(k||'hollin'), say:(w,t,e)=>say(w,t,e),
+  openShop:(k)=>openShop(k||'hollin'), say:(w,t,e)=>say(w,t,e), tutTest:(l,ms)=>toast(l,ms||3600,'tut'), get tutQ(){ return TUTQ.map(q=>q.k); }, // fix27 A2: capturas y medidas de los carteles
   /* auditoría de hablantes (docs/retratos-menu.md): recorre LINES, los textos de zona y los NPC de todas las zonas; por cada id que habla
      devuelve el nombre visible y de dónde sale el retrato: px (PixelLab) · ill (lámina) · npc (modelo NPC) · pxp (retrato pintado por código) · spr (reducción del sprite: no debería quedar) */
   auditHablantes:()=>{ const SAYK=new Set(['say','whisper','think','shout','ask','sayAt','line']); const who=new Map(); const add=(id,src)=>{ if(typeof id!=='string'||!id) return; if(!who.has(id)) who.set(id,new Set()); who.get(id).add(src); };
     const walk=(a,src,d)=>{ if(d>12||!a||typeof a!=='object') return; if(Array.isArray(a)){ if(typeof a[0]==='string'&&SAYK.has(a[0])&&typeof a[1]==='string'&&typeof a[2]==='string') add(a[1],src); else if((a[0]===null||typeof a[0]==='string'&&/^[A-Za-z]\w*$/.test(a[0])&&!SAYK.has(a[0]))&&typeof a[1]==='string'&&a.length>=3&&a.length<=4&&typeof a[2]==='string'&&/^[a-z]$/.test(a[2])){ if(a[0]) add(a[0],src); } else a.forEach(x=>walk(x,src,d+1)); return; } Object.keys(a).forEach(k=>walk(a[k],src+'.'+k,d+1)); };
     walk(LINES,'LINES',0); try{ walk(ZONES.TX,'ZONES.TX',0); }catch(e){}
     const npcNull=[], meta={}; try{ ZONES.ids.forEach(zid=>{ const Z=ZONES[zid]; let ns=[]; try{ ns=(typeof Z.npcs==='function'?Z.npcs():Z.npcs)||[]; }catch(e){} try{ ns=ns.concat(ZONES.caravanIn(zid,true)||[]); }catch(e){}
-      ns.forEach(n=>{ if(!n||!n.id) return; const t=n.talk; let L=null; try{ L=typeof t==='string'?ZONES.text(t):(typeof t==='function'?null:t); }catch(e){} if(!Array.isArray(L)) return; if(!Array.isArray(L[0])) L=[L];
-        L.forEach(l=>{ if(Array.isArray(l)&&l[0]==null&&!l[3]){ if(n.hidden||n.inCart) return; add(n.id,'npc@'+zid); meta[n.id]={name:n.name,spr:n.spr}; if(!n.name) npcNull.push(n.id+'@'+zid); } }); }); }); }catch(e){}
+      ns.forEach(n=>{ if(!n||!n.id) return; // fix27 A1: también las charlas armadas por función (caravana), capítulo por capítulo, y con la misma regla de useNpc (npcSid)
+        const Ls=[]; [n.talk,n.again,n.afterTalk,n.talkDone].forEach(t=>{ if(!t) return; if(typeof t==='function'){ const c0=G&&G.chap; for(let c=1;c<=5;c++){ try{ if(G) G.chap=c; Ls.push(t(G)); }catch(e){} } if(G) G.chap=c0; } else { try{ Ls.push(typeof t==='string'?ZONES.text(t):t); }catch(e){} } });
+        Ls.forEach(L=>{ if(!Array.isArray(L)||!L.length) return; if(!Array.isArray(L[0])) L=[L];
+        L.forEach(l=>{ if(!Array.isArray(l)) return; if(l[0]){ add(l[0],'npc@'+zid); return; } if(l[3]) return; if(n.hidden||n.inCart||n.caravan) return; if(!n.name&&rawName(n.id)) return; add(n.id,'npc@'+zid); meta[n.id]={name:n.name,spr:n.spr}; if(!n.name) npcNull.push(n.id+'@'+zid); }); }); }); }); }catch(e){}
     const out=[]; who.forEach((srcs,id)=>{ const m=meta[id]||{}, nm=m.name||nameOf(id), ok=f=>f(id)||(m.spr&&f(m.spr)); let port='spr'; if(NOPORT[id]) port='sin'; else if(ok(dlgPxKey)) port='px'; else if(ok(x=>artPortrait(x,'n'))) port='ill'; else if(ok(x=>NPCV.resolve(DLGNPC[x]||x))) port='npc'; else if(ok(hasPortrait)) port='pxp';
       const raw=!nm||nm===id&&/[_]|^[a-z]/.test(nm)||/^(npc|zn|merc)_/.test(nm); out.push({id,name:nm,raw,port,src:[...srcs].slice(0,3)}); });
-    return {total:out.length,raw:out.filter(o=>o.raw),spr:out.filter(o=>o.port==='spr'),npcNull,all:out}; },
+    return {total:out.length,raw:out.filter(o=>o.raw),spr:out.filter(o=>o.port==='spr'),npcNull,all:out,rawSpk:RAWSPK.slice()}; }, get rawSpk(){ return RAWSPK.slice(); },
   cutTest:(kind,ids,title)=>{ if(kind==='uni') cutInUni(ids,title||'Asedio',{}); else if(kind==='imp') impCutIn(ids[0],title||'Ímpetu','Ímpetu · Nivel 1'); else cutInNB(ids,title||'Definitiva','Definitiva'); }, // capturas de los cut-ins (docs/retratos-menu.md)
   fxDemo:(key,uid,tids)=>{ const B=CUR.B; if(!B) return; const f=id=>B.units.find(u=>u.id===id||u.key===id); const u=f(uid); const ts=(tids||[]).map(f).filter(Boolean); prepUnits(B); u.away=true; const run=playSeq(FX.get(key),{user:u,targets:ts,enemies:B.units.filter(v=>v.side!==u.side&&alive(v)),party:B.units.filter(v=>v.side===u.side&&alive(v)),setAnim:(v,a)=>{ if(a!=='walk'&&a!=='idle') setAct(v,a); else v.act=null; },sfx:n=>sfx(n)}); RUNS.add(run); run.done.then(()=>{ RUNS.delete(run); u.away=false; }); }, get blog(){ return CUR.blog||[]; }, get endG(){ return CUR.endG; }, get cap1(){ return CUR.cap1||null; }, get arc(){ return typeof ARC!=='undefined'?ARC.dbg:null; }, get T_(){ return {stats,CHAR,EQUIP}; },
   get slow(){ return SLOWFX; }, get tutLog(){ return CUR.tutLog||[]; }, perf(reset){ const r={frames:PERF.n,avg:PERF.n?PERF.sum/PERF.n:0,max:PERF.max}; if(reset){ PERF.n=0; PERF.sum=0; PERF.max=0; } return r; }, warmed:()=>WARMED.size};

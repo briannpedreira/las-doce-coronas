@@ -58,6 +58,35 @@ header.topbar{width:min(100%,var(--stageW,100%));margin-inline:auto;display:flex
 #toast{position:absolute;top:10px;left:50%;transform:translateX(-50%);font-family:var(--f-ui);font-size:14px;letter-spacing:.05em;background:rgba(10,16,32,.92);color:#f4ecd6;border:1px solid var(--gold);border-radius:999px;padding:6px 14px;pointer-events:none;opacity:0;transition:opacity .25s;white-space:nowrap;max-width:94%;overflow:hidden;text-overflow:ellipsis;z-index:7}
 #toast.on{opacity:1}
 body.wide #toast{top:auto;bottom:30%}
+/* fix27 A2: los avisos (y los tutoriales de LINES.tut, ≤ 100 caracteres) ya no se cortan con «…»: hasta 3 renglones, ancho acorde a la pantalla */
+#toast{white-space:normal;text-overflow:clip;text-align:center;width:max-content;max-width:min(94%,560px);border-radius:14px;line-height:1.32;text-wrap:balance}
+#toast.tut{padding:7px 14px;letter-spacing:.03em}
+body.wide:not(.land) #toast{max-width:min(80%,760px)}
+body.land #toast{max-width:min(66%,520px);font-size:13px}
+/* fix27 M5: teléfono vertical (y ventana angosta): el hueco entre el escenario y el pad lleva avisos, capítulo y zona, objetivo y el minimapa a ×2 */
+#gapinfo{display:none}
+body:not(.wide) #gapinfo.on{display:flex;flex-direction:column;align-items:center;gap:8px;flex:0 0 auto;width:100%;padding:2px 4px 0}
+#gtoast{width:100%;min-height:78px;display:flex;align-items:center;justify-content:center;position:relative}
+#gtoast #toast{position:static;transform:none;max-width:100%;font-size:14px}
+#ginfo{width:100%;display:flex;gap:12px;align-items:flex-start;justify-content:center}
+#gtxt{flex:1 1 auto;min-width:0;max-width:260px;font-family:var(--f-ui);color:#e9dfc6;font-size:14px;line-height:1.35}
+#gcap{font-family:var(--f-display);color:#e0b860;font-size:13px;letter-spacing:.06em;margin-bottom:2px}
+#gzone{color:#f4ecd6;font-size:15px;letter-spacing:.03em}
+#gobj{margin-top:6px;color:#d8ccb0}
+#gobj b{color:#ffd04a;font-weight:600;margin-right:4px}
+#gobj:empty{display:none}
+#gmini{flex:0 0 auto;width:216px;height:132px;image-rendering:pixelated;border-radius:4px;cursor:pointer;touch-action:manipulation}
+@media (max-width:380px){ #gmini{width:162px;height:99px} #gtxt{font-size:13px} }
+/* fix27 M3: aviso de error (crashNotice en p2_ui.js) */
+#crash{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;background:rgba(4,6,12,.72);padding:16px}
+#crash .win{max-width:440px;width:100%;padding:16px 18px;display:flex;flex-direction:column;gap:10px}
+#crash h2{margin:0;font-family:var(--f-display);font-weight:400;font-size:19px;letter-spacing:.05em;color:#fff4d8}
+#crash p{margin:0;font-family:var(--f-body);font-size:15px;line-height:1.4;color:#e6dcc4}
+#crash .cr-b{display:flex;flex-direction:column;gap:6px}
+#crash .mi{display:block;width:100%;text-align:center;border-color:var(--win-line)}
+#crash small{font-family:var(--f-ui);font-size:11px;color:var(--muted);word-break:break-word}
+/* fix27 B1: en el teléfono vertical el título «Las Doce Coronas» quedaba en una «L» suelta: se oculta (el capítulo se lee en el hueco, #gcap) */
+@media (max-width:560px){ body:not(.land) .brand{display:none} body:not(.land) header.topbar{justify-content:center} }
 
 /* ---------- panel (debajo en angosto, superpuesto en ancho) ---------- */
 #panel{width:var(--stageW,100%);flex:1 1 auto;min-height:0;display:flex;flex-direction:column;gap:8px;overflow-y:auto;overscroll-behavior:contain;padding-bottom:6px}
@@ -156,6 +185,7 @@ body.wide #dialog.side,body.wide #dialog.narr.side{left:2.4%;right:36%;text-alig
 #menu.two .mi .mc:empty{display:none}
 .mi{display:grid;grid-template-columns:24px minmax(0,1fr) auto;align-items:center;column-gap:9px;row-gap:1px;min-height:44px;padding:6px 10px;background:transparent;border:1px solid transparent;border-radius:4px;color:var(--text);font-family:var(--f-ui);font-size:15px;letter-spacing:.03em;text-align:left;cursor:pointer;position:relative}
 .mi .ml{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mi .ml.mlt{display:flex;align-items:center;gap:6px;overflow:visible}.mi .ml.mlt .mln{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.mi .mtag{flex:0 0 auto;font-family:var(--f-ui);font-weight:800;font-size:.8em;line-height:1;color:#ffd0d0;background:#3a1418;border:1px solid #a4444c;border-radius:3px;padding:2px 4px;letter-spacing:0} /* fix27 M2 */
 .mi .mc{color:#cfd9ee;font-variant-numeric:tabular-nums;font-size:14px;white-space:nowrap}
 .mi small{grid-column:2 / 4;font-family:var(--f-body);font-size:13px;color:var(--muted);letter-spacing:0;line-height:1.25;white-space:normal}
 .mi:hover:not([disabled]),.mi:focus-visible,.mi.sel{background:linear-gradient(90deg,var(--sel),rgba(96,138,210,.12));border-color:rgba(201,214,238,.75)}
@@ -837,6 +867,7 @@ body:not(.wide) .pz-body.t-objetos .iv-top{order:-2}
       <div id="toast" role="status" aria-live="polite"></div>
     </div>
     <div id="panel">
+      <div id="gapinfo" aria-live="polite"><div id="gtoast"></div><div id="ginfo"><div id="gtxt"><div id="gcap"></div><div id="gzone"></div><div id="gobj"></div></div><canvas id="gmini" width="216" height="132" aria-label="Minimapa (tocá para ver el mapa)"></canvas></div></div>
       <div id="dialog" class="win" hidden aria-live="polite" tabindex="-1"><div id="pframe"><canvas id="pcv" width="192" height="192"></canvas></div><div><div id="dname"></div><div id="dline"></div></div><div id="dnext" aria-hidden="true">▼</div></div>
       <div id="hud" hidden></div>
       <div id="menuBox" hidden><div id="menuTitle" hidden></div><div id="menu" class="win" role="menu"></div><div id="mhelp" class="win" hidden></div></div>
