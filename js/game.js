@@ -21861,13 +21861,13 @@ function layoutCast(ids,name){
 const FIGPUENTE={x:348,y:68};
 function drawFigura(c,a){ moveActor(a,0); const k=a.k||1; if(k===1){ drawActor(c,a); return; } c.save(); c.translate(a.x,a.y); c.scale(k,k); c.translate(-a.x,-a.y); drawActor(c,a); c.restore(); }
 // fix27 M1: manta de lana bajo Nach dormido (prólogo, «La carpa de Hagen»): pixel a mano, sin arte nuevo ni azar
-function mantaNach(c,a){ if(!a||a.hidden) return; const x=Math.round(a.x-9*(a.face<0?-1:1)), y=Math.round(a.y); c.save(); c.fillStyle='rgba(14,10,20,.4)'; /* centrada bajo el cuerpo tendido (no bajo los pies) */ c.fillRect(x-22,y-2,46,7);
+function mantaNach(c,a){ if(!a||a.hidden) return; const k=a.k||1, x=Math.round(a.x-9*k*(a.face<0?-1:1)), y=Math.round(a.y); c.save(); if(k!==1){ c.translate(x,y); c.scale(Math.max(k,0.85),1); c.translate(-x,-y); } c.fillStyle='rgba(14,10,20,.4)'; /* centrada bajo el cuerpo tendido (no bajo los pies) */ c.fillRect(x-22,y-2,46,7);
   c.fillStyle='#4e3324'; c.fillRect(x-21,y-5,44,8); c.fillStyle='#6d4a30'; c.fillRect(x-21,y-5,44,2); c.fillStyle='#93643a'; for(let i=-17;i<22;i+=9) c.fillRect(x+i,y-5,2,8); c.fillStyle='#3a2519'; c.fillRect(x-21,y+2,44,1); c.restore(); }
 function mkStage(zone,name,opt){
   opt=opt||{}; const ids=findCast(name); const ps=layoutCast(ids,name);
   const st={zone,name,actors:{},list:[],under:opt.under||null,over:opt.over||null,explore:false,cam:mkCam(),onos:[],title:null,faceLock:!!FACE[name]};
   ids.forEach(id=>{ if(!(ENTER[name]||[]).includes(id)) markMet(id); });
-  ids.forEach((id,i)=>{ const a=mkActor(id,ps[i].x,ps[i].y); if(id==='olaf'||id==='olafNino') a.base='sit'; if(id==='nachNino') a.base='ko'; /* fix27 M1: Nach chico, dormido (tendido) */ st.actors[id]=a; st.list.push(a); });
+  ids.forEach((id,i)=>{ const a=mkActor(id,ps[i].x,ps[i].y); if(id==='olaf'||id==='olafNino') a.base='sit'; if(id==='nachNino'){ a.base='ko'; a.noTurn=true; a.k=0.7; } /* fix27 M1: Nach chico, dormido (tendido) · v27.7: quieto aunque hablen los demás y más chico (tiene 3 años) */ st.actors[id]=a; st.list.push(a); });
   if(st.actors.nachNino){ const u0=st.under, nn=st.actors.nachNino; st.under=(c,dt)=>{ mantaNach(c,nn); if(u0) u0(c,dt); }; } // fix27 M1: la manta donde duerme Nach chico
   const il=st.actors.ilian; if(il && !st.actors.olaf) il.olaf=true;
   facing(st,name);
@@ -21881,7 +21881,7 @@ function mkStage(zone,name,opt){
   const am=ROOMSTAGE[zone]?null:ambStage(st);
   st.draw=(c,dt)=>{ const K=st.cam; camStep(K,dt); const zc=K.z!==1||K.x!==W/2||K.y!==H/2; if(zc){ c.save(); c.translate(W/2,H/2); c.scale(K.z,K.z); c.translate(-K.x,-K.y); }
     const fv=st.figura('valdris'); if(fv){ ENV.flags.valdris=false; drawBG(c,st.zone,dt); ENV.flags.valdris=true; drawFigura(c,fv); } else drawBG(c,st.zone,dt); if(st.under) st.under(c,dt); if(am) am.under(c);
-    const vis=st.list.filter(a=>!a.hidden); vis.forEach(a=>moveActor(a,dt)); vis.sort((a,b)=>a.y-b.y).forEach(a=>drawActor(c,a));
+    const vis=st.list.filter(a=>!a.hidden); vis.forEach(a=>moveActor(a,dt)); vis.sort((a,b)=>a.y-b.y).forEach(a=>{ const k=a.k||1; if(k===1){ drawActor(c,a); return; } c.save(); c.translate(a.x,a.y); c.scale(k,k); c.translate(-a.x,-a.y); drawActor(c,a); c.restore(); }); // v27.7: a.k achica o agranda la figura desde los pies
     vis.forEach(a=>drawExtras(c,a,a.x,a.y-(a.jump?jumpY(a):0),actorH(a)));
     if(st.olafProxy) drawProxy(c,st.olafProxy);
     if(st.mark) drawHeadMark(c,st.mark.x,st.mark.y,'#ffe9a8');
