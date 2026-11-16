@@ -30,6 +30,8 @@ aside{border-left:1px solid var(--line);background:var(--panel);display:flex;fle
 .card .k{font:600 11px system-ui,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:var(--gold)}
 .card h2{margin:4px 0 6px;font-size:20px}
 .card p{margin:6px 0;color:#ddd3bb}
+.card h4{margin:10px 0 2px;font:600 11px system-ui,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:#d9a948}
+.card .body p{margin:2px 0 4px}
 .chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}
 .chip{font:12px system-ui,sans-serif;border:1px solid var(--line);border-radius:999px;padding:2px 8px;color:var(--dim)}
 .chip.prop{border-color:#7a5a20;color:#e2b860}
@@ -46,8 +48,17 @@ aside{border-left:1px solid var(--line);background:var(--panel);display:flex;fle
 .lbl.sea{font:italic 600 15px Georgia,serif;fill:#9fc2dd;stroke:none;letter-spacing:.18em}
 .lbl.w{fill:#eae3cf;stroke:#10131f}
 .mk{cursor:pointer}
-.mk circle{stroke:#10131f;stroke-width:1.6}
-.mk.on circle{stroke:#fff;stroke-width:2.6}
+.lbl.rib{font:700 10.5px Georgia,serif;fill:#3a2410;stroke:none;letter-spacing:.02em}
+.pop{position:absolute;z-index:5;max-width:330px;background:#f3e6c4;color:#2a1a0c;border:1.5px solid #6a4a22;border-radius:10px;box-shadow:0 10px 30px rgba(0,0,0,.45);padding:12px 14px 12px;font:14px/1.45 Georgia,serif;display:none}
+.pop.on{display:block}
+.pop h3{margin:0 22px 4px 0;font-size:18px}
+.pop .k{font:600 10.5px system-ui,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#8a5a10}
+.pop h4{margin:8px 0 2px;font:600 11px system-ui,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:#6a4a22}
+.pop p{margin:0}
+.pop .x{position:absolute;right:6px;top:4px;border:0;background:transparent;font:20px system-ui;color:#6a4a22;cursor:pointer}
+.pop .chip{border-color:#b39a6a;color:#6a4a22}
+@media (max-width:820px){.pop{left:8px!important;right:8px;top:auto!important;bottom:8px;max-width:none;max-height:58%;overflow:auto}}
+.mk.on{filter:drop-shadow(0 0 3px #fff6) drop-shadow(0 0 6px #ffd36a)}
 footer{font:12px system-ui,sans-serif;color:var(--dim);padding:10px 16px;border-top:1px solid var(--line)}
 </style>
 </head>
@@ -61,6 +72,7 @@ footer{font:12px system-ui,sans-serif;color:var(--dim);padding:10px 16px;border-
     <svg class="map" id="svg" xmlns="http://www.w3.org/2000/svg"></svg>
     <div class="zoom"><button id="zin" aria-label="Acercar">+</button><button id="zout" aria-label="Alejar">−</button><button id="zre" aria-label="Ver todo" style="font-size:13px">⤢</button></div>
     <div class="legend" id="legend"></div>
+    <div class="pop" id="pop"></div>
   </div>
   <aside>
     <div class="card" id="card"></div>
@@ -249,27 +261,56 @@ function drawBren(){
   [['PRADOS DEL BREZO',380,520],['MONTES DEL PASO',1250,150],['PANTANO DE MURGO',600,815]].forEach(([s,x,y])=>txt(x,y,s,'lbl big').setAttribute('style','font-size:24px;stroke-width:5px'));
   markers(BREN,true);
 }
-function icon(m,t,k,c,ap){ const g=E('g',{transform:`scale(${k})`,opacity:ap?.8:1},m); const st={stroke:'#10131f','stroke-width':1.3,'stroke-linejoin':'round'};
-  const P=(d,f)=>E('path',Object.assign({d,fill:f||c},st),g);
-  if(t==='ciudad'){ P('M-7 6V-3h2v-2h2v2h2v-4h2v4h2v-2h2v2h2v-2h2V6Z','#f2ede0'); P('M-1 6v-4h2v4Z','#5a4a3a'); }
-  else if(t==='pueblo'){ P('M-5 5v-5l5-4 5 4v5Z','#d8c49a'); }
-  else if(t==='potencia'){ P('M-5 7V-8'); P('M-5-8h11l-3 4 3 4H-5Z'); }
-  else if(t==='historia'){ P('M-7 6h14v-2h-2v-7h-2v7h-2v-4h-2v4h-2v-9h-2v9h-2Z'); }
-  else if(t==='egida'){ P('M0-8 7 0 0 8-7 0Z'); P('M0-4 3 0 0 4-3 0Z','#f4ecff'); }
-  else if(t==='natural'){ P('M-8 6 0-8 8 6Z'); }
-  else if(t==='cueva'){ P('M-8 6C-8-4-4-8 0-8S8-4 8 6Z','#8a7a66'); P('M-4 6C-4-1-2-3 0-3S4-1 4 6Z','#1a1410'); }
-  else { E('circle',Object.assign({r:6,fill:c},st),g); }
-  if(ap) E('circle',{r:11,fill:'none',stroke:c,'stroke-dasharray':'2 3','stroke-width':'1.4'},g); }
+/* ===== Íconos ilustrados (propios; estilo de mapa de fantasía) ===== */
+const IC_CAP=['castel','equinoccia','vesper','lis','andra','p_hrafnborg','p_aurea','p_ferrumbre','p_nacara','p_hondaforja','p_hespera','p_andra_juego','b_hollin'];
+const IC_PUERTO=['p_eldvik','p_skjaldvik','p_doblon','p_ballena','p_garza','p_palma','v_23','maresol','b_aldea'];
+const IC_TORRE=['p_quilla','p_ulfstad','b_torre','p_mojon','b_campamento'];
+const IC_NORD=['p_hrafnborg','p_eldvik','p_skjaldvik','p_isavarde','p_ulfstad','p_kaldmyr','valkhar','skjald'];
+function kind(p){ if(IC_CAP.includes(p.id)) return 'capital'; if(IC_PUERTO.includes(p.id)) return 'puerto'; if(IC_TORRE.includes(p.id)) return 'torre';
+  return {ciudad:'ciudad',pueblo:'pueblo',historia:'ruina',cueva:'cueva',egida:'santuario',natural:'natural',potencia:'reino',fuera:'fuera'}[p.t]||'pueblo'; }
+function roofFor(p){ if(IC_NORD.includes(p.id)) return '#6b4a2e'; const r={sylvaren:'#3f6b3a',frondaverde:'#3f6b3a',p_hespera:'#3f6b3a',p_cantera:'#3f6b3a',p_aurea:'#c9902a',solean:'#c9902a',p_nacara:'#2f7d9a',maresol:'#2f7d9a',p_ferrumbre:'#6a6f78',halvar:'#6a6f78',p_hondaforja:'#7a5a3a',p_andra_juego:'#8a3a7a',equinoccia:'#e8e2d0'}; return r[p.id]||(['#a8452e','#3e5a8c','#8a5a2e','#4f6d8f'][p.id.length%4]); }
+const OL={stroke:'#2a1a0c','stroke-width':.9,'stroke-linejoin':'round','stroke-linecap':'round'};
+function sh(g,d,f,extra){ return E('path',Object.assign({d,fill:f},OL,extra||{}),g); }
+function house(g,x,y,w,h,roof,ch){ // casa con techo a dos aguas
+  sh(g,`M${x-w/2} ${y}v${-h}h${w}v${h}Z`,'#efe3c4'); sh(g,`M${x-w/2-1.2} ${y-h}L${x} ${y-h-w*.75}L${x+w/2+1.2} ${y-h}Z`,roof);
+  sh(g,`M${x-w*.12} ${y}v${-h*.55}h${w*.24}v${h*.55}`,'#5a3a22'); if(ch) sh(g,`M${x+w*.22} ${y-h-w*.35}v${-w*.35}h${w*.16}v${w*.5}`,'#8a7a6a'); }
+function tower(g,x,y,w,h,roof,cone){ sh(g,`M${x-w/2} ${y}v${-h}h${w}v${h}Z`,'#e6dcc2');
+  if(cone) sh(g,`M${x-w/2-1.4} ${y-h}L${x} ${y-h-w*1.6}L${x+w/2+1.4} ${y-h}Z`,roof); else sh(g,`M${x-w/2-1} ${y-h}h${w+2}v-2h-1.5v1.2h-1.4v-1.2h-1.4v1.2h-1.4v-1.2h-1.5Z`,'#d4c8aa');
+  E('rect',Object.assign({x:x-.7,y:y-h*.7,width:1.4,height:2.2,fill:'#2a1a0c'}),g); }
+function shadow(g,w){ E('ellipse',{cx:0,cy:1.5,rx:w,ry:w*.28,fill:'#2a1a0c',opacity:.25},g); }
+function drawIcon(m,p,k){ const g=E('g',{transform:`scale(${k})`},m); const kd=kind(p), roof=roofFor(p);
+  if(kd==='capital'){ shadow(g,15); sh(g,'M-13 0v-7l2-1v1.5l2-1v1.5l2-1v1.5l2-1V-7l2-1v1.5l2-1v1.5l2-1v1.5l2-1V0Z','#d8cba8');
+    tower(g,-10,0,5,12,roof,true); tower(g,10,0,5,12,roof,true); tower(g,0,-3,7,17,roof,true); sh(g,'M0 -23.5v-6l5 1.6-5 1.6','#b03a2e'); sh(g,'M-2 0v-4a2 2 0 0 1 4 0v4','#3a2414'); }
+  else if(kd==='ciudad'){ shadow(g,12); house(g,-7,0,7,6,roof,true); house(g,6,1,7,5,roof,false); house(g,0,-3,6,7,roof,true); tower(g,-1,-1,3.4,13,roof,true); }
+  else if(kd==='pueblo'){ shadow(g,8); house(g,-3.5,0,5.5,4.5,roof,true); house(g,3.5,1,5,4,roof,false); }
+  else if(kd==='puerto'){ shadow(g,12); house(g,-5,-1,6,5,roof,true); house(g,1.5,-2,5.5,6,roof,false); sh(g,'M-10 1h21','none',{'stroke-width':1.6});
+    sh(g,'M7 1l1.5 3h7l1.5-3Z','#7a5230'); sh(g,'M12 1v-13','none'); sh(g,'M12.4-11.5q5 4 0 8Z','#efe3c4'); }
+  else if(kd==='torre'){ shadow(g,6); tower(g,0,0,6,16,roof,!(p.id==='p_quilla')); if(p.id==='p_quilla'){ E('circle',{cx:0,cy:-18,r:3,fill:'#ffd36a',opacity:.9},g); E('circle',{cx:0,cy:-18,r:6,fill:'#ffd36a',opacity:.25},g); } }
+  else if(kd==='ruina'){ shadow(g,11); sh(g,'M-10 0v-9h3v9M-4 0v-13h3v13M3 0v-7h3v7M8 0v-4h2v4','#d4c8aa'); sh(g,'M-7 -9q3-4 6 0','none'); sh(g,'M-12 0h24','none'); E('circle',{cx:5,cy:-1,r:1.6,fill:'#b5a888',stroke:'#2a1a0c','stroke-width':.6},g); }
+  else if(kd==='cueva'){ shadow(g,11); sh(g,'M-12 0q2-12 12-13q10 1 12 13Z','#9a8a70'); sh(g,'M-5 0q0-8 5-8t5 8Z','#1a1008'); sh(g,'M-5.5 0v-6.5M5.5 0v-6.5M-6-6.6h12','none',{stroke:'#7a5230','stroke-width':1.6}); }
+  else if(kd==='santuario'){ shadow(g,8); sh(g,'M-7 0h14l-2-3h-10Z','#d4c8aa'); sh(g,'M0-17l5 8-5 6-5-6Z','#b9a6ff'); sh(g,'M0-14l2.4 5-2.4 3-2.4-3Z','#f4ecff'); E('circle',{cx:0,cy:-9,r:9,fill:'#b9a6ff',opacity:.18},g); }
+  else if(kd==='natural'){ shadow(g,9); [[-5,0,5],[4,1,4.4],[0,-2,6]].forEach(([x,y,r])=>{ sh(g,`M${x-r} ${y}L${x} ${y-r*2.4}L${x+r} ${y}Z`,'#4f6b3a'); sh(g,`M${x} ${y}v2`,'none'); }); }
+  else if(kd==='reino'){ shadow(g,7); sh(g,'M0 2V-18','none',{'stroke-width':1.4}); sh(g,'M0-18h11l-2.6 4 2.6 4H0Z',roof); sh(g,'M-5-9h10v5q0 5-5 7-5-2-5-7Z','#e9d9a8'); sh(g,'M-3-6h6M0-8v6','none',{stroke:roof,'stroke-width':1.4}); }
+  else { E('circle',{r:7,fill:'#dfe7ef',opacity:.6,stroke:'#2a1a0c','stroke-width':.8},g); sh(g,'M-4 0q4-5 8 0t-8 0','none'); }
+  if(p.aprox) E('circle',{r:16,fill:'none',stroke:'#2a1a0c','stroke-dasharray':'2 3','stroke-width':'1',opacity:.6},g);
+}
+function ribbon(m,p,y,big){ // cartel de pergamino para ciudades y capitales
+  const kd=kind(p); const t=txt(0,y,p.n,'lbl',m); t.setAttribute('style',big?'font-size:20px;stroke-width:4px':'');
+  if(!['capital','ciudad','puerto','reino'].includes(kd)) { if(p.t==='pueblo') t.setAttribute('style',big?'font-size:17px':'font-size:9.5px;opacity:.92'); return; }
+  t.setAttribute('class','lbl rib'); t.setAttribute('style',big?'font-size:19px':'');
+  requestAnimationFrame(()=>{ try{ const b=t.getBBox(); const w=b.width+10, h=b.height+3, x=b.x-5, yy=b.y-1.5;
+    const r=E('path',{d:`M${x} ${yy}h${w}l-3 ${h/2} 3 ${h/2}h${-w}l3 ${-h/2}Z`,fill:'#efe2bf',stroke:'#5a3a1a','stroke-width':big?1.4:.8,opacity:.96},m); m.insertBefore(r,t); }catch(e){} });
+}
 function markers(L,big){
   const g=E('g',{});
-  L.forEach(p=>{ const m=E('g',{class:'mk','data-id':p.id,transform:`translate(${p.x} ${p.y})`},g);
-    const r=big?(p.t==='ciudad'?14:11):(p.t==='potencia'?8:6), k=big?2.1:1, c=T[p.t].c;
-    E('circle',{r:r+3,fill:'#10131f',opacity:.35},m);
-    if(p.prop&&p.t!=='pueblo') E('circle',{r:13,fill:'rgba(255,240,200,.35)',stroke:'#8a5a10','stroke-dasharray':'3 3','stroke-width':'1.4'},m);
-    if(false){ E('circle',{r:9,fill:'transparent'},m); E('circle',{r:2.6,fill:c,stroke:'#2a1a0c','stroke-width':1},m); if(p.aprox) E('circle',{r:11,fill:'none',stroke:c,'stroke-dasharray':'2 3','stroke-width':'1.4'},m); }
-    else icon(m,p.t,k,c,p.aprox);
-    const t=txt(0,(big?-r-14:-r-6),p.n,'lbl',m); if(p.t==='pueblo') t.setAttribute('style','font-size:9.5px;opacity:.9'); if(big) t.setAttribute('style','font-size:22px;stroke-width:5px');
-    m.addEventListener('click',e=>{ e.stopPropagation(); select(p.id,false); }); });
+  L.slice().sort((a,b)=>a.y-b.y).forEach(p=>{ const m=E('g',{class:'mk','data-id':p.id,transform:`translate(${p.x} ${p.y})`},g);
+    const k=big?2.2:1.35;
+    E('circle',{r:big?30:15,fill:'transparent'},m);
+    if(p.prop&&p.t!=='pueblo') E('circle',{r:big?32:17,fill:'rgba(255,236,170,.28)',stroke:'#8a5a10','stroke-dasharray':'3 3','stroke-width':big?2:1.2},m);
+    drawIcon(m,p,k);
+    const kd=kind(p), top=({capital:31,ciudad:21,puerto:18,torre:20,ruina:15,cueva:15,santuario:19,natural:16,reino:21,pueblo:11,fuera:9})[kd]||14;
+    ribbon(m,p,-(top*k)-4,big);
+  });
 }
 /* ===== Panel ===== */
 const data=()=>VIEW==='mundo'?MUNDO:BREN;
@@ -277,32 +318,43 @@ const DIB=['castel','equinoccia','vesper','lis','andra','maresol','hollin','moll
 function card(p){ const c=document.getElementById('card');
   if(!p){ c.innerHTML=`<div class="k">${VIEW==='mundo'?'Orvanthe':'Región del Arco I'}</div><h2>${VIEW==='mundo'?'Una media luna alrededor del Mar del Zénit':'Brenmoor del Sur'}</h2><p>${VIEW==='mundo'?'El continente abraza el Mar del Zénit, con una península en el norte que entra en el mar. Entre Vesper y Maresol está el Estrecho, la única salida al Océano Austral; más allá de las tormentas, el Abismo. Los aros amarillos son pueblos y ciudades propuestos, todavía sin aprobar. Tocá un punto para ver su ficha.':'Mapa global del juego (1.440 × 900), con las coordenadas reales de v27.7: del Burgo de Hollin al camino a Vesper, más los lugares de los Caps. 2 a 5. Tocá un punto.'}</p>`; return; }
   const chips=[T[p.t].n]; if(p.estilo) chips.push('Estilo: '+p.estilo); if(p.casa) chips.push('Casa: '+p.casa); if(p.arco) chips.push('Arco/Cap.: '+p.arco);
-  c.innerHTML=`<div class="k">${T[p.t].n}</div><h2></h2><p></p><div class="chips">${chips.map(s=>`<span class="chip"></span>`).join('')}${p.aprox?'<span class="chip prop">ubicación aproximada</span>':''}${p.prop?'<span class="chip prop">propuesta nueva</span>':''}</div>`;
-  c.querySelector('h2').textContent=p.n; c.querySelector('p').textContent=p.d; [...c.querySelectorAll('.chip:not(.prop)')].forEach((el,i)=>el.textContent=chips[i]); }
+  c.innerHTML=`<div class="k">${T[p.t].n}</div><h2></h2><div class="body"></div><div class="chips">${chips.map(s=>`<span class="chip"></span>`).join('')}${p.aprox?'<span class="chip prop">ubicación aproximada</span>':''}${p.prop?'<span class="chip prop">propuesta nueva</span>':''}</div>`;
+  c.querySelector('h2').textContent=p.n; fillRes(c.querySelector('.body'),p); [...c.querySelectorAll('.chip:not(.prop)')].forEach((el,i)=>el.textContent=chips[i]); }
+const RES={"valkhar": {"car": "Reino guerrero del norte volcánico: estepas de ceniza, montañas nevadas y salones de madera negra. Su tambor de guerra es el instrumento de la Casa de Aries.", "his": "El trono no se hereda: se gana en el Torneo de Ceniza. Así llegó la reina Hrafna Valk «la Brasa». En el Arco III Valkhar ataca por el norte."}, "durmhold": {"car": "Reino enano de ciudades-forja bajo la roca, gobernado por el Consejo de Gremios y un Rey-Yunque electo, hoy Brodda Kael (210 años).", "his": "Vendió armas a todos durante siglos. Las fábricas de Halvar dejaron sin trabajo a sus forjas y los jóvenes emigran: de ahí salieron Bertram, Dov y la Marca Enana de Brenmoor."}, "yunque": {"car": "Sala sagrada bajo el Gran Yunque de Durmhold, donde se jura ante el Consejo de Gremios.", "his": "Ahí duerme la Égida de Tauro, que ningún no enano vio jamás. Se gana con un juramento grabado en piedra."}, "cumbres": {"car": "Montañas nevadas y calladas del noroeste, tierra de los Kel'uun.", "his": "Ahí se pacta con Ghorun, la Montaña Muda (n.º 68, Arco IV)."}, "fresno": {"car": "Isla de bosque boreal en el noreste: pinos altísimos, nieve casi todo el año y un pueblo que vive entre los árboles.", "his": "El Fresno que Recuerda, un Eco del Arco IV, tiene raíces acá."}, "skjald": {"car": "Clanes de los fiordos helados del extremo norte; viven del mar y de la costa ajena.", "his": "Saquean las costas del Zénit desde siempre. Ningún rey los gobernó más de una generación."}, "kharn": {"car": "Galerías enanas bajo la cordillera central, hoy inundadas.", "his": "Los elfos las inundaron después de la tala de Vel'Dorn. En el Arco IV se devuelve ahí el martillo del n.º 83; el n.º 117 es su último minero."}, "corvaine": {"car": "Reino viejo del noroeste: nobleza en decadencia, castillos grises y deudas con Vesper y con el Imperio.", "his": "Tras la muerte del rey Edric, el Regente Duque Aldren Mor da el golpe. Su orden armada es la Rosa Ceniza, con Varek Mor como Gran Maestre."}, "sylvaren": {"car": "Territorio élfico en los bosques antiguos de la costa oeste: ciudades en los árboles y memoria larga. Gobierna la Reina-Vidente Aelith, de más de 900 años.", "his": "Tienen un pacto antiguo con el Tribunal y cargan con la culpa de haber ayudado a sellar a Nhessa. De acá vienen Faelan y Merith."}, "doncella": {"car": "Santuario escondido en el corazón del bosque de Sylvaren.", "his": "Guarda sellada la Égida de Virgo. Los elfos veneran a la Doncella como una diosa dormida."}, "lisandra": {"car": "República de dos ciudades gemelas, Lis y Andra, gobernada por dos cónsules elegidos por los gremios. Banca, seguros, teatro de máscaras e ilusionismo.", "his": "Las dos ciudades se odian y le prestan plata a todos los bandos. La Égida de Géminis está partida en dos: juntarla es una misión política."}, "lis": {"car": "La mitad norte de Lisandra: bancos de mármol, casas de seguros y la cónsul Mirela Voss.", "his": "Guarda una de las dos mitades de la Égida de Géminis."}, "andra": {"car": "La mitad sur de Lisandra, la del cónsul Darian Kest: ferias, teatros y mercaderes.", "his": "Cuna de Rocío Lux «la Miel», que pelea en la feria. Guarda la otra mitad de la Égida de Géminis."}, "brenmoor": {"car": "El granero del continente: trigo, brezo, cebada y bosques. Su instrumento es el violín folk.", "his": "Reino sin Casa ni Égida, con el rey Odran Brenn viviendo de lo que le presta Vesper. Acá empieza la historia, en los Arcos I y II."}, "castel": {"car": "Capital de Brenmoor, en el interior, al oeste de Hollin: murallas de piedra amarilla y el castillo del rey Odran Brenn.", "his": "En el Arco I el camino al interior está cerrado por los rumores de guerra; se abre en el Arco II."}, "molle": {"car": "Pueblo del norte de Brenmoor, sobre la frontera con Corvaine.", "his": "Es lo primero que arde cuando empieza la guerra. Si Nach lo libera en La Orilla Partida, Lina se suma."}, "hollin": {"car": "Burgo del sur de Brenmoor: la taberna, la capilla de Odo, el corral y el altillo de Agnes.", "his": "Acá firman el contrato que lo cambia todo en el Capítulo 1. En el Arco II, cap. 9, Hollin se quema."}, "puente": {"car": "Puente de piedra asterii sobre el río Varne, en el camino viejo a Vesper.", "his": "Ahí cae el rey Edric y empieza la trampa del Capítulo 1."}, "murgo": {"car": "Pantanos del sur de Brenmoor: juncos, pasarelas de tablas, garzas y niebla.", "his": "El Linde, el Albardón y el Paso del Juncal; el anguilero Ñoko conoce los diez pasos de tierra firme."}, "bastion": {"car": "Fortaleza asterii hundida en la niebla del pantano; sus luces laten cada Día Mudo.", "his": "Ahí duerme Kett, la Unidad K-7, que despierta si Ilian lee su pedestal (Arco II)."}, "vesper": {"car": "Puerto franco en la punta de la península: bancos, muelles y ningún Juez con jurisdicción.", "his": "Sus bancos acuñan la corona del continente. Un preso que llega a Vesper deja de ser preso."}, "tamaru": {"car": "Isla frente a la costa oeste, con su propia tradición de espada.", "his": "Cuna del espadachín n.º 50 (modelo Shinken), con una deuda de honor con Brava."}, "equinoccia": {"car": "Isla-ciudad blanca del Tribunal del Zénit: el Palacio de las Doce Balanzas, el archivo sellado y la Sala del Equinoccio. Nadie entra armado.", "his": "Se levantó sobre los arrecifes donde se hundió Aster. El poder visible es de la Gran Jueza Veyra Kassel; el oculto, de Calix, el Primer Juez."}, "aster": {"car": "Ruinas hundidas de la capital de los Asterii; en días calmos se ven los techos bajo el agua.", "his": "Se hundió por el esfuerzo de los sellos que forjaron las doce Égidas. El trono hundido es del Arco IV."}, "halvar": {"car": "Tecnocracia de las Fundiciones: vapor, éter, constructos y relojes. Gobierna la Directora Suprema Kessa Steyl.", "his": "El éter sale de restos divinos asterii y contamina la tierra. De acá desertó Darra."}, "ardes": {"car": "Principado de montaña con un desfiladero de peaje.", "his": "El Monasterio de las Nubes guarda el pacto de Samsar (n.º 81)."}, "iskarra": {"car": "Mesetas del este: clanes ecuestres, cetrería y la mejor caballería del continente. Gran Jinete Temur Ask.", "his": "Hace 200 años robaron la Égida de Sagitario a Hirka y la guardan en secreto. Lideran la Liga de los sin Corona."}, "sarn": {"car": "Vado del río Sarn en las mesetas de Iskarra.", "his": "Ahí murió Corlan Varre, el padre de Nach, el año en que Nach nació."}, "hirka": {"car": "Confederación de clanes bestiales: tradición oral, caza y ritos lunares. Portavoz Ussa Garra-Gris, loba.", "his": "Perseguidos por las cacerías de esclavos del Imperio. Cuna de Zarpa, Tilo, Yenna, Garmo, Hoskel y los halcones de Asentye."}, "marcas": {"car": "Desierto quemado sin Estado, regido por un Consejo de Compañías y la Matrona Escorpia. El contrato sellado es sagrado.", "his": "Ahí estuvo el reino de Aldhara, quemado en 2711 D.S. De acá son el Cuervo Gris y los Varre; el traidor que los vendió sigue acá."}, "salquieta": {"car": "Oasis del borde del desierto, a un día al norte del valle de Kael-Varn.", "his": "Última agua segura antes de entrar a las Marcas."}, "kaelvarn": {"car": "Ruinas de una fortaleza en un valle de pinos, al sur de las Marcas.", "his": "Ahí ocurre el prólogo, en el verano de 2995 D.S."}, "dhaskari": {"car": "Pueblo del desierto profundo del este.", "his": "Guardan la memoria más vieja del continente."}, "maresol": {"car": "Monarquía marítima de flota y sal: nácar, coral y arpas.", "his": "Cuna de la Infanta Coral. Su Égida de Cáncer se perdió en un naufragio."}, "naufragio": {"car": "Restos de un barco hundido entre las tormentas, al sur del Estrecho.", "his": "Ahí está la Égida de Cáncer; se rescata en una misión naval con Brava o con Maresol."}, "estrecho": {"car": "La única salida del Mar del Zénit al Océano Austral, entre Vesper y Maresol.", "his": "Quien controla el Estrecho controla el comercio del mar interior."}, "solean": {"car": "Imperio centralizado: ciudades doradas, burocracia, legiones y arenas de gladiadores.", "his": "La emperatriz Ysolde III «la Dorada» reina; el Canciller Varo Septimus gobierna. Financió el golpe de Corvaine."}, "gorr": {"car": "Tribus de saurios de las selvas del sur.", "his": "De acá son los n.º 77 y 78 (Arco IV)."}, "brava": {"car": "Cayos de corsarios frente a Vesper.", "his": "Patria de la corsaria n.º 52 y de los que le deben favores."}, "ostrel": {"car": "Archipiélago académico gobernado por un Senado de Eruditos y el Arconte-Bibliotecario Selim Odra: universidades, observatorios y gólems.", "his": "La Égida de su museo es una réplica. En su archivo prohibido se pacta con Ulvenna (Arco IV)."}, "ys": {"car": "Islas de niebla fuera de todo mapa oficial.", "his": "El Velo se está corriendo hacia el continente."}, "abismo": {"car": "Tierra roja y volcánica del sur, más allá de la barrera de tormentas.", "his": "Se cruza solo en conjunción. En los Días Mudos la barrera se abre más que nunca."}, "frondaverde": {"car": "Península del norte del Zénit, de los elfos del bosque verde: más abiertos al mundo que sus primos de Sylvaren.", "his": "Comercian con Equinoccia desde antes de que existiera el Tribunal."}, "p_hespera": {"car": "Ciudad-puerto élfica con muelles de madera viva y faroles de savia.", "his": "Es el puerto de los peregrinos que cruzan a Equinoccia."}, "p_cantera": {"car": "Canteras de piedra blanca en las lomas de Frondaverde.", "his": "Toda la piedra de Equinoccia salió de acá, por un pacto entre los elfos verdes y el Tribunal."}, "p_quilla": {"car": "Faro élfico en la punta de la península.", "his": "Marca la entrada al fondeadero de Equinoccia; nunca se apagó."}, "p_hondaforja": {"car": "Ciudad-mina enana cavada en la montaña del sudoeste: chimeneas en la roca, puentes colgantes y el ruido de los martillos.", "his": "La fundaron enanos jóvenes que se fueron de Durmhold cuando las forjas de Halvar los dejaron sin trabajo. Paga tributo al rey de Brenmoor."}, "p_bocapizarra": {"car": "La entrada principal a las galerías enanas.", "his": "De noche se ven las linternas de los mineros subir y bajar por la ladera."}, "p_mojon": {"car": "Fortaleza enana en la montaña.", "his": "Guarda las minas de la Marca Enana y el paso hacia el pantano."}, "p_hrafnborg": {"car": "Capital de Valkhar: salones largos de madera negra con techos de turba, al pie del volcán.", "his": "Sede del Torneo de Ceniza, donde se gana el trono. Ahí reina Hrafna «la Brasa»."}, "p_eldvik": {"car": "Puerto de Valkhar sobre el Zénit: drakares en una playa de arena negra.", "his": "Por acá sale el hierro volcánico del norte."}, "p_skjaldvik": {"car": "Puerto de los clanes Skjald en el fiordo más al norte.", "his": "Desde acá zarpan los saqueos de costa."}, "p_isavarde": {"car": "Aldea de cazadores y mineros en las Cumbres Mudas, con runas talladas en cada puerta.", "his": "Los Kel'uun dicen que las runas mantienen callada a la montaña."}, "p_ulfstad": {"car": "Fortín de empalizada en la nieve.", "his": "Marca la frontera entre Valkhar y las Cumbres."}, "p_kaldmyr": {"car": "Pueblo de leñadores en la isla boreal: casas en los árboles y fogatas que no se apagan.", "his": "El fuego del pueblo no se dejó morir en ningún invierno."}, "p_doblon": {"car": "Puerto pirata de Brava: tabernas sobre pilotes, cascos de barco convertidos en casas y un mercado de botines.", "his": "Nadie pregunta de dónde viene lo que se vende."}, "p_ahorcados": {"car": "Fondeadero escondido entre los cayos de Brava.", "his": "La horca vieja de la entrada avisa a los curiosos. Es el refugio de la corsaria n.º 52."}, "p_aurea": {"car": "Capital del Imperio Soleán: avenidas doradas, templos al León y la Gran Arena, un coliseo de gladiadores y bestias.", "his": "Las provincias pagan con oro y con sangre: los mejores gladiadores son esclavos bestiales de Hirka."}, "p_andra_juego": {"car": "Andra de noche: casinos de máscaras, teatros de ilusionistas y luces de éter hasta el amanecer. Se apuesta sobre todo.", "his": "Los gremios de Andra hicieron del juego su banca. Rocío pelea en la feria, y la casa siempre cobra."}, "p_ferrumbre": {"car": "Capital del Cantón de Halvar: torres de engranajes, tranvías de vapor, dirigibles y fábricas de constructos movidas con éter.", "his": "Cada chimenea quema restos asterii. Algunos constructos empiezan a pensar por su cuenta."}, "p_nacara": {"car": "Capital de Maresol construida sobre el agua: canales en vez de calles, góndolas, puentes de nácar, cascadas desde terrazas blancas y un palacio sobre el mar.", "his": "La ciudad crece hacia el mar, piso sobre piso de coral. Desde el palacio se ve el Estrecho."}};
+function fillRes(el,p){ const r=RES[p.id]; el.innerHTML=''; if(r){ [['Características',r.car],['Historia',r.his]].forEach(([h,t])=>{ const H=document.createElement('h4'); H.textContent=h; const P=document.createElement('p'); P.textContent=t; el.append(H,P); }); if(p.prop){ const P=document.createElement('p'); P.style.cssText='margin-top:6px;font-style:italic;opacity:.8'; P.textContent='Propuesta para completar el mapa: sin aprobar.'; el.appendChild(P);} } else el.textContent=p.d; }
+function pop(p){ const el=document.getElementById('pop'); if(!p){ el.classList.remove('on'); return; }
+  el.innerHTML=`<button class="x" aria-label="Cerrar">×</button><div class="k"></div><h3></h3><div class="body"></div><div class="chips"></div>`;
+  el.querySelector('.k').textContent=T[p.t].n+(p.estilo?' · '+p.estilo:''); el.querySelector('h3').textContent=p.n; fillRes(el.querySelector('.body'),p);
+  const ch=[]; if(p.casa) ch.push('Casa: '+p.casa); if(p.arco) ch.push(p.arco); if(p.aprox) ch.push('ubicación aproximada'); el.querySelector('.chips').innerHTML=ch.map(()=>'<span class="chip"></span>').join(''); [...el.querySelectorAll('.chip')].forEach((c,i)=>c.textContent=ch[i]);
+  el.querySelector('.x').onclick=()=>{ pop(null); }; el.classList.add('on');
+  const r=svg.getBoundingClientRect(), W=document.getElementById('wrap').getBoundingClientRect(); const sx=(p.x-VB[0])/VB[2]*r.width+r.left-W.left, sy=(p.y-VB[1])/VB[3]*r.height+r.top-W.top;
+  const pw=Math.min(330,W.width-20); let left=sx+18, top=sy-40; if(left+pw>W.width-10) left=sx-pw-18; if(left<10) left=10; top=Math.max(10,Math.min(top,W.height-el.offsetHeight-10)); el.style.left=left+'px'; el.style.top=top+'px'; }
 function list(){ const q=document.getElementById('q').value.trim().toLowerCase(), L=document.getElementById('list'); L.innerHTML='';
   const items=data().filter(p=>!q||(p.n+' '+p.d+' '+(p.casa||'')).toLowerCase().includes(q));
   Object.keys(T).forEach(t=>{ const g=items.filter(p=>p.t===t); if(!g.length) return; const h=document.createElement('div'); h.className='grp'; h.textContent=T[t].n+' · '+g.length; L.appendChild(h);
     g.forEach(p=>{ const b=document.createElement('button'); b.className='it'+(SEL===p.id?' on':''); b.innerHTML=`<span class="dot" style="background:${T[t].c}"></span><span></span><small></small>`; b.children[1].textContent=p.n; b.children[2].textContent=p.casa||p.arco||''; b.onclick=()=>select(p.id,true); L.appendChild(b); }); }); }
 function legend(){ document.getElementById('legend').innerHTML=Object.keys(T).filter(t=>data().some(p=>p.t===t)).map(t=>`<span><i class="dot" style="background:${T[t].c}"></i>${T[t].n}</span>`).join('')+'<span>◌ ubicación aproximada</span><span>◌ amarillo: propuesta nueva</span>'; }
 function select(id,center){ SEL=id; const p=data().find(x=>x.id===id); card(p);
+  if(center&&p){ const w=VB0[2]/2.2,h=VB0[3]/2.2; setVB([p.x-w/2,p.y-h/2,w,h]); } pop(p);
   svg.querySelectorAll('.mk').forEach(m=>m.classList.toggle('on',m.dataset.id===id)); list();
-  if(center&&p){ const w=VB0[2]/2.2,h=VB0[3]/2.2; setVB([p.x-w/2,p.y-h/2,w,h]); } }
+  }
 /* ===== Zoom y arrastre ===== */
 function setVB(v){ VB=v; svg.setAttribute('viewBox',v.map(n=>n.toFixed(1)).join(' ')); }
 function zoom(f,cx,cy){ const [x,y,w,h]=VB; const nw=Math.max(VB0[2]/8,Math.min(VB0[2]*1.4,w*f)), nh=nw*h/w; cx=cx??x+w/2; cy=cy??y+h/2; setVB([cx-(cx-x)*nw/w,cy-(cy-y)*nh/h,nw,nh]); }
 const pt=(ev)=>{ const r=svg.getBoundingClientRect(); return [VB[0]+(ev.clientX-r.left)/r.width*VB[2], VB[1]+(ev.clientY-r.top)/r.height*VB[3]]; };
 svg.addEventListener('wheel',e=>{ e.preventDefault(); const [cx,cy]=pt(e); zoom(e.deltaY>0?1.15:1/1.15,cx,cy); },{passive:false});
 const P=new Map(); let start=null;
-svg.addEventListener('pointerdown',e=>{ svg.setPointerCapture(e.pointerId); P.set(e.pointerId,[e.clientX,e.clientY]); start={vb:VB.slice(),pts:new Map(P)}; svg.classList.add('drag'); });
+let downMk=null, downXY=null;
+svg.addEventListener('pointerdown',e=>{ const mk=e.target.closest&&e.target.closest('.mk'); downMk=mk?mk.dataset.id:null; downXY=[e.clientX,e.clientY]; svg.setPointerCapture(e.pointerId); P.set(e.pointerId,[e.clientX,e.clientY]); start={vb:VB.slice(),pts:new Map(P)}; svg.classList.add('drag'); });
 svg.addEventListener('pointermove',e=>{ if(!P.has(e.pointerId)) return; P.set(e.pointerId,[e.clientX,e.clientY]); const r=svg.getBoundingClientRect();
   if(P.size===1&&start.pts.size===1){ const [x0,y0]=[...start.pts.values()][0]; const dx=(e.clientX-x0)/r.width*start.vb[2], dy=(e.clientY-y0)/r.height*start.vb[3]; setVB([start.vb[0]-dx,start.vb[1]-dy,start.vb[2],start.vb[3]]); }
   else if(P.size===2&&start.pts.size===2){ const a=[...start.pts.values()], b=[...P.values()]; const d0=Math.hypot(a[0][0]-a[1][0],a[0][1]-a[1][1]), d1=Math.hypot(b[0][0]-b[1][0],b[0][1]-b[1][1]); if(d0>0){ VB=start.vb.slice(); const mx=(a[0][0]+a[1][0])/2, my=(a[0][1]+a[1][1])/2; const cx=VB[0]+(mx-r.left)/r.width*VB[2], cy=VB[1]+(my-r.top)/r.height*VB[3]; zoom(d0/d1,cx,cy); } } });
-const up=e=>{ P.delete(e.pointerId); start={vb:VB.slice(),pts:new Map(P)}; if(!P.size) svg.classList.remove('drag'); };
+const up=e=>{ if(downXY&&Math.hypot(e.clientX-downXY[0],e.clientY-downXY[1])<6&&P.size===1){ if(downMk) select(downMk,false); else pop(null); } downXY=null; P.delete(e.pointerId); start={vb:VB.slice(),pts:new Map(P)}; if(!P.size) svg.classList.remove('drag'); };
 svg.addEventListener('pointerup',up); svg.addEventListener('pointercancel',up);
 document.getElementById('zin').onclick=()=>zoom(1/1.3); document.getElementById('zout').onclick=()=>zoom(1.3); document.getElementById('zre').onclick=()=>setVB(VB0.slice());
 document.getElementById('q').addEventListener('input',list);
 document.getElementById('legend').onclick=e=>e.currentTarget.classList.toggle('open');
-function show(v){ VIEW=v; SEL=null; document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('on',b.dataset.v===v)); (v==='mundo'?drawMundo:drawBren)(); setVB(VB0.slice()); legend(); card(null); list(); }
+function show(v){ VIEW=v; SEL=null; pop(null); document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('on',b.dataset.v===v)); (v==='mundo'?drawMundo:drawBren)(); setVB(VB0.slice()); legend(); card(null); list(); }
 document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>show(b.dataset.v));
 show('mundo');
 </script>
