@@ -536,12 +536,22 @@ const MUS={
     const vl=seq('r:4 64:3 65:1 | 64:6 r:2 | r:4 67:2 65:2 | 64:4 62:4',0,0.35);
     return [{inst:'strings',notes:pad},{inst:'drum',notes:dr},{inst:'bell',notes:bell,pan:0.3},{inst:'violin',notes:vl,pan:-0.2}];
   })()},
+  // v28: fanfarria de recluta. Melodía original (no cita a ningún juego): escala que sube en Re mayor y cae en la octava
+  recluta:{step:0.12,len:22,once:true,parts:[
+    {inst:'brass',notes:seq('69:1 71:1 73:1 74:2 r:1 71:1 74:2 76:2 78:6 r:5',0,0.8)},
+    {inst:'lyre',notes:seq('62+66+69:5 r:1 67+71+74:3 r:1 74+78+81:8',0,0.55)},
+    {inst:'drum',notes:[[0,36,1,.8],[5,38,1,.7],[9,36,1,.8],[11,38,1,.9],[12,36,1,.9]]}
+  ]},
   victoria:{step:0.15,len:16,once:true,parts:[
     {inst:'brass',notes:seq('62:2 66:2 69:2 74:6 r:4',0,0.85)},
     {inst:'drum',notes:[[0,36,1,.9],[2,36,1,.8],[4,36,1,.8],[6,38,1,.9]]},
     {inst:'lyre',notes:seq('74+78+81:8',6,0.7)}
   ]}
 };
+// v28: toca una pieza corta ENCIMA de la música (la baja un momento y la devuelve), sin cortarla
+function playJingle(name){ try{ AU.init(); if(!AU.ctx) return; AU.resume(); const T=MUS[name]; if(!T) return; const c=AU.ctx, t0=c.currentTime+0.06, dur=T.len*T.step;
+  const m=AU.bus('mus'); if(m){ m.gain.setTargetAtTime(volGain('mus')*0.25,c.currentTime,0.08); m.gain.setTargetAtTime(volGain('mus'),t0+dur,0.4); }
+  T.parts.forEach(p=>p.notes.forEach(n=>playInst(p.inst,t0+n[0]*T.step,n[1],n[2]*T.step,n[3],AU.sfx,0,n[4]))); }catch(e){} }
 function playMusic(name){
   AU.init(); if(!AU.ctx) return; AU.resume();
   if(AU.cur && AU.cur.name===name) return;
@@ -1426,6 +1436,7 @@ for(const fam in TROPA_C) for(const cls in TROPA_C[fam]){ const C=TROPA_C[fam][c
       trail:C.trail,cast:C.cast,pal};
     if(!SP[id].atk) delete SP[id].atk;
     const hd=C.heads[pi%C.heads.length]; TROPA_ID[id]={fam,cls,pal:pn,pi,head:hd,C,clut:{g:PL,mg,ol:F.ol,head:hd}}; }); }
+SP.lancero_rosa=Object.assign({},SP.rc_lancero); TROPA_ID.lancero_rosa=TROPA_ID.rc_lancero; SP.lancero=Object.assign({},SP.rc_lancero); TROPA_ID.lancero=TROPA_ID.rc_lancero; // (el combate anima por la clave del enemigo) // v28: el lancero de la Rosa usa la tropa «luto» (negro, sin oro) con nombre propio, para no caer en la hoja del jinete
 for(const id in SP){ const s=SP[id]; if(s.pal&&s.pal.skin&&id!=='valdris') SKIN[s.pal.skin]=1; if(s.pal&&s.pal.eyeA){ EYE[s.pal.eyeA]=1; EYE[s.pal.eyeB||s.pal.eyeA]=1; } if(s.pal&&s.pal.eye) EYE[s.pal.eye]=1; s.id=id; if(s.k==='h'){ s.b=BLD[s.b]; s.pal=Object.assign({},DEF,{belt:'#5e4130',boot:'#4a3426',pants:'#3a3a40',lash:'#2b1d24'},s.pal);
   if(!s.pal.hair) s.pal.hair='#3a3030'; if(!s.pal.beard) s.pal.beard=s.pal.hair; if(!s.pal.cape) s.pal.cape='#555';
   if(id==='ilian'||s.olafOk) Object.assign(s.pal,{catfur:DEF.catfur}); }
@@ -14115,6 +14126,7 @@ LINES.cap2 = {
   },
   codex: {
     enemies: {
+      lancero:{tipo:'Orden de la Rosa Ceniza',zona:'Prados y Sauces · Pozo del Albardón · Plaza del edicto',lore:'Infantería de lanza larga, armadura negra lacada y ni un hilo de oro: la Rosa no gasta brillo en los que van adelante. Mantienen la distancia y entran con el cuerpo. Una estocada bien dada atraviesa la cota.'},
       jinete:{tipo:'Orden de la Rosa Ceniza',zona:'Senda de los carboneros · Orilla del Varne',lore:'Lanceros de la escolta del príncipe. El tratado les daba treinta lanzas envainadas; las desenvainaron. A pie pelean peor, pero cargan igual.'},
       cabo_jinetes:{tipo:'Jefe · Orden de la Rosa Ceniza',zona:'Orilla del Varne',lore:'Cabo de una partida de cuatro. Llevaba el cartel en la mano y el precio en la boca. Dov le enseñó lo que pasa cuando se toca un eje ajeno.'}
     },
@@ -22774,7 +22786,19 @@ const PZ={open:false,tab:'fichas',sel:'ilian',slot:null,use:null,L:null,body:nul
 /* Posadas (docs/diseno-posadas-formacion.md, D1/D2): el grupo activo (los 5 que pelean) se intercambia con la caravana solo en posadas, campamentos,
    puntos de formación y el castillo (Arco II). PZ.mode: libre · posada · campamento · formacion · fijo · castillo (lo pone quien abre la pausa).
    Fuera de esos lugares se ve todo, se reordena dentro de los 5, se cambian filas y se equipa; cruzar el 5.º lugar, no. */
-const GRUPO={ canSwap(){ return ['posada','campamento','formacion','castillo'].includes(PZ.mode); },
+/* v28 · «Formar el grupo» en la esfera de guardado, con candados por historia. Tabla ampliable (Arco II en adelante):
+     {id, si:()=>bool, fijo:'motivo'}            → en ese tramo no se cruza el 5.º lugar (el grupo lo arma la historia)
+     {id, si:()=>bool, oblig:[ids], motivo:'…'}  → esos integrantes no pueden bajar a la caravana
+   El protagonista y las invitadas tienen su candado propio (prot / guest). */
+const GRUPO_TRAMOS=[
+  {id:'c3_castel', si:()=>G.chap===3&&grupoHas('c3_hollin')&&!grupoHas('c3_jefe_corte')&&!grupoHas('c3_jefe'), fijo:'En Hollin los grupos los arma Nach. Se vuelve a cambiar después de la pelea de la plaza.'}
+];
+function grupoHas(k){ try{ return typeof ARC!=='undefined'&&ARC.has?ARC.has(k):!!(G.flags&&G.flags[k]); }catch(e){ return false; } }
+function grupoTramos(){ if(!G) return []; return GRUPO_TRAMOS.filter(t=>{ try{ return !!t.si(); }catch(e){ return false; } }); }
+const GRUPO={ canSwap(){ if(PZ.mode==='esfera') return !GRUPO.fijo(); return ['posada','campamento','formacion','castillo'].includes(PZ.mode); },
+  fijo(){ const t=grupoTramos().find(t=>t.fijo); return t?t.fijo:null; },
+  lock(id){ if(id===GRUPO.prot()) return nameOf(id)+': '+GRUPO.txt('protagonista','va siempre en el grupo.'); if(GRUPO.guest(id)) return GRUPO.txt('invitada','Va como invitada: no se cambia.');
+    const t=grupoTramos().find(t=>t.oblig&&t.oblig.includes(id)); return t?(nameOf(id)+': '+(t.motivo||'la historia lo necesita ahora.')):null; },
   prot(){ try{ return (G.flags&&G.flags.lider_nach&&G.party.nach)?'nach':(G.party.ilian?'ilian':partyIds()[0]); }catch(e){ return 'ilian'; } },
   guest(id){ return id==='lina'||(id==='agnes'&&!!(G.flags&&G.flags.agnes_invitada)&&!(G.flags&&G.flags.rec_agnes)); },
   txt(k,d){ try{ const P=LINES.posada, v=(P.grupo&&P.grupo[k])!=null?P.grupo[k]:(P.formacion&&P.formacion[k]); const L=POSADAS.lines(v); return (L&&L[0]&&L[0][1])||d; }catch(e){ return d; } } };
@@ -23012,14 +23036,14 @@ function tabGrupo(B){
   const fixed=PZ.mode==='fijo'&&PZ.fixed?PZ.fixed.filter(id=>G.party[id]):null;
   const ids=fixed||partyIds(); const N=5, big=!fixed&&ids.length>N, swap=GRUPO.canSwap(), prot=GRUPO.prot(); const main=el('div','pz-col gp-main');
   const cap=el('div','pz-cap gp-cap'); cap.appendChild(el('span',null,'Grupo')); cap.appendChild(el('span','gp-n',ids.length+' integrantes'));
-  if(PZ.mode!=='libre'){ const ML={posada:'Posada',campamento:'Campamento',formacion:'Formación',fijo:'Formación',castillo:'Castillo'}; cap.appendChild(el('span','gp-mode',ML[PZ.mode]||PZ.mode)); } main.appendChild(cap);
+  if(PZ.mode!=='libre'){ const ML={posada:'Posada',campamento:'Campamento',formacion:'Formación',fijo:'Formación',castillo:'Castillo',esfera:'Esfera de guardado'}; cap.appendChild(el('span','gp-mode',ML[PZ.mode]||PZ.mode)); } main.appendChild(cap);
   if(fixed) main.appendChild(el('p','pz-hint gp-lockhint',GRUPO.txt('bloqueado','Quién pelea lo decide la historia; las filas, vos.')));
   else if(PZ.mode==='formacion') main.appendChild(el('p','pz-hint',GRUPO.txt('abrir','Elegí quién pelea y en qué fila.')));
-  if(big&&!swap) main.appendChild(el('p','pz-hint gp-lockhint',GRUPO.txt('candado','El grupo se cambia en posadas, campamentos y puntos de formación.')));
+  if(big&&!swap) main.appendChild(el('p','pz-hint gp-lockhint',(PZ.mode==='esfera'&&GRUPO.fijo())||GRUPO.txt('candado','El grupo se cambia en posadas, campamentos, esferas de guardado y puntos de formación.')));
+  else if(big&&PZ.mode==='esfera'){ const ob=partyIds().slice(0,N).filter(id=>id!==prot&&!GRUPO.guest(id)&&GRUPO.lock(id)); if(ob.length) main.appendChild(el('p','pz-hint gp-lockhint','Con candado por la historia: '+ob.map(nameOf).join(', ')+'.')); }
   const grid=el('div','gp-cards');
   const doSwap=(a,b)=>{ const o=partyIds(); const i1=o.indexOf(a), i2=o.indexOf(b); if(i1<0||i2<0) return;
-    const cross=(i1<N)!==(i2<N); if(cross&&(GRUPO.guest(a)||GRUPO.guest(b))){ toast(GRUPO.txt('invitada','Va como invitada: no se cambia.'),2200); return; }
-    if(cross&&(a===prot&&i1<N||b===prot&&i2<N)){ toast(nameOf(prot)+': '+GRUPO.txt('protagonista','va siempre en el grupo.'),2000); return; }
+    const cross=(i1<N)!==(i2<N); if(cross){ const la=i1<N?GRUPO.lock(a):(GRUPO.guest(a)?GRUPO.lock(a):null), lb=i2<N?GRUPO.lock(b):(GRUPO.guest(b)?GRUPO.lock(b):null); if(la||lb){ toast(la||lb,2400); return; } } /* v28: candados por historia */
     [o[i1],o[i2]]=[o[i2],o[i1]]; G.order=o; sfx('heal'); };
   ids.forEach((id,i)=>{ const m=G.party[id], s=stats(m), nx=expInfo(m), [stc,stt]=statusOf(m,s);
     if(big&&i===N){ const sep=el('div','gp-sep',GRUPO.txt('caravana','En la caravana')); grid.appendChild(sep); }
@@ -23029,7 +23053,7 @@ function tabGrupo(B){
     const hd=el('div','gp-hd'); const nm=el('div','gp-nm'); nm.appendChild(el('b',null,CHAR[id].name)); const lv=el('span','gp-lv'); lv.appendChild(el('small',null,UIT.nivelCorto+' ')); lv.appendChild(el('b',null,String(m.lvl))); nm.appendChild(lv); hd.appendChild(nm);
     const sub=el('div','gp-sub'); sub.appendChild(el('span','gp-cls',classOf(id))); sub.appendChild(el('span','gp-st '+stc,stt)); hd.appendChild(sub); c.appendChild(hd);
     // ▲▼: reordenar. Sin posada no se cruza el 5.º lugar (candado); en la posada, el protagonista no baja a la caravana
-    const lockDn=big&&i===N-1&&(!swap||id===prot||GRUPO.guest(id)), lockUp=big&&i===N&&(!swap||GRUPO.guest(id)||GRUPO.guest(ids[N-1])||ids[N-1]===prot);
+    const lockDn=big&&i===N-1&&(!swap||!!GRUPO.lock(id)), lockUp=big&&i===N&&(!swap||GRUPO.guest(id)||!!GRUPO.lock(ids[N-1]));
     const mv=(d)=>{ if((d>0&&lockDn)||(d<0&&lockUp)){ toast(GRUPO.txt('candado','El grupo se cambia en posadas, campamentos y puntos de formación.'),2200); return; } const o=partyIds(); const j=i+d; if(j<0||j>=o.length) return; [o[i],o[j]]=[o[j],o[i]]; G.order=o; renderPause(); const f=PZ.body.querySelectorAll(d<0?'.pz-up':'.pz-dn')[j]; const g2=f&&!f.disabled?f:PZ.body.querySelectorAll(d<0?'.pz-dn':'.pz-up')[j]; if(g2) g2.focus({preventScroll:true}); };
     const ord=el('div','gp-ordb'); const bu=btn('pz-up'+(lockUp?' locked':''),'▲',()=>mv(-1),{disabled:!!fixed||i===0||lockUp,label:'Subir a '+CHAR[id].name}); const bd=btn('pz-dn'+(lockDn?' locked':''),'▼',()=>mv(1),{disabled:!!fixed||i===ids.length-1||lockDn,label:'Bajar a '+CHAR[id].name});
     if(lockUp||lockDn){ (lockUp?bu:bd).title=GRUPO.txt('candado','El grupo se cambia en posadas, campamentos y puntos de formación.'); } ord.appendChild(bu); ord.appendChild(bd); c.appendChild(ord);
@@ -23429,7 +23453,7 @@ TABDEF.opciones={label:'Opciones',render:B=>renderOptions(B)};
    ============================================================ */
 const CXT={
   tabs:{bestiario:'Bestiario',diario:'Diario',afinidad:'Afinidad'}, short:{bestiario:'Best.',diario:'Diario',afinidad:'Afin.'},
-  elem:{fuego:'Fuego',viento:'Viento',rayo:'Rayo',luz:'Luz',agua:'Agua',tierra:'Tierra',hielo:'Hielo',sombra:'Sombra',veneno:'Veneno',fisico:'Físico'},
+  elem:{fuego:'Fuego',viento:'Viento',rayo:'Rayo',luz:'Luz',agua:'Agua',tierra:'Tierra',hielo:'Hielo',sombra:'Oscuridad',veneno:'Veneno',fisico:'Físico'},
   enemies:{
     lobo:{tipo:'Bestia',zona:'Prados del Brezo · Linde del pantano',lore:'Bajan del brezo en manada cuando el invierno se estira. Cazan en semicírculo y siempre prueban primero al que va adelante. Le temen más al fuego que al acero.'},
     lobo_bosque:{tipo:'Bestia',zona:'Bosque de Sauces',lore:'Primo flaco del lobo gris, con el pelaje verdoso de tanto echarse en el musgo de la orilla. No sale a campo abierto: espera entre los juncos a que alguien se quede atrás o venga sangrando, y ahí muerde. Al fuego le tiene el mismo miedo que cualquier lobo.'},
@@ -26438,7 +26462,7 @@ const ENC=(()=>{
     if(!table||!danger) return {key,danger:0,on:false};
     // pulido A11 (S17): desde el Cap. 3, patrullas de la Rosa en Prados y Sauces, al nivel del capítulo (solo se llega en las ventanas de viaje)
     if(!AUTO&&(zoneId==='prados'||zoneId==='sauces')&&typeof G!=='undefined'&&G&&(G.chap|0)>=3&&typeof arcLvlKey==='function'){ const n=({3:8,4:9,5:10})[Math.min(5,G.chap|0)]; const lk=k=>arcLvlKey(k,n);
-      try{ table=table.concat([[40,[lk('soldado'),lk('soldado')]],[35,[lk('jinete'),lk('ballestero')]],[25,[lk('soldado'),lk('ballestero'),lk('jinete')]]]); }catch(e){} }
+      try{ table=table.concat([[25,[lk('soldado'),lk('soldado')]],[25,[lk('soldado'),lk(lanceroKey())]],[30,[lk('jinete'),lk('ballestero')]],[20,[lk(lanceroKey()),lk('ballestero'),lk('jinete')]]]); /* v28 (lancero A): las patrullas de la Rosa suman lanceros */ }catch(e){} }
     table=table.filter(x=>x[1]&&x[1].length&&x[1].every(k=>ENEMY[k])); // solo enemigos que existen
     const need=(enc&&enc.need!=null)?enc.need:(d?d.need:'c1');
     const bg=(enc&&enc.bgZone)||(zd&&zd.bgZone)||(d&&d.bg)||'prados';
@@ -26732,7 +26756,11 @@ function consGain(k,pvNow,pvMax,pmNow,pmMax){ const C=k==='pocion'?{pv:150}:ARC_
 const ARC_DROPS={ cabo_jinetes:['panuelo_cabo'], cabo_taberna:['guantelete_rosa'], montero:['cuerno_montero'] };
 
 /* ---------- enemigos y jefes (plan 2.x; escala de scaleUnit: PV×(1+0,12·d), ATQ/MAG +3d, DEF/RES +2d, VEL +d) ---------- */
+/* v28: el lancero entra a patrullas, pozo y edicto cuando tenga su hoja de PixelLab (modelo de Brian, ya hecho). Hasta entonces esos lugares siguen con soldados. */
+const LANCERO_ARTE=false;
+function lanceroKey(){ return LANCERO_ARTE?'lancero':'soldado'; }
 const ARC_ENEMY={
+  lancero:     {name:'Lancero de la Rosa',lvl:4,pv:320,atk:34,def:18,res:10,vel:15,pre:90,eva:6,cri:8,weak:['rayo'],exp:32,oro:18,spr:'lancero_rosa'}, // v28 (A+B): infantería de la Rosa con lanza larga, armadura negra lacada sin oro
   jinete:      {name:'Jinete de la Rosa',lvl:7,pv:470,atk:40,def:24,res:14,vel:22,pre:92,eva:8,cri:10,weak:['viento'],exp:80,oro:26,spr:'jinete'},
   cabo_jinetes:{name:'Cabo de jinetes',lvl:8,pv:2400,atk:46,def:30,res:18,vel:20,pre:92,eva:6,cri:10,weak:['rayo'],exp:150,oro:180,spr:'rc_oficial_ceniza',boss:true},
   sargento:    {name:'Sargento de la Rosa',lvl:10,pv:3400,atk:50,def:36,res:20,vel:20,pre:92,eva:6,cri:10,weak:['rayo'],exp:240,oro:0,spr:'rc_oficial',boss:true},
@@ -26759,6 +26787,7 @@ function arcLvlKey(key,lvl){ const b=ENEMY[key]; if(!b||b.lvl===lvl) return key;
 /* ---------- IA de los enemigos nuevos (la llama enemyTurn de p3_logic.js) ---------- */
 const arcFoes=B=>B.units.filter(v=>v.side==='e'&&alive(v)), arcAllies=B=>B.units.filter(v=>v.side==='p'&&alive(v));
 const ARC_AI={
+  lancero: async(B,e,cfg,X)=>{ if(!X.sealed&&LR()<0.35){ await X.atk('Estocada de lanza',{poder:115,pierce:true}); return; } await X.atk('Lanzazo',{poder:105}); },
   jinete: async(B,e,cfg,X)=>{ if(!X.sealed&&LR()<0.3){ const r=await X.atk('Carga',{poder:130}); if(r&&!r.r.miss&&alive(r.t)){ r.t.ct-=200; addFloat(B,{x:r.t.x,y:r.t.y+12},'Retrasado','#bbb'); } return; } await X.atk('Lanza',{poder:100}); },
   cabo_jinetes: async(B,e,cfg,X)=>{ bossBark(B,e);
     if(!X.sealed&&!e.carga&&e.pv<=e.pvMax*0.7){ e.carga=true; const L=arcTxt(2,'boss','cabo_jinetes','aLaCarga'); B.log='Cabo de jinetes: ¡A la carga!'; await X.fxOnly('en_soldado_formacion',[],()=>{ arcFoes(B).filter(v=>v.key!=='cabo_jinetes').forEach(v=>{ v.ct=1000; addFloat(B,v,'¡Carga!','#ff8a7a'); }); }); if(L&&!AUTO) await say(L[0],L[1],L[2]); hideDialog(); return; }
@@ -26781,7 +26810,7 @@ const ARC_FXA={descarga:'virote',canto_valor:'aullido',tajo_pesado:'mordida',fle
   imp_dov_0:'imp_severo_1',imp_dov_2:'imp_bertram_2',imp_ysa_0:'imp_simona_1',imp_ysa_2:'imp_nach_1',imp_bram_0:'imp_simona_1',imp_bram_2:'imp_maela_0',imp_tessa_0:'imp_bertram_0',imp_tessa_2:'imp_ilian_1',
   imp_odo_0:'imp_simona_1',imp_odo_2:'imp_simona_1',imp_zarpa_0:'defensa',imp_zarpa_2:'imp_lina_2',imp_gaspar_0:'en_asesino_humo',imp_gaspar_2:'imp_severo_2',imp_agnes_0:'imp_nach_0',imp_agnes_2:'imp_lina_2',imp_darra_0:'imp_nach_1',imp_darra_2:'imp_ilian_2'};
 const ARC_FXB={dov:'atk_ballesta',ysa:'atk_dagas',bram:'atk_maza',tessa:'atk_arco',odo:'atk_baston',zarpa:'atk_dagas',gaspar:'atk_baston',agnes:'atk_garra',darra:'atk_espada',
-  jinete:'atk_espada',cabo_jinetes:'atk_espada',sargento:'atk_espada',cabo_taberna:'atk_maza',sabueso:'atk_mordida',montero:'atk_espada',valdris:'atk_espada'};
+  lancero:'atk_espada',jinete:'atk_espada',cabo_jinetes:'atk_espada',sargento:'atk_espada',cabo_taberna:'atk_maza',sabueso:'atk_mordida',montero:'atk_espada',valdris:'atk_espada'};
 const ARC_FXE={'Venablo':'atk_arco','Golpe de jarra':'atk_maza','Tajo del Ocaso':'oswin_mandoble_ceniza','Dentellada':'en_alfa_desgarro','Mordida':'atk_mordida'};
 try{ const g0=FX.get, b0=FX.basic, e0=FX.enemy;
   FX.get=k=>{ const q=g0(k); return q||(ARC_FXA[k]?g0(ARC_FXA[k]):q); };
@@ -26965,7 +26994,7 @@ function log(x){ dbg.log.push(x); }
 /* ---------- reclutas (S2) ---------- */
 function join(id,minLvl,quiet){ if(!G||G.party[id]) return; const avg=arcCoreAvg(); /* B09: nivel de ingreso contra el núcleo (antes, contra todo el grupo, que ya incluía reclutas atrasados) */
   const lvl=Math.max(minLvl||2,Math.round(avg)-1); G.party[id]=mkMember(id,lvl); if(G.order&&!G.order.includes(id)) G.order.push(id); markMet(id); set('rec_'+id);
-  if(!G.sealed.includes(id)) seal(id); if(!AUTO) warmPartyArt([id]); if(!quiet) toast('Se suma '+CHAR[id].name+' · Nv '+lvl,2400); log('join:'+id+':'+lvl); }
+  if(!G.sealed.includes(id)) seal(id); if(!AUTO) warmPartyArt([id]); if(!quiet){ if(!AUTO&&typeof recruitCeremony==='function') recruitCeremony(id,lvl); else toast('Se suma '+CHAR[id].name+' · Nv '+lvl,2400); } log('join:'+id+':'+lvl); }
 // S7: ausencia temporal sin memberLeaves (conserva equipo y nivel)
 function away(id){ if(!G.party[id]) return; (G.away||(G.away={}))[id]=G.party[id]; delete G.party[id]; log('away:'+id); }
 function back(id){ if(!G.away||!G.away[id]) return; G.party[id]=G.away[id]; delete G.away[id]; log('back:'+id); }
@@ -27041,7 +27070,7 @@ const PRE={c4_gaspar:guard,c4_robo:guard,c4_vuelta:guard}, POST={
   c2_titulo:()=>farm(2), c3_titulo:()=>farm(3), c4_titulo:()=>farm(4), c5_titulo:()=>farm(5),
   c2_hollin:()=>buy([['pocion',2,15]]), c4_gaspar:async()=>{ unguard(); buy([['pocion_mayor',2,40],['bomba_eter',1,35]]); }, c5_granja:()=>buy([['pocion_mayor',2,40],['bomba_eter',1,35]]),
   c4_robo:unguard, c4_vuelta:unguard,
-  c4_fin:async()=>{ if(G&&!G.party.gaspar&&!(G.away&&G.away.gaspar)){ join('gaspar',CAPMIN[4]); log('gaspar:historia'); } } };
+  c4_fin:async()=>{ /* v28 (decisión 14): Gaspar ya no se suma solo al cerrar el Cap. 4; se suma únicamente si le comprás algo en su carreta */ } };
 // v27: otros módulos suman ganchos antes / después de un tramo (reclutas opcionales, escenas de Unísono): ARC.step(id,'pre'|'post',fn)
 function stepHook(id,when,fn){ const M=when==='pre'?PRE:POST, f0=M[id]; M[id]=f0?async()=>{ await f0(); await fn(); }:fn; }
 /* ---------- B23: temas nuevos donde corresponden (sin tocar los capN_mundo.js): se reemplaza el tema pedido en ese tramo ----------
@@ -27058,6 +27087,46 @@ return {step:stepHook,epigrafe,cap,install,set,has,txt,join,away,back,leader,key
 })();
 const arcTxt=(n,...p)=>ARC.txt(n,...p);
 
+/* ==================== MÓDULO arco1/ceremonia.js ==================== */
+/* v28 · CEREMONIA DE RECLUTA: cuando alguien se suma al grupo permanente, un cartel con su retrato,
+   destellos y una fanfarria corta original (playJingle('recluta')). No frena el juego: se va solo o con un toque. */
+let RECCER=null;
+function recruitCeremony(id,lvl){ try{
+  const ch=CHAR[id]; if(!ch) return; const host=document.getElementById('stage')||document.body;
+  if(!document.getElementById('reccer-css')){ const st=document.createElement('style'); st.id='reccer-css'; st.textContent=`
+#reccer{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:300;pointer-events:auto;background:radial-gradient(ellipse at center,rgba(255,214,120,.22),rgba(8,10,20,.55) 70%);opacity:0;transition:opacity .25s}
+#reccer.on{opacity:1}
+#reccer .rc-card{position:relative;display:flex;align-items:center;gap:14px;padding:14px 22px 14px 14px;background:linear-gradient(180deg,rgba(24,30,54,.96),rgba(10,14,28,.96));border:2px solid var(--gold,#e2b04a);border-radius:12px;box-shadow:0 0 0 3px rgba(0,0,0,.45),0 0 26px rgba(255,200,90,.45);transform:scale(.6) translateY(16px);animation:rcIn .5s cubic-bezier(.2,1.6,.4,1) forwards}
+#reccer .rc-port{width:76px;height:76px;image-rendering:pixelated;border:2px solid rgba(226,176,74,.8);border-radius:8px;background:#0b1020}
+#reccer .rc-t1{font-family:var(--f-ui,sans-serif);font-size:12px;letter-spacing:.18em;color:#e2b04a;text-transform:uppercase}
+#reccer .rc-t2{font-family:var(--f-ui,sans-serif);font-size:24px;font-weight:700;color:#fff6dc;text-shadow:0 2px 0 #000;margin:2px 0}
+#reccer .rc-t3{font-family:var(--f-ui,sans-serif);font-size:13px;color:#cfd6e8}
+#reccer .rc-sp{position:absolute;width:6px;height:6px;background:#ffe9a8;box-shadow:0 0 8px #ffd36a;transform:rotate(45deg);opacity:0;animation:rcSp 1.4s ease-out forwards}
+#reccer .rc-shine{position:absolute;inset:0;border-radius:10px;overflow:hidden;pointer-events:none}
+#reccer .rc-shine:after{content:'';position:absolute;top:-20%;bottom:-20%;width:40px;left:-60px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.35),transparent);transform:skewX(-20deg);animation:rcShine 1.1s .45s ease-out forwards}
+@keyframes rcIn{to{transform:scale(1) translateY(0)}}
+@keyframes rcSp{0%{opacity:0;transform:translate(0,0) rotate(45deg) scale(.4)}20%{opacity:1}100%{opacity:0;transform:translate(var(--dx),var(--dy)) rotate(45deg) scale(1)}}
+@keyframes rcShine{to{left:110%}}
+body.land #reccer .rc-t2{font-size:20px}`; document.head.appendChild(st); }
+  if(RECCER){ try{ RECCER.remove(); }catch(e){} RECCER=null; }
+  const ov=document.createElement('div'); ov.id='reccer';
+  const card=document.createElement('div'); card.className='rc-card';
+  const cv=document.createElement('canvas'); cv.className='rc-port'; cv.width=64; cv.height=64;
+  const im=(typeof pxPortraitImg==='function')?pxPortraitImg(id):null; const x=cv.getContext('2d'); x.imageSmoothingEnabled=false;
+  if(im){ const s=Math.min(64/im.naturalWidth,64/im.naturalHeight); const w=im.naturalWidth*s, h=im.naturalHeight*s; x.drawImage(im,(64-w)/2,(64-h)/2,w,h); }
+  else { x.fillStyle='#e2b04a'; x.font='bold 34px serif'; x.textAlign='center'; x.textBaseline='middle'; x.fillText((ch.name||'?')[0],32,34); }
+  const tx=document.createElement('div');
+  tx.innerHTML='<div class="rc-t1">Nuevo integrante</div><div class="rc-t2"></div><div class="rc-t3"></div>';
+  tx.querySelector('.rc-t2').textContent=ch.name+' se suma al grupo'; tx.querySelector('.rc-t3').textContent='Nivel '+lvl;
+  const sh=document.createElement('div'); sh.className='rc-shine';
+  card.append(cv,tx,sh);
+  for(let i=0;i<14;i++){ const p=document.createElement('i'); p.className='rc-sp'; const a=i/14*Math.PI*2, r=70+Math.random()*60;
+    p.style.left='50%'; p.style.top='50%'; p.style.setProperty('--dx',Math.round(Math.cos(a)*r*1.6)+'px'); p.style.setProperty('--dy',Math.round(Math.sin(a)*r)+'px'); p.style.animationDelay=(0.15+Math.random()*0.35).toFixed(2)+'s'; card.appendChild(p); }
+  ov.appendChild(card); host.appendChild(ov); RECCER=ov; requestAnimationFrame(()=>ov.classList.add('on'));
+  if(typeof playJingle==='function') playJingle('recluta');
+  let done=false; const close=()=>{ if(done) return; done=true; ov.classList.remove('on'); setTimeout(()=>{ try{ ov.remove(); }catch(e){} if(RECCER===ov) RECCER=null; },300); };
+  ov.addEventListener('pointerdown',close); setTimeout(close,3200);
+}catch(e){ try{ toast('Se suma '+CHAR[id].name+' · Nv '+lvl,2400); }catch(_){} } }
 /* ==================== MÓDULO arco1/sq.js ==================== */
 /* ============================================================
    ARCO I · Las dos misiones secundarias que entran (plan 5; textos: js/arco1/secundarias.js · LINES.sq)
@@ -28314,10 +28383,10 @@ function hollinC4(){ const tag='c4';
       { const g0=api.mk('soldado',sp.taberna_puerta.x+42,sp.taberna_puerta.y+10,{face:-1,label:'Soldado de la Rosa',onTalk:async()=>{ await api.playLines(Z4().hol_guardia_rosa_c4); }}); g0.speakId='soldado'; }
       [[[520,610],[800,610]],[[900,440],[1000,560],[900,560]]].forEach((pts,i)=>{ if(ARC.has('c4_ronda_'+i)) return; const g=api.patrol('soldado',pts,{label:'Soldado de la Rosa',spd:20,onTalk:async()=>{ await api.playLines(Z4().hol_guardia_rosa_c4); }}); g.speakId='soldado'; g.rondaId=i; });
       // guardias de la Rosa en la plaza: se esquivan o se pelean (opcional; una vez)
-      [[sp.pozo.x-30,sp.pozo.y+20],[sp.pozo.x+34,sp.pozo.y+16]].forEach(([x,y],i)=>{ const g=api.mk('soldado',x,y,{face:i?-1:1,label:'Soldado de la Rosa',onTalk:async()=>{
+      [[sp.pozo.x-30,sp.pozo.y+20],[sp.pozo.x+34,sp.pozo.y+16]].forEach(([x,y],i)=>{ const g=api.mk(i&&LANCERO_ARTE?'lancero_rosa':'soldado',x,y,{face:i?-1:1,label:i&&LANCERO_ARTE?'Lancero de la Rosa':'Soldado de la Rosa',onTalk:async()=>{
         if(ARC.has('c4_guardias')){ await say(null,'El soldado duerme contra el pozo. Nadie lo va a despertar.'); return; }
-        await api.playLines(Z4().hol_guardia_rosa_c4); const v=await choose([{label:'Esquivarlos',value:0,cls:'primary',auto:true,icon:'back'},{label:'Pelear (2 soldados)',value:1,icon:'sword'}],'Toque de queda');
-        if(v){ hideDialog(); await PFXI.cover('C8',250); await arcFight({zone:'noche',party:null,enemies:[['soldado',9],['soldado',9]]}); ARC.set('c4_guardias'); await fadeTo(1,150); setScene(api.S); CUR.sayStage=api.S; await fadeTo(0,300); } }}); g.speakId='soldado'; }); },
+        await api.playLines(Z4().hol_guardia_rosa_c4); const v=await choose([{label:'Esquivarlos',value:0,cls:'primary',auto:true,icon:'back'},{label:LANCERO_ARTE?'Pelear (soldado y lancero)':'Pelear (2 soldados)',value:1,icon:'sword'}],'Toque de queda');
+        if(v){ hideDialog(); await PFXI.cover('C8',250); await arcFight({zone:'noche',party:null,enemies:[['soldado',9],[lanceroKey(),9]]}); /* v28 (lancero A) */ ARC.set('c4_guardias'); await fadeTo(1,150); setScene(api.S); CUR.sayStage=api.S; await fadeTo(0,300); } }}); g.speakId='soldado'; }); },
     goal:api=>api.porton, // A02
     // pulido A14: toque de queda. Dos rondas de la Rosa con farol, lejos del camino al portón: si te ven, combate (y esa ronda no vuelve)
     patrols:true,
@@ -28339,7 +28408,7 @@ ARC.cap(4,{
     async c4_titulo(){ if(!ARC.has('sq_fiado_pago')&&(ARC.has('sq_fiado')||ARC.has('sq_fiado_espera'))) ARC.set('sq_fiado_perdida'); await ARC.card(4); },
     async c4_sur(){ ARC.set('c4_sur'); await ARC.enter('albardon','entrada'); playMusic('calma'); await ARC.world('c4_sur',at('entrada'),{},{music:'calma'}); },
     async c4_edicto(){ const r=await WORLD.go('c4_edicto'); const st=await WORLD.sceneIn('c4_edicto',{at:r.anchor,ms:400});
-      await playScene('c4_edicto',stageCtx(st,ARC.hooks({battle:async()=>{ await ARC.fightIn(st,{zone:'pantano',party:null,enemies:[['soldado',9],['soldado',9],['soldado',9]]}); }}))); hideDialog(); WORLD.finish('c4_edicto'); },
+      await playScene('c4_edicto',stageCtx(st,ARC.hooks({battle:async()=>{ await ARC.fightIn(st,{zone:'pantano',party:null,enemies:[['soldado',9],[lanceroKey(),9],['soldado',9]]}); }}))); hideDialog(); WORLD.finish('c4_edicto'); /* v28 (lancero B): soldado + lancero + soldado */ },
     async c4_gaspar(){ await ARC.enter('albardon','edicto'); const st=await WORLD.sceneIn('c4_gaspar',{at:at('edicto'),ms:300,music:'calma'}); let bought=false;
       await playScene('c4_gaspar',stageCtx(st,ARC.hooks({tiendaGaspar:async()=>{ ARC.set('c4_gaspar'); bought=await gasparTienda(); }})));
       if(bought) await playScene('c4_gaspar_compra',stageCtx(st,ARC.hooks({joinGaspar:async()=>{ ARC.join('gaspar',10); }}))); hideDialog(); await WORLD.back(st); },
@@ -28635,7 +28704,14 @@ const AFTER=[]; // POSADAS.afterSleep(fn): fn(idDelLugar, {camp,…})
 async function esferaOpen(o){ if(AUTO||!G) return false; o=o||{}; const T=PT('esfera')||{}; hideDialog(); try{ sfx('seal'); }catch(e){}
   const seen=flagsOf('esfera'); if(!seen.vista){ seen.vista=1; await speak(T.primera,null); } await speak(T.toque,null); hideDialog();
   let place=o.place; if(!place){ try{ place=SAVES.placeNow(); }catch(e){ place=''; } }
-  const saved=await openSaveLayer({title:T.nombre||'Esfera de guardado',place,reason:'esfera'});
+  /* v28: la esfera también arma el grupo (activos ↔ caravana), salvo en los tramos donde la historia lo fija */
+  let saved=false; const big=()=>{ try{ return WORLD.partyIds().length>5; }catch(e){ return false; } };
+  for(;;){ const ops=[{label:T.guardar||'Guardar',value:'g',cls:'primary',icon:'feather'}];
+    if(big()) ops.push({label:T.formar||'Formar el grupo',value:'f',icon:'swap'}); ops.push({label:T.seguir||'Seguir',value:'s',icon:'back'});
+    const v=ops.length>2?await choose(ops,T.nombre||'Esfera de guardado'):'g';
+    if(v==='f'){ hideDialog(); await pauseAwait('grupo',{mode:'esfera',place}); continue; }
+    if(v==='g'){ saved=await openSaveLayer({title:T.nombre||'Esfera de guardado',place,reason:'esfera'}); }
+    break; }
   await speak(saved?T.guardado:T.cancelar,null); hideDialog(); return saved; }
 
 /* ---------- mojón del cuervo: después del autoguardado ofrece la ranura (LINES.posada.mojon) ---------- */
