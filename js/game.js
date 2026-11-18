@@ -28547,7 +28547,7 @@ ARC.cap(5,{
     async c5_caceria(){ await ARC.enter('granja_vieja','granero'); playMusic('intriga'); const st=await WORLD.sceneIn('c5_caceria',{at:at('techo'),ms:300});
       await playScene('c5_caceria',stageCtx(st,ARC.hooks({battle:async()=>{ await ARC.fightIn(st,{zone:'campamento',party:null,enemies:[['sabueso_alfa',11],['sabueso',10],['jinete',10]] /* v28.3: la jauría la encabeza un alfa */}); }}))); hideDialog(); },
     async c5_granero(){ await ARC.enter('granja_vieja','granero'); await ARC.world('c5_granero_post',at('corral'),{},{music:'intriga'}); ARC.set('c5_juncal'); },
-    async c5_juncal(){ ARC.set('c5_juncal'); await ARC.enter('juncal','entrada'); playMusic('intriga'); await ARC.world('c5_juncal',at('entrada'),{anguileroPago:async()=>{ if(!AUTO) toast((L5().toasts||{}).anguilero||'',2200); }},{music:'intriga'}); },
+    async c5_juncal(){ ARC.set('c5_juncal'); await ARC.enter('juncal','entrada'); playMusic('intriga'); await ARC.world('c5_juncal',at('entrada'),{anguileroPago:async()=>{ ARC.set('noko_cruce'); /* v28.4: traspaso al Arco II (Ñoko) */ if(!AUTO) toast((L5().toasts||{}).anguilero||'',2200); }},{music:'intriga'}); },
     async c5_laguna(){ const r=await WORLD.go('c5_laguna'); const st=await WORLD.sceneIn('c5_laguna',{at:r.anchor,ms:400});
       await playScene('c5_laguna',stageCtx(st,ARC.hooks({battle:async()=>{ await ARC.fightIn(st,{zone:'pantano',party:null,enemies:[['jinete',11],['jinete',10],['jinete',11]]}); }}))); hideDialog(); await WORLD.back(st); },
     async c5_jefe(){ const r=await WORLD.go('c5_jefe'); playMusic('jefe'); const st=await WORLD.sceneIn('c5_jefe',{at:r.anchor,ms:400});
@@ -29011,6 +29011,27 @@ return {perfil,estado,libroInfo,fuera,hooks,txt,install,uniCheck,tessaSegunda,od
 })();
 RECL.install();
 
+/* ============================================================
+   ARCO II · TRASPASO DESDE EL ARCO I (v28.4)
+   Al cerrar el Arco I (epílogo del Cap. 5, ARC.set('arco1_fin')) se arma G.arco1: un resumen fijo de lo que el Arco II necesita saber,
+   para no depender de banderas sueltas. Ver docs/arco2/plan-produccion.md §3.
+   Se vuelve a armar si falta (partidas guardadas antes de la v28.4) con arco1Resumen().
+   ============================================================ */
+const ARCO1_OPC=['tessa','odo','zarpa','darra','gaspar'];
+function arco1Resumen(){
+  if(!G) return null; const f=G.flags||{}, P=G.party||{};
+  const opc={}; ARCO1_OPC.forEach(id=>{ opc[id]=P[id]?'sumado':(id==='tessa'&&f.tessa_perdida)?'perdido':(id==='zarpa'&&f.zarpa_se_va)?'se_fue':'no'; });
+  const rivales=Object.keys((G.enc&&G.enc.rivals)||{}).sort();
+  const R={v:1, reclutas:Object.keys(P).sort(), opcionales:opc,
+    gaspar:P.gaspar?'sumado':'no', // «Mercadería Devuelta» (s/d) si 'no'
+    noko_cruce:!!f.noko_cruce, // Ñoko se suma en el pantano (Arco II, cap. 11) si le pagaron el cruce
+    viejo_juncal:rivales.includes('riv_juncal')?'vencido':'no', // el pacto «dejarlo ir» todavía no existe en el Arco I (s/d)
+    rivales, oro:G.oro|0, rep_corvaine:f.rep_corvaine||0,
+    niveles:Object.fromEntries(Object.entries(P).map(([id,m])=>[id,m.lvl|0]))};
+  G.arco1=R; return R; }
+// partida terminada del Arco I: queda aparte de las ranuras para que el Arco II arranque desde ahí («Continuar al Arco II»)
+function arco1Guardar(){ if(!G) return false; const g=JSON.parse(JSON.stringify(G)); return store.set('arco1_clear',{v:1,ts:Date.now(),g}); }
+try{ const s0=ARC.set; ARC.set=function(k,v){ const r=s0.apply(this,arguments); if(k==='arco1_fin'){ try{ arco1Resumen(); arco1Guardar(); }catch(e){ console.error(e); } } return r; }; }catch(e){ console.error('traspaso',e); }
 /* ==================== MÓDULO viaje.js ==================== */
 /* ============================================================
    v28 · VIAJE POR EL MAPA DEL MUNDO (decisión de Brian: «que el pasaje de mapa en mapa deje de existir; sí o sí a través del mapa del mundo»)
