@@ -29687,86 +29687,255 @@ ARC.cap(6,{
 })();
 /* ==================== MÓDULO arco2/guerra.js ==================== */
 /* ============================================================
-   BATALLA DE GUERRA · v2 (pedido de Brian 19/11: estilo clásico de ejércitos con líder visible; las referencias son solo de estilo)
-   · Cada unidad es un LÍDER (un recluta, con su sprite de verdad) al frente de SU EJÉRCITO (soldaditos en formación y un número de tropa).
-   · El campo es abierto (fondo pintado + caminos); por debajo hay una grilla invisible de 7×5 para mover y medir alcances.
-   · Al chocar dos unidades se corta a un COMBATE SIMULADO EN MINIATURA: los dos ejércitos corren, chocan, caen soldados y bajan los contadores.
-   · Triángulo: infantería > caballería > tiradores > infantería (×1,5 / ×0,67). Moral ≤ 20 o tropa en 0 → la unidad se retira (el líder no muere).
-   · Cada líder tiene una habilidad propia (una vez por batalla). El general tiene la Arenga y el Duelo de generales.
-   · Órdenes por el menú de comandos (choose 'cmd'): mover (4 direcciones), atacar, sostener, habilidad.
+   BATALLA DE GUERRA · v3 (pedido de Brian 19/11: subtipos de tropa, habilidad del comandante según su oficio y pasiva de su raza;
+   ejércitos más grandes con la vista alejada). Las referencias de otros juegos son solo de estilo.
+   · Cada unidad es un LÍDER (un recluta, con su sprite) al frente de SU EJÉRCITO (soldados en formación y un número de tropa).
+   · Grilla invisible de 7×5. Al chocar se corta a un COMBATE SIMULADO: los ejércitos corren o disparan, caen soldados y bajan los contadores.
+   · Triángulo: infantería > caballería > tiradores > infantería (×1,5 / ×0,67). Moral ≤ 20 o tropa en 0 → se retira (el líder no muere).
+   · SUBTIPO (fijo por comandante, decisión 19/11): infantería de espada y escudo o de lanza; tiradores arqueros/ballesteros o magos;
+     caballería de caballeros con espada y escudo o de lanza de choque. Cada subtipo tiene su pasiva.
+   · HABILIDAD DE MANDO según el OFICIO del comandante (clase de su ficha): una vez por batalla.
+   · PASIVA DE RAZA del comandante: vale para toda su división (canon Etapa 6, B4 y B6).
+   · El enemigo también usa sus habilidades.
    Uso: const r=await WAR.run(cfg) → {win, turns, tries}. Lo usa Tresmolinos (Cap. 7) y lo va a usar el reencuentro (Cap. 8).
-   cfg: {title, turns, hold:{x,y,name}, ours:[u], foes:[u], waves:{turno:[u]}, joins:{turno:[u]}, bg, genLvl:{p,e}, foeMul, retry, armyP, armyE, lines:{start,win,lose}}
-   u: {id, name, leader:'idSprite', type:'inf'|'cab'|'tir'|'gen', x, y, troops?, moral?, skill?:'arenga'|'lluvia'|'carga'|'muro'}
+   cfg: {title, turns, hold:{x,y,name}, ours:[u], foes:[u], waves:{turno:[u]}, joins:{turno:[u]}, bg, genLvl:{p,e}, foeMul, retry, armyP, armyE, lines:{start,win,<habilidad>}}
+   u: {id, name, leader:'idSprite', type:'inf'|'cab'|'tir'|'gen', sub?, x, y, troops?, moral?, skill?, raza?, clase?}
    ============================================================ */
 const WAR=(()=>{
 const COLS=7, ROWS=5;
 const TYPE={ inf:{n:'Infantería',atk:22,def:1.0,mv:1,rng:1}, cab:{n:'Caballería',atk:26,def:0.9,mv:2,rng:1},
   tir:{n:'Tiradores',atk:18,def:0.8,mv:1,rng:2}, gen:{n:'Mando',atk:16,def:1.1,mv:1,rng:1} };
 const BEATS={inf:'cab',cab:'tir',tir:'inf'};
-const SKILL={ arenga:{n:'Arenga',d:'+20 de Moral a todo el ejército'}, lluvia:{n:'Lluvia de flechas',d:'Disparo a 3 casillas, daño ×1,5'},
-  carga:{n:'Carga',d:'Ataque con daño ×1,6 que además hunde la Moral'}, muro:{n:'Muro de picas',d:'Dos turnos recibiendo la mitad de daño'} };
-// soldaditos de cada tipo (ids de sprites.js: tropas de Brenmoor para nosotros, de la Rosa Ceniza para ellos)
+// soldaditos de respaldo mientras cargan las tiras (ids de sprites.js)
 const MINI={ p:{inf:'br_miliciano',cab:'guardia',tir:'br_arquero',gen:'guardia'}, e:{inf:'soldado',cab:'rc_caballero',tir:'ballestero',gen:'rc_lancero'} };
+// subtipos y sus pasivas
+const SUB={ inf:{espada:{n:'Espada y escudo',p:'Escudos: −25 % de daño de tiradores y magos'},lanza:{n:'Lanceros',p:'Picas: +30 % contra caballería'}},
+  tir:{arco:{n:'Arqueros y ballesteros',p:'Andanada: no reciben respuesta al disparar'},magia:{n:'Magos',p:'Hechizos: ignoran la guardia y el muro; +25 % contra infantería; caballería ×1,25 contra ellos'}},
+  cab:{espada:{n:'Caballeros de espada y escudo',p:'Armadura: −20 % de daño recibido'},lanza:{n:'Lanzas de choque',p:'Embestida: +30 % de daño y más Moral enemiga al atacar'}},
+  gen:{escolta:{n:'Guardia del general',p:'Estandarte: +5 de Moral a las divisiones vecinas cada turno'}} };
+// habilidad de mando por oficio (una vez por batalla). r: alcance para elegir objetivo.
+const SKILL={
+  ojo:{n:'Ojo del Cuervo',d:'Lee la jugada enemiga: este turno nuestras divisiones reciben −40 % y responden ×1,5; +10 de Moral'},
+  arenga:{n:'Arenga',d:'+20 de Moral a todo el ejército'},
+  canto:{n:'Canto de Valor',d:'+15 de Moral y +15 % de daño a todo el ejército durante 2 turnos'},
+  muro:{n:'Muro de escudos',d:'2 turnos con la mitad de daño; las divisiones vecinas reciben −20 %'},
+  cubrir:{n:'Cubrir la columna',d:'2 turnos: las divisiones propias de su columna reciben −40 %'},
+  atravesar:{n:'Atravesar',d:'La lanza pasa de largo: golpea al objetivo ×1,2 y a la división de atrás ×0,8',r:1},
+  galope:{n:'Galope',d:'Corre hasta 3 casillas y ataca en la misma orden ×1,3',r:4},
+  lluvia:{n:'Lluvia de flechas',d:'Hasta 3 casillas: objetivo ×1,3 y los que tiene pegados ×0,6',r:3},
+  sanar:{n:'Gracia',d:'Revive una división retirada (35 % de tropa); si no hay, cura 25 % a las vecinas',r:0},
+  fuego:{n:'Tormenta de fuego',d:'Hasta 3 casillas: ×1,4 sin guardia que valga, quema 2 turnos; ×0,5 a los pegados',r:3},
+  invocar:{n:'Invocación',d:'Una criatura cae sobre cualquier división enemiga ×1,5 y −15 de Moral, sin respuesta',r:9},
+  tajo:{n:'Tajo Pesado',d:'Ataque ×1,6 que rompe la guardia y el muro del objetivo',r:1},
+  rafaga:{n:'Ráfaga',d:'Dos ataques seguidos ×0,75',r:1},
+  sabotaje:{n:'Sabotaje',d:'Hasta 2 casillas: −25 de Moral y el objetivo pierde su próximo turno',r:2},
+  bomba:{n:'Bomba de éter',d:'Hasta 2 casillas: ×0,8 al objetivo y a los pegados, −10 de Moral',r:2},
+  torreta:{n:'Ballesta de campaña',d:'Disparo a 3 casillas ×1,4 sin respuesta',r:3},
+  decreto:{n:'Decreto: Ley del Acero',d:'3 turnos: el enemigo no usa habilidades y sus tiradores hacen −30 %'},
+  sobrecarga:{n:'Sobrecarga',d:'Ataque ×1,9; el turno siguiente la división queda quieta',r:1},
+  ola:{n:'Ola Umbría',d:'Daña a todas las divisiones enemigas pegadas; cuesta 10 % de la tropa propia',r:1} };
+// oficio (clase de la ficha) → habilidad y subtipo natural
+const CLS=[ [/batidor/i,'ojo'],[/escudero|guardi[aá]n/i,'cubrir'],[/caballero oscuro/i,'ola'],[/caballero|palad/i,'muro'],[/lancer|dragoon|valkiria/i,'atravesar'],
+  [/arquer|cazador|francotir|pistoler/i,'lluvia'],[/mago blanco|cl[eé]rigo|sacerdot|druida/i,'sanar'],[/mago|hechic|brujo/i,'fuego'],[/invocador/i,'invocar'],
+  [/guerrer|espadach|berserk|gladiad|samur|duelist/i,'tajo'],[/monje|p[uú]gil|shaolin/i,'rafaga'],[/ladr|ninja|asesin/i,'sabotaje'],[/alquim/i,'bomba'],[/ingenier|artific/i,'torreta'],
+  [/juez/i,'decreto'],[/exo|aut[oó]mata|coloso/i,'sobrecarga'],[/bardo|lirist|danzar/i,'canto'] ];
+const SUBDEF={inf:c=>/lancer|guardi|dragoon|valkiria/i.test(c)?'lanza':'espada', cab:c=>/lancer|dragoon|valkiria/i.test(c)?'lanza':'espada',
+  tir:c=>/mago|cl[eé]rigo|invoc|sacerd|alquim|bardo|druida/i.test(c)?'magia':'arco', gen:()=>'escolta'};
+// pasiva de raza del comandante (canon Etapa 6)
+const RAZA={ humano:{n:'Adaptables',d:'+10 % contra divisiones humanas; recupera 3 de Moral por turno'},
+  enano:{n:'Piedra Viva',d:'−15 % de daño recibido; −1 de movimiento (mínimo 1)'},
+  elfo:{n:'Memoria Antigua',d:'La Moral no baja cuando se retira un aliado; tiradores con +1 de alcance'},
+  semielfo:{n:'Dos Mundos',d:'+5 % de daño; la mitad de Moral perdida cuando se retira un aliado'},
+  bestial:{n:'Sentidos Agudos',d:'No la sorprenden: +15 % de daño al responder; felino: +1 de movimiento'},
+  injertado:{n:'Motor de Éter',d:'+10 % de daño; recibe +10 % de los magos'},
+  constructo:{n:'Sin Miedo',d:'La Moral nunca baja; −1 de movimiento (mínimo 1)'},
+  criatura:{n:'Olfato',d:'+10 % de daño y +1 de movimiento'},
+  ninguna:{n:'Sin comandante',d:'Sin habilidad ni pasiva de raza'} };
+function razaKey(r){ r=String(r||''); if(/semielf/i.test(r)) return 'semielfo'; if(/elf/i.test(r)) return 'elfo'; if(/enan/i.test(r)) return 'enano'; if(/bestial/i.test(r)) return 'bestial';
+  if(/injert/i.test(r)) return 'injertado'; if(/constru|aut[oó]mat/i.test(r)) return 'constructo'; if(/criatur|perr|gato/i.test(r)) return 'criatura'; return 'humano'; }
+// comandantes conocidos (raza y oficio de sus fichas); si falta, se lee la ficha del juego
+const CMD={ ilian:['Humano','Batidor'],nach:['Humano','Escudero de Guerra'],maela:['Humana','Lancero'],ewald:['Humano','Caballero'],mirena:['Humana','Cazador'],
+  hedda:['Humana','Mago blanco'],casimir:['Humano','Mago rojo'],bram:['Humano','Guerrero'],tessa:['Humana','Arquero'],odo:['Humano','Clérigo'],zarpa:['Bestial (felino leve)','Ladrón'],
+  gaspar:['Humano','Alquimista'],agnes:['Humana','Monje'],darra:['Humana (injertada)','Exo-Infante'],kett:['Constructo asterii','Autómata de Guerra'],teo:['Humano','Ingeniero'],
+  lamar:['Humano','Bardo'],ismena:['Humana','Invocador'],rocio:['Humana','Púgil'],nilo:['Enano de las Marcas','Guerrero'],bertram:['Enano (Durmhold)','Arquero (ballesta)'],
+  severo:['Humano','Juez'],lina:['Humana','Espadachín'],dov:['Enano','Ingeniero'],ysa:['Semielfa','Bardo'],simona:['Criatura (perra)','Guardiana'],valdris:['¿?','Caballero oscuro'],
+  capitan_rosa:['Humano','Caballero'],lancero_rosa:['Humano','Lancero'],rc_caballero:['Humano','Caballero'],ballestero:['Humano','Arquero'],soldado:['Humano','Guerrero'],
+  mago_rosa:['Humano','Mago negro'],varek:['Humano','Guerrero'],oswin:['Humano','Caballero'] };
+// COMANDANTES (decisión 19/11): no todos pueden mandar. Cada uno trae su ejército con estadísticas base propias.
+// atk/def: multiplican el daño hecho y dividen el recibido · mor: Moral inicial · troops: tropa base. El resto del elenco puede ser SUBCOMANDANTE.
+const WCMD={
+  ilian:{army:'Guardia del Cuervo',type:'gen',sub:'escolta',troops:200,atk:1.00,def:1.10,mor:75},
+  nach:{army:'Escudos de Nach',type:'inf',sub:'espada',troops:500,atk:1.05,def:1.25,mor:80},
+  maela:{army:'Jinetes de Maela',type:'cab',sub:'lanza',troops:300,atk:1.20,def:0.95,mor:75},
+  ewald:{army:'Picas de Ewald',type:'inf',sub:'lanza',troops:500,atk:1.00,def:1.15,mor:70},
+  mirena:{army:'Arqueros de Mirena',type:'tir',sub:'arco',troops:300,atk:1.10,def:0.90,mor:70},
+  hedda:{army:'Sanadores de Hedda',type:'tir',sub:'magia',troops:200,atk:0.85,def:0.95,mor:72},
+  casimir:{army:'Magos de Casimir',type:'tir',sub:'magia',troops:200,atk:1.25,def:0.80,mor:60},
+  bram:{army:'Hachas de Hollin',type:'inf',sub:'espada',troops:400,atk:1.10,def:1.05,mor:70},
+  bertram:{army:'Ballestas de Durmhold',type:'tir',sub:'arco',troops:300,atk:1.15,def:1.10,mor:68},
+  nilo:{army:'Escudos de Pedernal',type:'inf',sub:'espada',troops:400,atk:1.05,def:1.20,mor:72},
+  severo:{army:'Guardia del Juez',type:'inf',sub:'espada',troops:400,atk:1.00,def:1.20,mor:65},
+  kett:{army:'Unidad K',type:'inf',sub:'espada',troops:300,atk:1.20,def:1.30,mor:100},
+  // la Rosa Ceniza
+  capitan_rosa:{army:'Mando de la Rosa',type:'gen',sub:'escolta',troops:200,atk:1.00,def:1.10,mor:65},
+  lancero_rosa:{army:'Lanceros de la Rosa',type:'inf',sub:'lanza',troops:500,atk:1.00,def:1.00,mor:65},
+  rc_caballero:{army:'Jinetes de la Rosa',type:'cab',sub:'espada',troops:300,atk:1.05,def:1.00,mor:65},
+  ballestero:{army:'Ballesteros de la Rosa',type:'tir',sub:'arco',troops:300,atk:1.00,def:0.95,mor:65},
+  mago_rosa:{army:'Magos de la Rosa',type:'tir',sub:'magia',troops:200,atk:1.15,def:0.85,mor:60} };
+const NOCMD={atk:0.75,def:0.85,mor:50}; // ejército sin comandante: sin habilidad ni pasiva, estadísticas bajas
+const isCmd=id=>!!WCMD[id];
+// SUBCOMANDANTES: hasta 2 por comandante. Sin habilidades en guerra; suben Ataque, Defensa y Moral según su AFINIDAD con el ejército:
+// Alta si su oficio comanda esa misma tropa (Etapa 5, §8), Media si es afín, Baja si no; +1 nivel si es de la raza del comandante o tienen vínculo.
+const RELS=[['bram','tessa'],['ilian','nach'],['maela','nach'],['ilian','maela'],['ewald','hedda'],['nilo','bertram'],['mirena','tessa'],['odo','agnes'],['gaspar','zarpa']];
+function troopOfClass(c){ c=c||''; if(/caballero|palad/i.test(c)) return 'cab'; if(/arquer|cazador|pistol|francot|ingenier|artific|batidor/i.test(c)) return 'arco';
+  if(/mago|hechic|brujo|invoc|alquim/i.test(c)) return 'magia'; if(/cl[eé]rigo|sacerd|bardo|lirist|druida/i.test(c)) return 'sacro'; if(/ladr|ninja|asesin|danzar/i.test(c)) return 'ligera';
+  if(/exo|aut[oó]mat|constru/i.test(c)) return 'constructo'; return 'inf'; }
+const ROLE=c=>/caballero|guardi|escudero|juez|exo|aut[oó]mat|guerrero/i.test(c||'')?'def':/cl[eé]rigo|sacerd|bardo|monje|lirist|druida|mago blanco/i.test(c||'')?'mor':'atk';
+function affinity(cmd,subId){ const [rz,cl]=cmdOf(subId); const t=troopOfClass(cl); const ty=cmd.type, sb=cmd.sub; let lv=1;
+  if((ty==='inf'||ty==='gen')&&t==='inf'||ty==='cab'&&t==='cab'||ty==='tir'&&sb==='arco'&&t==='arco'||ty==='tir'&&sb==='magia'&&(t==='magia'||t==='sacro')) lv=3;
+  else if((ty==='inf'||ty==='gen')&&(t==='ligera'||t==='constructo'||t==='cab')||ty==='cab'&&t==='inf'||ty==='tir'&&(t==='arco'||t==='magia'||t==='sacro')||t==='sacro') lv=2;
+  if(razaKey(rz)===cmd.raza||RELS.some(([x,y])=>(x===cmd.leader&&y===subId)||(y===cmd.leader&&x===subId))) lv=Math.min(3,lv+1);
+  const k=[0,0.025,0.045,0.07][lv], role=ROLE(cl); const b={atk:k*(role==='atk'?1.5:1),def:k*(role==='def'?1.5:1),mor:Math.round(k*100*(role==='mor'?1.5:1))};
+  return {lv,n:['','Baja','Media','Alta'][lv],b}; }
+function applySubs(u){ u.atkM=u.baseAtk; u.defM=u.baseDef; let mor=0; (u.subs||[]).forEach(id=>{ const a=affinity(u,id); u.atkM+=a.b.atk; u.defM+=a.b.def; mor+=a.b.mor; }); u.moral=Math.min(100,u.baseMor+mor); }
+function cmdOf(id){ if(CMD[id]) return CMD[id]; try{ const f=fichaData(id); if(f&&(f.raza||f.clase)) return [f.raza,f.clase]; }catch(e){} return ['Humano','Guerrero']; }
+function skillOf(clase){ for(const [re,k] of CLS) if(re.test(clase||'')) return k; return 'tajo'; }
 function tri(a,d){ if(a==='gen'||d==='gen') return 1; if(BEATS[a]===d) return 1.5; if(BEATS[d]===a) return 0.67; return 1; }
 const dist=(a,b)=>Math.abs(a.x-b.x)+Math.abs(a.y-b.y);
-function mk(d,side){ const t=d.troops||({inf:500,cab:300,tir:300,gen:200}[d.type]||300); return Object.assign({max:t,troops:t,str:100,moral:side==='p'?70:65,hold:0,side,used:false},d); }
+function mk(d,side){ const C=d.leader&&WCMD[d.leader]; const D=Object.assign({},C?{type:C.type,sub:C.sub,troops:C.troops,name:C.army}:{},d);
+  const t=D.troops||({inf:500,cab:300,tir:300,gen:200}[D.type]||300); const [rz,cl]=C?cmdOf(d.leader):['',''];
+  const clase=D.clase||cl, raza=C?razaKey(D.raza||rz):'ninguna'; const sub=D.sub||SUBDEF[D.type](clase); const skill=C?(D.skill||skillOf(clase)):null;
+  const st=C||NOCMD; const u=Object.assign({max:t,troops:t,str:100,hold:0,side,used:false,felino:/felin/i.test(D.raza||rz),subs:[]},D,{clase,raza,sub,skill,cmd:!!C,
+    baseAtk:st.atk,baseDef:st.def,baseMor:D.moral||st.mor||(side==='p'?70:65)});
+  if(!C){ u.leader=null; if(!u.name) u.name='Milicia sin mando'; } applySubs(u); return u; }
 function rng(seed){ let s=seed>>>0||1; return ()=>{ s^=s<<13; s>>>=0; s^=s>>>17; s^=s<<5; s>>>=0; return (s%10000)/10000; }; }
-function State(cfg){ const S={cfg,turn:1,units:[],log:[],R:rng(cfg.seed||1312),duel:false,say:null,clash:null};
+function State(cfg){ const S={cfg,turn:1,units:[],log:[],R:rng(cfg.seed||1312),duel:false,say:null,clash:null,guard:null,decreto:{p:0,e:0}};
   (cfg.ours||[]).forEach(d=>S.units.push(mk(d,'p'))); (cfg.foes||[]).forEach(d=>S.units.push(mk(d,'e'))); return S; }
 const ok=u=>u.str>0&&u.moral>20;
 const alive=S=>S.units.filter(ok);
 const side=(S,s)=>alive(S).filter(u=>u.side===s);
 const at=(S,x,y)=>alive(S).find(u=>u.x===x&&u.y===y);
 const free=(S,x,y)=>x>=0&&y>=0&&x<COLS&&y<ROWS&&!at(S,x,y);
-const inRange=(a,b,r)=>dist(a,b)<=(r||TYPE[a.type].rng);
+const mvOf=u=>Math.max(1,TYPE[u.type].mv+((u.raza==='enano'||u.raza==='constructo')?-1:0)+((u.raza==='bestial'&&u.felino)||u.raza==='criatura'?1:0));
+const rngOf=u=>TYPE[u.type].rng+(u.raza==='elfo'&&u.type==='tir'?1:0);
+const inRange=(a,b,r)=>dist(a,b)<=(r||rngOf(a));
 const targets=(S,u,r)=>alive(S).filter(v=>v.side!==u.side&&inRange(u,v,r));
 const army=(S,s)=>S.units.filter(u=>u.side===s).reduce((a,u)=>a+(ok(u)?u.troops:0),0);
 const syncTroops=u=>{ u.troops=Math.max(0,Math.round(u.max*u.str/100)); };
+const adj=(S,u,s)=>alive(S).filter(v=>v!==u&&(s?v.side===s:true)&&dist(u,v)===1);
+const ranged=(a,d)=>a.type==='tir'&&dist(a,d)>1;
 
-// choque: daño = base × triángulo × Fuerza × Moral × azar; sostener ×0,7, muro ×0,5; cuerpo a cuerpo devuelve la mitad
+// choque: daño = base × triángulo × subtipo × raza × Fuerza × Moral × azar; guardia ×0,7, muro ×0,5; cuerpo a cuerpo devuelve la mitad
+function mods(S,a,d,o){ let m=1; const notes=[];
+  if(a.sub==='lanza'&&a.type==='inf'&&d.type==='cab'){ m*=1.3; notes.push('picas'); }
+  if(a.sub==='magia'&&d.type==='inf') m*=1.25;
+  if(a.type==='cab'&&d.sub==='magia') m*=1.25;
+  if(d.type==='inf'&&d.sub==='espada'&&(ranged(a,d)||a.sub==='magia')) m*=0.75;
+  if(d.type==='cab'&&d.sub==='espada') m*=0.8;
+  if(a.type==='cab'&&a.sub==='lanza'&&!o.counter) m*=1.3;
+  if(a.raza==='humano'&&d.raza==='humano') m*=1.1;
+  if(d.raza==='enano') m*=0.85; if(a.raza==='injertado') m*=1.1; if(d.raza==='injertado'&&a.sub==='magia') m*=1.1;
+  if(a.raza==='semielfo') m*=1.05; if(a.raza==='criatura') m*=1.1; if(a.raza==='bestial'&&o.counter) m*=1.15;
+  if(a.cantoT>0) m*=1.15;
+  if(S.guard===d.side&&!o.counter) m*=0.6; if(S.guard===a.side&&o.counter) m*=1.5;
+  if(d.cubrirT>0) m*=0.6; else if(adj(S,d,d.side).some(v=>v.muroT>0)) m*=0.8;
+  if(a.type==='tir'&&S.decreto[a.side]>0) m*=0.7;
+  if(d.hold&&a.sub!=='magia'&&!o.pierce) m*=(d.muro?0.5:0.7);
+  return m; }
 function hit(S,a,d,o){ o=o||{}; const T=TYPE[a.type]; const tr=tri(a.type,d.type);
-  let dmg=T.atk*(a.side==='e'?(S.cfg.foeMul||1):1)*tr*(a.str/100)*(0.5+a.moral/200)*(0.85+S.R()*0.3)/TYPE[d.type].def*(o.mul||1);
-  if(d.hold) dmg*=(d.muro?0.5:0.7); if(o.counter) dmg*=0.5; dmg=Math.max(1,Math.round(dmg));
-  const before={a:a.troops,d:d.troops};
-  d.str=Math.max(0,d.str-dmg); d.moral=Math.max(0,d.moral-Math.round(dmg*(o.moralMul||0.6))); a.moral=Math.min(100,a.moral+(o.counter?0:3)); syncTroops(d);
-  let back=0; if(!o.counter&&ok(d)&&T.rng===1&&TYPE[d.type].rng===1&&!o.noBack){ back=hit(S,d,a,{counter:true,quiet:true}).dmg; }
+  let dmg=T.atk*(a.side==='e'?(S.cfg.foeMul||1):1)*tr*(a.str/100)*(0.5+a.moral/200)*(0.85+S.R()*0.3)/TYPE[d.type].def*(o.mul||1)*mods(S,a,d,o)*(a.atkM||1)/(d.defM||1);
+  if(o.counter) dmg*=0.5; dmg=Math.max(1,Math.round(dmg));
+  const before={a:a.troops,d:d.troops}; const mm=(o.moralMul||0.6)+(a.type==='cab'&&a.sub==='lanza'&&!o.counter?0.4:0);
+  d.str=Math.max(0,d.str-dmg); if(d.raza!=='constructo') d.moral=Math.max(0,d.moral-Math.round(dmg*mm)); a.moral=Math.min(100,a.moral+(o.counter?0:3)); syncTroops(d);
+  let back=0; const canBack=!o.counter&&!o.noBack&&ok(d)&&!(a.type==='tir'&&a.sub==='arco')&&dist(a,d)<=rngOf(d)&&(rngOf(a)===1||dist(a,d)===1);
+  if(canBack){ back=hit(S,d,a,{counter:true,quiet:true}).dmg; }
   if(!o.quiet){ S.log.push(a.name+' → '+d.name+': −'+(before.d-d.troops)+' soldados'+(tr>1?' (ventaja)':tr<1?' (desventaja)':''));
-    S.clash={a,d,tr,before,after:{a:a.troops,d:d.troops},t:0}; }
-  if(!ok(d)){ S.log.push(d.name+' se retira del campo.'); side(S,d.side).forEach(v=>{ v.moral=Math.max(0,v.moral-8); }); }
+    if(!o.noClash) S.clash={a,d,tr,before,after:{a:a.troops,d:d.troops},t:0,label:o.label||null,shot:ranged(a,d)||a.sub==='magia'||!!o.shot,magic:a.sub==='magia'||!!o.magic,
+      school:o.school||(a.sub==='magia'?(a.skill==='sanar'?'luz':'fuego'):null),extra:o.extra||null}; }
+  if(!ok(d)){ S.log.push(d.name+' se retira del campo.'); d.gone=S.turn;
+    side(S,d.side).forEach(v=>{ if(v.raza==='constructo'||v.raza==='elfo') return; v.moral=Math.max(0,v.moral-(v.raza==='semielfo'?4:8)); }); }
   return {dmg,back}; }
 function nearest(S,u,list){ let b=null,bd=99; list.forEach(v=>{ const d=dist(u,v); if(d<bd){ bd=d; b=v; } }); return b; }
-function stepToward(S,u,goal){ let best=null,bd=dist(u,goal); const mv=TYPE[u.type].mv;
+function stepToward(S,u,goal,mvMax){ let best=null,bd=dist(u,goal); const mv=mvMax||mvOf(u);
   for(let dx=-mv;dx<=mv;dx++) for(let dy=-mv;dy<=mv;dy++){ if(Math.abs(dx)+Math.abs(dy)>mv||(!dx&&!dy)) continue; const x=u.x+dx,y=u.y+dy; if(!free(S,x,y)) continue; const d=dist({x,y},goal); if(d<bd){ bd=d; best={x,y}; } }
   if(best){ u.x=best.x; u.y=best.y; return true; } return false; }
 function bestTarget(S,u,r){ const T=targets(S,u,r); if(!T.length) return null; return T.slice().sort((p,q)=>(tri(u.type,q.type)-tri(u.type,p.type))||(p.str-q.str))[0]; }
+// caballería: casilla libre pegada al objetivo a la que llega este turno (mover y atacar)
+function chargeCell(S,u,v,mv){ let best=null,bd=99; [[1,0],[-1,0],[0,1],[0,-1]].forEach(([dx,dy])=>{ const x=v.x+dx,y=v.y+dy; if(!free(S,x,y)) return; const d=Math.abs(x-u.x)+Math.abs(y-u.y); if(d<=mv&&d<bd){ bd=d; best={x,y}; } }); return best; }
+const behind=(S,u,t)=>{ const dx=Math.sign(t.x-u.x), dy=Math.sign(t.y-u.y); const b=at(S,t.x+dx,t.y+dy); if(b&&b.side===t.side) return b; return adj(S,t,t.side)[0]||null; };
 const DIRS=[[1,0,'→ hacia el enemigo'],[0,-1,'↑ arriba'],[0,1,'↓ abajo'],[-1,0,'← hacia atrás']];
+const tag=u=>TYPE[u.type].n+(SUB[u.type][u.sub]?' ('+SUB[u.type][u.sub].n.toLowerCase()+')':'');
+
+// ¿se puede usar la habilidad ahora? devuelve el objetivo (o true)
+function canSkill(S,u){ const k=u.skill, sk=SKILL[k]; if(!sk||u.used||S.decreto[u.side]>0) return null;
+  if(k==='galope'){ const T=side(S,u.side==='p'?'e':'p').filter(v=>dist(u,v)<=4&&(dist(u,v)===1||chargeCell(S,u,v,3))); return T.sort((p,q)=>(tri(u.type,q.type)-tri(u.type,p.type))||(p.str-q.str))[0]||null; }
+  if(k==='sanar'){ const gone=S.units.find(v=>v.side===u.side&&!ok(v)&&!v.revived); if(gone) return gone; const hurt=adj(S,u,u.side).concat([u]).filter(v=>v.str<80); return hurt.length?true:null; }
+  if(sk.r) return bestTarget(S,u,sk.r);
+  return true; }
+function skillHit(S,u,t,mul,o){ return hit(S,u,t,Object.assign({mul,label:SKILL[u.skill].n},o||{})); }
+function useSkill(S,u){ const k=u.skill, sk=SKILL[k], t=canSkill(S,u); if(!t) return false; u.used=true; const L=S.cfg.lines||{};
+  const say=(def)=>sayL(S,u.leader,L[k]||def); const foe=u.side==='p'?'e':'p';
+  if(k==='ojo'){ S.guard=u.side; side(S,u.side).forEach(w=>{ w.moral=Math.min(100,w.moral+10); }); S.log.push(u.name+': '+sk.n+'. Ya sabemos por dónde vienen.'); say('Ya sé por dónde vienen.'); }
+  else if(k==='arenga'){ side(S,u.side).forEach(w=>{ w.moral=Math.min(100,w.moral+20); }); S.log.push(u.name+': Arenga. +20 de Moral.'); say('¡Aguanten!'); }
+  else if(k==='canto'){ side(S,u.side).forEach(w=>{ w.moral=Math.min(100,w.moral+15); w.cantoT=2; }); S.log.push(u.name+': '+sk.n+'.'); say('¡Una más, que esta la saben!'); }
+  else if(k==='muro'){ u.hold=1; u.muro=true; u.muroT=2; S.log.push(u.name+': '+sk.n+' (2 turnos).'); say('Escudos al frente.'); }
+  else if(k==='cubrir'){ side(S,u.side).filter(w=>w.x===u.x).forEach(w=>{ w.cubrirT=2; }); S.log.push(u.name+': '+sk.n+'.'); say('Detrás mío. Todos.'); }
+  else if(k==='atravesar'){ const b=behind(S,u,t); skillHit(S,u,t,1.2,{noBack:true,extra:b?b.name:null}); if(b&&ok(b)) hit(S,u,b,{mul:0.8,noBack:true,quiet:true,noClash:true}); if(b) S.log.push('La lanza llega hasta '+b.name+'.'); say('¡Pasen de largo!'); }
+  else if(k==='galope'){ if(dist(u,t)>1){ const c=chargeCell(S,u,t,3); if(c){ u.x=c.x; u.y=c.y; } } skillHit(S,u,t,1.3,{moralMul:1.0}); say('¡Al galope!'); }
+  else if(k==='lluvia'){ skillHit(S,u,t,1.3,{noBack:true,shot:true}); adj(S,t,t.side).forEach(v=>hit(S,u,v,{mul:0.6,noBack:true,quiet:true,noClash:true})); say('¡Ahora!'); }
+  else if(k==='sanar'){ if(t!==true){ const c=[[1,0],[0,1],[0,-1],[-1,0],[1,1],[1,-1]].map(([dx,dy])=>({x:u.x+dx*(u.side==='p'?1:-1),y:u.y+dy})).find(c=>free(S,c.x,c.y)); if(c){ t.x=c.x; t.y=c.y; }
+      t.str=35; t.moral=55; t.revived=true; t.hold=0; syncTroops(t); S.log.push(u.name+': '+sk.n+'. ¡'+t.name+' vuelve al campo!'); say('Levántense. Todavía no.'); }
+    else { adj(S,u,u.side).concat([u]).forEach(v=>{ v.str=Math.min(100,v.str+25); v.moral=Math.min(100,v.moral+10); syncTroops(v); }); S.log.push(u.name+': '+sk.n+'. Las divisiones vecinas se recuperan.'); say('Quietos, que esto cierra.'); } }
+  else if(k==='fuego'){ skillHit(S,u,t,1.4,{noBack:true,pierce:true,magic:true,school:'fuego'}); t.burnT=2; adj(S,t,t.side).forEach(v=>hit(S,u,v,{mul:0.5,noBack:true,quiet:true,noClash:true,pierce:true})); say('Esto va a doler.'); }
+  else if(k==='invocar'){ skillHit(S,u,t,1.5,{noBack:true,magic:true,school:'sombra',moralMul:0.6}); t.moral=Math.max(0,t.moral-15); say('Vení. Te llamo yo.'); }
+  else if(k==='tajo'){ t.hold=0; t.muro=false; t.muroT=0; skillHit(S,u,t,1.6); say('¡Abran paso!'); }
+  else if(k==='rafaga'){ skillHit(S,u,t,0.75); if(ok(t)) hit(S,u,t,{mul:0.75,noBack:true,quiet:true,noClash:true}); say('¡Uno, dos!'); }
+  else if(k==='sabotaje'){ t.moral=Math.max(0,t.moral-25); t.stun=1; S.log.push(u.name+': '+sk.n+' contra '+t.name+'.'); say('Les corté las cinchas.'); }
+  else if(k==='bomba'){ skillHit(S,u,t,0.8,{noBack:true,shot:true,magic:true,school:'eter'}); adj(S,t,t.side).forEach(v=>{ hit(S,u,v,{mul:0.8,noBack:true,quiet:true,noClash:true}); v.moral=Math.max(0,v.moral-10); }); t.moral=Math.max(0,t.moral-10); say('¡Atrás, que explota!'); }
+  else if(k==='torreta'){ skillHit(S,u,t,1.4,{noBack:true,shot:true}); say('Calibrada. Fuego.'); }
+  else if(k==='decreto'){ S.decreto[foe]=3; S.log.push(u.name+': '+sk.n+'.'); say('Por ley: acero y nada más.'); }
+  else if(k==='sobrecarga'){ skillHit(S,u,t,1.9); u.stun=1; say('Sobrecarga.'); }
+  else if(k==='ola'){ const A=adj(S,u,foe); A.forEach((v,i)=>hit(S,u,v,{mul:1,noBack:true,quiet:i>0,noClash:i>0,label:sk.n,magic:true,school:'sombra'})); u.str=Math.max(1,u.str-10); syncTroops(u); say('Que los trague la sombra.'); }
+  return true; }
 
 // órdenes de una unidad propia (la primera marcada auto es la sensata: la elige la prueba automática)
 function orders(S,u){ const o=[]; const tg=bestTarget(S,u); const Hd=S.cfg.hold;
-  if(tg) o.push({label:'Atacar a '+tg.name,sub:TYPE[u.type].n+' contra '+TYPE[tg.type].n+(tri(u.type,tg.type)>1?' · con ventaja':tri(u.type,tg.type)<1?' · con desventaja':'')+' · '+tg.troops+' soldados',value:{k:'atk',t:tg.id},icon:'target',auto:true});
-  targets(S,u).filter(v=>!tg||v.id!==tg.id).slice(0,2).forEach(v=>o.push({label:'Atacar a '+v.name,sub:TYPE[u.type].n+' contra '+TYPE[v.type].n+' · '+v.troops+' soldados',value:{k:'atk',t:v.id},icon:'target'}));
-  const sk=u.skill&&!u.used&&SKILL[u.skill]; if(sk){ const can=u.skill==='lluvia'?!!bestTarget(S,u,3):(u.skill==='carga'?!!tg:true); if(can) o.push({label:sk.n,sub:'Habilidad de '+u.name+' (una vez): '+sk.d,value:{k:'skill'},icon:'flame'}); }
-  o.push({label:'Sostener la posición',sub:'Recibe un 30 % menos de daño este turno',value:{k:'hold'},icon:'shield',auto:!tg});
-  DIRS.forEach(([dx,dy,n])=>{ const mv=TYPE[u.type].mv; for(let s=mv;s>=1;s--){ const x=u.x+dx*s*(u.side==='p'?1:-1), y=u.y+dy*s; if(free(S,x,y)){ o.push({label:'Mover '+n,sub:s>1?'Dos casillas (caballería)':'Una casilla',value:{k:'mv',x,y},icon:'go'}); break; } } });
+  if(u.stun) return [{label:'La división se reagrupa',sub:'Pierde este turno',value:{k:'wait'},icon:'shield',auto:true}];
+  const vs=v=>tag(u)+' contra '+tag(v)+(tri(u.type,v.type)>1?' · con ventaja':tri(u.type,v.type)<1?' · con desventaja':'')+' · '+v.troops+' soldados';
+  if(tg) o.push({label:'Atacar a '+tg.name,sub:vs(tg),value:{k:'atk',t:tg.id},icon:'target',auto:true});
+  targets(S,u).filter(v=>!tg||v.id!==tg.id).slice(0,2).forEach(v=>o.push({label:'Atacar a '+v.name,sub:vs(v),value:{k:'atk',t:v.id},icon:'target'}));
+  if(u.type==='cab'){ const mv=mvOf(u); side(S,u.side==='p'?'e':'p').filter(v=>dist(u,v)>1&&dist(u,v)<=mv+1).slice(0,2).forEach(v=>{ const c=chargeCell(S,u,v,mv); if(c) o.push({label:'Cargar contra '+v.name,sub:'Caballería: se mueve y ataca en la misma orden (×0,9) · '+vs(v),value:{k:'charge',t:v.id,x:c.x,y:c.y},icon:'go',auto:!tg&&!o.some(q=>q.auto)}); }); }
+  const sk=SKILL[u.skill]; const st=canSkill(S,u); if(sk&&st) o.push({label:sk.n,sub:'Habilidad de '+u.name+' (una vez): '+sk.d+(st!==true&&st.name?' · objetivo: '+st.name:''),value:{k:'skill'},icon:'flame'});
+  o.push({label:'Sostener la posición',sub:'Recibe un 30 % menos de daño este turno',value:{k:'hold'},icon:'shield',auto:!o.some(q=>q.auto)});
+  DIRS.forEach(([dx,dy,n])=>{ const mv=mvOf(u); for(let s=mv;s>=1;s--){ const x=u.x+dx*s*(u.side==='p'?1:-1), y=u.y+dy*s; if(free(S,x,y)){ o.push({label:'Mover '+n,sub:s>1?s+' casillas':'Una casilla',value:{k:'mv',x,y},icon:'go'}); break; } } });
   if(Hd&&dist(u,Hd)>1) o.push({label:'Volver al '+(Hd.name||'objetivo'),sub:'Cubrir lo que hay que defender',value:{k:'back'},icon:'back'});
   const eg=side(S,'e').find(v=>v.type==='gen'); if(u.type==='gen'&&eg&&dist(u,eg)===1&&!S.duel) o.push({label:'Duelo de generales',sub:'Retar a '+eg.name,value:{k:'duel',t:eg.id},icon:'chat'});
   return o; }
 function sayL(S,id,txt){ S.say={id,txt,t:0}; }
+// al empezar el turno de un bando: quemaduras, estandarte, moral humana, contadores
+function upkeep(S,s){ side(S,s).forEach(u=>{ if(u.burnT>0){ u.burnT--; u.str=Math.max(0,u.str-4); syncTroops(u); if(!ok(u)){ S.log.push(u.name+' se retira entre las llamas.'); u.gone=S.turn; } }
+    if(u.raza==='humano') u.moral=Math.min(100,u.moral+3);
+    if(u.type==='gen') adj(S,u,s).forEach(v=>{ v.moral=Math.min(100,v.moral+5); });
+    if(u.cantoT>0) u.cantoT--; if(u.cubrirT>0) u.cubrirT--; });
+  if(S.decreto[s]>0) S.decreto[s]--; if(S.guard===s) S.guard=null; }
 function apply(S,u,v){ const Hd=S.cfg.hold; if(u.hold&&!u.muroT) u.hold=0; if(u.muroT){ u.muroT--; if(!u.muroT){ u.hold=0; u.muro=false; } }
-  if(v.k==='atk'){ const t=S.units.find(x=>x.id===v.t); if(t) hit(S,u,t); }
+  if(v.k==='wait'){ u.stun=0; S.log.push(u.name+' se reagrupa.'); }
+  else if(v.k==='atk'){ const t=S.units.find(x=>x.id===v.t); if(t) hit(S,u,t); }
+  else if(v.k==='charge'){ const t=S.units.find(x=>x.id===v.t); if(t&&free(S,v.x,v.y)){ u.x=v.x; u.y=v.y; hit(S,u,t,{mul:0.9,label:'Carga'}); } }
   else if(v.k==='hold'){ u.hold=1; S.log.push(u.name+' sostiene la posición.'); }
   else if(v.k==='mv'){ if(free(S,v.x,v.y)){ u.x=v.x; u.y=v.y; } S.log.push(u.name+' se mueve.'); }
   else if(v.k==='back'){ stepToward(S,u,Hd); S.log.push(u.name+' vuelve a cubrir.'); }
-  else if(v.k==='skill'){ u.used=true; const sk=u.skill;
-    if(sk==='arenga'){ side(S,'p').forEach(w=>{ w.moral=Math.min(100,w.moral+20); }); S.log.push(u.name+': Arenga. +20 de Moral.'); sayL(S,u.leader,(S.cfg.lines&&S.cfg.lines.arenga)||'¡Que nadie pise el molino!'); }
-    else if(sk==='lluvia'){ const t=bestTarget(S,u,3); if(t){ hit(S,u,t,{mul:1.5,noBack:true}); sayL(S,u.leader,(S.cfg.lines&&S.cfg.lines.lluvia)||'Ahora.'); } }
-    else if(sk==='carga'){ const t=bestTarget(S,u); if(t){ hit(S,u,t,{mul:1.6,moralMul:1.2}); sayL(S,u.leader,(S.cfg.lines&&S.cfg.lines.carga)||'¡Carguen!'); } }
-    else if(sk==='muro'){ u.hold=1; u.muro=true; u.muroT=2; S.log.push(u.name+': Muro de picas (2 turnos).'); sayL(S,u.leader,(S.cfg.lines&&S.cfg.lines.muro)||'Picas al frente.'); } }
+  else if(v.k==='skill'){ useSkill(S,u); }
   else if(v.k==='duel'){ S.duel=true; const t=S.units.find(x=>x.id===v.t); const G2=S.cfg.genLvl||{p:14,e:13}; const win=(G2.p-G2.e)*0.08+0.5+(S.R()-0.5)*0.4>0.5;
     side(S,win?'e':'p').forEach(w=>{ w.moral=Math.max(0,w.moral-25); }); if(win&&t){ t.str=Math.max(0,t.str-40); syncTroops(t); }
     S.log.push(win?'Duelo de generales: gana '+u.name+'. La Moral enemiga se hunde.':'Duelo de generales: gana '+(t?t.name:'el enemigo')+'. Nuestra Moral cae.'); } }
-function foeTurn(S){ const Hd=S.cfg.hold; const acts=[]; side(S,'e').forEach(u=>{ if(!ok(u)) return; u.hold=0; const tg=bestTarget(S,u);
-    if(tg){ acts.push(()=>hit(S,u,tg)); return; } const goal=(Hd&&!at(S,Hd.x,Hd.y))?Hd:(nearest(S,u,side(S,'p'))||Hd); if(goal) stepToward(S,u,goal); }); return acts; }
+// el enemigo: usa su habilidad cuando le conviene (desde el turno 2), si no ataca o avanza
+function foeTurn(S){ const Hd=S.cfg.hold; const acts=[]; upkeep(S,'e'); side(S,'e').forEach(u=>{ if(!ok(u)) return; u.hold=0; if(u.muroT){ u.muroT--; if(u.muroT) u.hold=1; else u.muro=false; }
+    if(u.stun){ u.stun=0; S.log.push(u.name+' se reagrupa.'); return; }
+    if(S.turn>=2&&!u.used&&canSkill(S,u)&&S.R()<0.55){ acts.push(()=>{ if(ok(u)) useSkill(S,u); }); return; }
+    const tg=bestTarget(S,u); if(tg){ acts.push(()=>{ if(ok(u)&&ok(tg)) hit(S,u,tg); }); return; }
+    if(u.type==='cab'){ const v=side(S,'p').filter(w=>dist(u,w)<=mvOf(u)+1).sort((p,q)=>tri('cab',q.type)-tri('cab',p.type))[0]; const c=v&&chargeCell(S,u,v,mvOf(u)); if(c){ u.x=c.x; u.y=c.y; acts.push(()=>{ if(ok(u)&&ok(v)) hit(S,u,v,{mul:0.9,label:'Carga'}); }); return; } }
+    const goal=(Hd&&!at(S,Hd.x,Hd.y))?Hd:(nearest(S,u,side(S,'p'))||Hd); if(goal) stepToward(S,u,goal); }); return acts; }
 function lost(S){ const Hd=S.cfg.hold; const o=Hd&&at(S,Hd.x,Hd.y); return (o&&o.side==='e')||!side(S,'p').length; }
 
 /* ---------- dibujo ---------- */
@@ -29788,38 +29957,62 @@ function horse(c,x,y,face,t,dark,sc){ sc=sc||1; const rows=HORSE.concat(Math.sin
 const TM={cg_inf:{w:35,h:50,n:7,ax:22,ay:49},cg_tir:{w:30,h:51,n:1,ax:15,ay:50},rc_inf:{w:41,h:49,n:7,ax:20,ay:48},rc_tir:{w:19,h:49,n:1,ax:10,ay:48},cg_cab:{w:76,h:53,n:7,ax:42,ay:52},rc_cab:{w:77,h:54,n:7,ax:43,ay:53}};
 const TIMG={}; const TK={p:'cg',e:'rc'};
 function timg(k){ let im=TIMG[k]; if(im===undefined){ try{ im=new Image(); im.src=LDC_ASSET('art/tropas/'+k+'.png'); }catch(e){ im=null; } TIMG[k]=im; } return im&&im.complete&&im.naturalWidth?im:null; }
-// arma por código (la pica del Cuervo, la lanza de la Rosa): una línea en diagonal, hacia adelante
-function pole(c,side,sc,lift){ c.strokeStyle='#5a4630'; c.lineWidth=1.2/Math.max(0.5,sc)*0.6+0.6; c.beginPath(); c.moveTo(-4,-20); c.lineTo(16,-42-lift); c.stroke(); c.fillStyle=side==='p'?'#cfd6e0':'#8a8e96'; c.beginPath(); c.moveTo(16,-46-lift); c.lineTo(18,-40-lift); c.lineTo(14,-41-lift); c.fill(); }
-function troop(c,side,type,x,y,face,t,run,sc){ const ty=type==='gen'?'inf':type; const k=TK[side]+'_'+ty; const m=TM[k], im=timg(k); if(!m||!im) return false;
+// armas por código para las tiras provisorias (cuando el subtipo todavía no tiene su modelo de PixelLab con el arma dibujada)
+const AC={p:{steel:'#cfd6e0',sh:'#3a6db0',shd:'#1d3a66',em:'#e8eef6'},e:{steel:'#8a8e96',sh:'#a23038',shd:'#3a0c12',em:'#120d16'}};
+function pole(c,side,lift){ c.strokeStyle='#5a4630'; c.lineWidth=1.6; c.beginPath(); c.moveTo(-4,-20); c.lineTo(16,-42-lift); c.stroke(); c.fillStyle=AC[side].steel; c.beginPath(); c.moveTo(16,-46-lift); c.lineTo(18,-40-lift); c.lineTo(14,-41-lift); c.fill(); }
+function shield(c,side,x,y){ const A=AC[side]; c.fillStyle=A.shd; c.beginPath(); c.moveTo(x-6,y-9); c.lineTo(x+6,y-9); c.lineTo(x+6,y+2); c.lineTo(x,y+8); c.lineTo(x-6,y+2); c.closePath(); c.fill();
+  c.fillStyle=A.sh; c.beginPath(); c.moveTo(x-5,y-8); c.lineTo(x+5,y-8); c.lineTo(x+5,y+1.5); c.lineTo(x,y+6.5); c.lineTo(x-5,y+1.5); c.closePath(); c.fill(); c.fillStyle=A.em; c.fillRect(x-1,y-6,2,9); c.fillRect(x-3.5,y-3,7,2); }
+function sword(c,side,x,y,up){ c.strokeStyle=AC[side].steel; c.lineWidth=2; c.beginPath(); c.moveTo(x,y); c.lineTo(x+(up?6:12),y-(up?16:6)); c.stroke(); c.fillStyle='#5a4630'; c.fillRect(x-3,y-1,6,2); }
+function lance(c,side,x,y){ c.strokeStyle='#6a5236'; c.lineWidth=2.2; c.beginPath(); c.moveTo(x-14,y+2); c.lineTo(x+30,y-3); c.stroke(); c.fillStyle=AC[side].steel; c.beginPath(); c.moveTo(x+30,y-6); c.lineTo(x+38,y-3.5); c.lineTo(x+30,y-1); c.fill();
+  c.fillStyle=AC[side].sh; c.beginPath(); c.moveTo(x+18,y-2); c.lineTo(x+24,y-2.6); c.lineTo(x+21,y+4); c.fill(); }
+const SCH={luz:['#fff6c0','#ffe27a'],fuego:['#ffb060','#ff5a20'],sombra:['#c8a0ff','#7a3cff'],eter:['#b8fff8','#3ad8e8']};
+function staff(c,school,t){ const C=SCH[school]||SCH.luz; c.strokeStyle='#6a5236'; c.lineWidth=1.8; c.beginPath(); c.moveTo(6,-4); c.lineTo(12,-40); c.stroke();
+  const r=3.2+Math.sin(t*6)*0.8; c.fillStyle=C[1]; c.globalAlpha=0.35; c.beginPath(); c.arc(12.5,-42,r+3,0,Math.PI*2); c.fill(); c.globalAlpha=1; c.fillStyle=C[0]; c.beginPath(); c.arc(12.5,-42,r,0,Math.PI*2); c.fill(); }
+const school=u=>u.sub==='magia'?(u.skill==='sanar'?'luz':u.skill==='invocar'?'sombra':u.skill==='bomba'?'eter':'fuego'):null;
+// busca la mejor tira disponible para el subtipo: la propia (con su arma) o la provisoria (y le dibuja el arma)
+function pick(side,keys){ for(const k of keys){ const key=TK[side]+'_'+k; if(TM[key]&&timg(key)) return {k:key,m:TM[key],im:timg(key),real:k.indexOf('_')>0||k==='esp'||k==='mag'}; } return null; }
+function troop(c,u,x,y,face,t,run,sc){ const side=u.side, ty=u.type==='gen'?'inf':u.type, sub=u.type==='gen'?'espada':u.sub;
+  const keys=ty==='inf'?(sub==='espada'?['esp','inf']:['inf']):ty==='tir'?(sub==='magia'?['mag_'+school(u),'mag','tir']:['tir']):['cab'];
+  const P=pick(side,keys); if(!P) return false; const m=P.m, im=P.im;
   const f=run&&m.n>1?1+Math.floor(t*12)%(m.n-1):0; const bob=!run&&m.n===1?Math.round(Math.sin(t*3)*0.6):0;
   c.save(); c.translate(Math.round(x),Math.round(y)); c.scale(face*sc,sc); c.imageSmoothingEnabled=false;
   if(ty==='cab'){ c.drawImage(im,f*m.w,0,m.w,m.h,-m.ax,-m.ay,m.w,m.h);
-    // jinete: medio cuerpo del infante del mismo ejército, sentado sobre la montura, con su lanza
-    const rk=TK[side]+'_inf', rm=TM[rk], ri=timg(rk); const hb=run?(f%2?-1:0):0;
-    if(ri){ const cut=30; c.drawImage(ri,0,0,rm.w,cut,-rm.ax+2,-m.ay+4-cut+hb+17,rm.w,cut); }
-    c.save(); c.translate(4,-m.ay+40+hb); pole(c,side,sc,run?0:4); c.restore(); }
-  else { c.drawImage(im,f*m.w,0,m.w,m.h,-m.ax,-m.ay+bob,m.w,m.h); if(ty==='inf'){ c.save(); c.translate(0,bob); pole(c,side,sc,run?-6:0); c.restore(); } }
+    // jinete: medio cuerpo del infante del mismo ejército sobre la montura, con su arma
+    const R=pick(side,sub==='espada'?['esp','inf']:['inf']); const hb=run?(f%2?-1:0):0;
+    if(R){ const cut=30; c.drawImage(R.im,0,0,R.m.w,cut,-R.m.ax+2,-m.ay+4-cut+hb+17,R.m.w,cut); }
+    if(sub==='lanza') lance(c,side,4,-m.ay+28+hb); else { if(!R||!R.real){ shield(c,side,-2,-m.ay+26+hb); } sword(c,side,8,-m.ay+22+hb,!run); } }
+  else { c.drawImage(im,f*m.w,0,m.w,m.h,-m.ax,-m.ay+bob,m.w,m.h);
+    if(!P.real){ c.save(); c.translate(0,bob);
+      if(ty==='inf'&&sub==='lanza') pole(c,side,run?-6:0);
+      else if(ty==='inf'){ sword(c,side,8,-22,!run); shield(c,side,4,-20); }
+      else if(sub==='magia') staff(c,school(u),t);
+      c.restore(); } }
   c.restore(); return true; }
-function miniSoldier(c,u,x,y,t,face,run){ const tt=t+(x*0.13);
-  if(troop(c,u.side,u.type,x,y,face,tt,run,u.type==='cab'?0.34:0.36)) return;
-  const id=MINI[u.side][u.type]; const o={anim:run?'walk':'idle',face,t:tt,scale:0.42};
-  if(u.type==='cab'){ horse(c,x+face*3,y,face,tt,u.side==='e',0.85); spr(c,id,x-face*1,y-8,Object.assign(o,{scale:0.34})); } else spr(c,id,x,y,o); }
-// una unidad en el mapa: estandarte, soldaditos en formación, líder adelante, número de tropa y barras
-function drawUnit(c,S,u,t){ const X=cx(u), Y=cy(u), face=u.side==='p'?1:-1; const n=Math.max(1,Math.min(7,Math.ceil(u.troops/80)));
+function miniSoldier(c,u,x,y,t,face,run,sc){ const tt=t+(x*0.13);
+  if(troop(c,u,x,y,face,tt,run,sc||(u.type==='cab'?0.26:0.27))) return;
+  const id=MINI[u.side][u.type]; const o={anim:run?'walk':'idle',face,t:tt,scale:0.32};
+  if(u.type==='cab'){ horse(c,x+face*3,y,face,tt,u.side==='e',0.65); spr(c,id,x-face*1,y-6,Object.assign(o,{scale:0.26})); } else spr(c,id,x,y,o); }
+// una unidad en el mapa: estandarte, el ejército en bloque (hasta 12 soldados en 4 filas), líder adelante, número de tropa y barras
+function drawUnit(c,S,u,t){ const X=cx(u), Y=cy(u), face=u.side==='p'?1:-1; const n=Math.max(2,Math.min(12,Math.ceil(u.troops/40)));
   const hit=S.clash&&S.clash.d===u&&S.clash.t<0.6; const sh=hit?Math.sin(t*60)*1.5:0;
-  c.fillStyle='rgba(0,0,0,.22)'; c.beginPath(); c.ellipse(X,Y+3,26,7,0,0,Math.PI*2); c.fill();
-  if(S.cur===u.id){ const k=0.5+0.5*Math.sin(t*6); c.strokeStyle='rgba(255,240,180,'+(0.55+0.45*k)+')'; c.lineWidth=2; c.beginPath(); c.ellipse(X,Y+3,29+k*2,9+k,0,0,Math.PI*2); c.stroke(); }
-  if(u.hold){ c.strokeStyle=u.muro?'#f0c04a':'rgba(240,208,112,.7)'; c.lineWidth=1.5; c.beginPath(); c.ellipse(X,Y+3,24,6,0,0,Math.PI*2); c.stroke(); }
+  c.fillStyle='rgba(0,0,0,.24)'; c.beginPath(); c.ellipse(X-face*2,Y+3,30,8,0,0,Math.PI*2); c.fill();
+  if(S.cur===u.id){ const k=0.5+0.5*Math.sin(t*6); c.strokeStyle='rgba(255,240,180,'+(0.55+0.45*k)+')'; c.lineWidth=2; c.beginPath(); c.ellipse(X-face*2,Y+3,32+k*2,10+k,0,0,Math.PI*2); c.stroke(); }
+  if(u.hold){ c.strokeStyle=u.muro?'#f0c04a':'rgba(240,208,112,.7)'; c.lineWidth=1.5; c.beginPath(); c.ellipse(X-face*2,Y+3,27,7,0,0,Math.PI*2); c.stroke(); }
+  if(u.burnT>0){ for(let i=0;i<4;i++){ c.fillStyle=i%2?'rgba(255,150,60,.8)':'rgba(255,90,30,.7)'; c.fillRect(X-12+i*7,Y-14-((t*30+i*7)%10),2,3); } }
   // estandarte
-  const bx=X-face*20+sh, by=Y-24; c.fillStyle='#5a4630'; c.fillRect(bx,by,1,22); c.fillStyle=COL[u.side]; c.beginPath(); c.moveTo(bx+1,by); c.lineTo(bx+1+face*10,by+2); c.lineTo(bx+1+face*7,by+5); c.lineTo(bx+1+face*10,by+8); c.lineTo(bx+1,by+9); c.fill();
+  const bx=X-face*25+sh, by=Y-26; c.fillStyle='#5a4630'; c.fillRect(bx,by,1,24); c.fillStyle=COL[u.side]; c.beginPath(); c.moveTo(bx+1,by); c.lineTo(bx+1+face*10,by+2); c.lineTo(bx+1+face*7,by+5); c.lineTo(bx+1+face*10,by+8); c.lineTo(bx+1,by+9); c.fill();
   c.fillStyle='#f4e8c8'; c.fillRect(bx+1+face*3,by+3,2,2);
-  // formación (atrás) y líder (adelante)
-  for(let i=0;i<n;i++){ const col=Math.floor(i/3), row=i%3; const sp=u.type==='cab'?14:10; miniSoldier(c,u,X-face*(4+col*sp)+(row===1?-face*5:0)+sh,Y-1+(row-1)*7,t,face,false); }
-  if(u.leader) spr(c,u.leader,X+face*10+sh,Y+4,{anim:'idle',face,t,scale:0.52});
+  // el ejército en bloque: 4 filas, de atrás hacia adelante para que se tapen bien
+  const sp=u.type==='cab'?11:7, rows=4, cols=Math.ceil(n/rows); const list=[];
+  for(let i=0;i<n;i++){ const row=i%rows, col=Math.floor(i/rows); list.push({x:X-face*(2+col*sp)+(row%2?-face*sp/2:0)+sh,y:Y-8+row*5}); }
+  list.sort((p,q)=>p.y-q.y).forEach(q=>miniSoldier(c,u,q.x,q.y,t,face,false));
+  (u.subs||[]).forEach((id,j)=>spr(c,id,X+face*(9+j*13)+sh,Y-3+j*2,{anim:'idle',face,t:t+j*0.4,scale:0.36}));
+  if(u.leader) spr(c,u.leader,X+face*15+sh,Y+5,{anim:'idle',face,t,scale:0.48});
   // tropa y barras
   c.font='700 9px "Alegreya Sans SC", system-ui, sans-serif'; c.textAlign='center'; const lab=String(u.troops); const w=c.measureText(lab).width+6;
-  c.fillStyle=u.side==='p'?COL.pd:COL.ed; c.fillRect(X-w/2,Y+8,w,10); c.fillStyle='#fff'; c.fillText(lab,X,Y+16);
-  c.fillStyle='rgba(0,0,0,.55)'; c.fillRect(X-14,Y+19,28,3); c.fillStyle='#f0c04a'; c.fillRect(X-14,Y+19,28*u.moral/100,3); }
+  c.fillStyle=u.side==='p'?COL.pd:COL.ed; c.fillRect(X-w/2,Y+9,w,10); c.fillStyle='#fff'; c.fillText(lab,X,Y+17);
+  c.fillStyle='rgba(0,0,0,.55)'; c.fillRect(X-14,Y+20,28,3); c.fillStyle='#f0c04a'; c.fillRect(X-14,Y+20,28*u.moral/100,3);
+  if(u.skill&&!u.used&&SKILL[u.skill]){ c.fillStyle='#f0c04a'; c.beginPath(); c.arc(X+17,Y+15,2.2,0,Math.PI*2); c.fill(); } }
 function drawField(c,S,dt){ try{ drawBG(c,S.cfg.bg||'prados',dt); }catch(e){ c.fillStyle='#4d6a38'; c.fillRect(0,0,W,H); }
   c.fillStyle='rgba(20,30,10,.18)'; c.fillRect(0,0,W,H);
   // camino viejo (de izquierda a derecha, pasando por el objetivo)
@@ -29846,34 +30039,63 @@ function drawHud(c,S){ const pa=army(S,'p'), ea=army(S,'e'); const nP=S.cfg.army
   if(S.say){ const s=S.say; s.t+=1/60; if(s.t>2.6){ S.say=null; } else { const y=H-64; c.fillStyle='rgba(20,16,12,.88)'; c.fillRect(W/2-150,y,300,30); c.strokeStyle='#b89a5a'; c.strokeRect(W/2-149.5,y+0.5,299,29);
       try{ const h=headOf(s.id,26); if(h) c.drawImage(h,W/2-147,y+2,26,26); }catch(e){}
       c.fillStyle='#e0b860'; c.font='700 9px "Alegreya Sans SC", system-ui, sans-serif'; c.fillText(String(nameOf(s.id)||'').toUpperCase(),W/2-116,y+11); c.fillStyle='#f4e8c8'; c.font='11px Alegreya, Georgia, serif'; c.fillText(s.txt,W/2-116,y+24); } } }
-// el combate simulado en miniatura: franja de campo, los dos ejércitos corren y chocan; caen soldados y bajan los contadores
+// el combate simulado: franja de campo, los dos ejércitos corren y chocan (o se disparan); caen soldados y bajan los contadores
 function drawClash(c,S,dt){ const K=S.clash; K.t+=dt; const t=K.t, a=K.a, d=K.d; const fa=a.side==='p'?1:-1;
   c.fillStyle='rgba(0,0,0,'+Math.min(0.55,t*2)+')'; c.fillRect(0,0,W,H);
   const y0=78, h=150; c.save(); c.beginPath(); c.rect(0,y0,W,h); c.clip();
   try{ drawBG(c,S.cfg.bg||'prados',dt); }catch(e){ c.fillStyle='#4d6a38'; c.fillRect(0,y0,W,h); }
-  c.fillStyle='rgba(30,40,15,.25)'; c.fillRect(0,y0,W,h); c.fillStyle='rgba(120,100,60,.35)'; c.fillRect(0,y0+h-46,W,46);
-  const left=fa>0?a:d, right=fa>0?d:a; const meet=W/2; const run=Math.min(1,t/0.9); const fight=t>0.9&&t<2.1;
-  const side2=(u,dir,start)=>{ const nb=Math.max(2,Math.min(10,Math.ceil(K.before[u===a?'a':'d']/45))); const na=Math.max(0,Math.min(nb,Math.ceil(K.after[u===a?'a':'d']/45)));
-    const fallN=fight||t>=2.1?Math.round((nb-na)*Math.min(1,(t-0.9)/1.0)):0;
-    for(let i=0;i<nb;i++){ const row=i%3, col=Math.floor(i/3); const sp=u.type==='cab'?62:36; const tx=meet-dir*(30+col*sp)+(row===1?-dir*16:0); const sx=start-dir*col*sp; const x=sx+(tx-sx)*run+(fight?Math.sin(t*20+i)*2+dir*Math.max(0,Math.sin(t*9+i*1.7))*5:0); const y=y0+h-18-row*26+col%2;
-      const fallen=i>=nb-fallN; if(fallen){ c.save(); c.globalAlpha=Math.max(0.25,1-(t-1.2)); c.translate(x,y); c.rotate(dir*-1.3); try{ troop(c,u.side,u.type,0,0,dir,t,false,u.type==='cab'?0.78:0.82)||miniSoldier(c,u,0,0,t,dir,false); }catch(e){} c.restore(); }
-      else{ c.save(); if(troop(c,u.side,u.type,x,y,dir,t+i*0.17,run<1||fight,u.type==='cab'?0.78:0.82)){ c.restore(); continue; } try{ const id=MINI[u.side][u.type]; if(u.type==='cab') horse(c,x+dir*6,y,dir,t,u.side==='e',1.7); SPR.draw(c,id,x-dir*1,u.type==='cab'?y-15:y,{anim:u.type==='cab'?(fight?'attack':'idle'):(run<1?'walk':(fight?'attack':'idle')),face:dir,t:t+i*0.17,scale:u.type==='cab'?0.6:0.8}); }catch(e){} c.restore(); } }
-    if(u.leader){ const lx=start-dir*70+(meet-dir*120-(start-dir*70))*run; try{ SPR.draw(c,u.leader,lx,y0+h-8,{anim:fight?'attack':(run<1?'walk':'idle'),face:dir,t,scale:1.05}); }catch(e){} } };
+  c.fillStyle='rgba(30,40,15,.25)'; c.fillRect(0,y0,W,h); c.fillStyle='rgba(120,100,60,.35)'; c.fillRect(0,y0+h-62,W,62);
+  const left=fa>0?a:d, right=fa>0?d:a; const meet=W/2; const shot=K.shot; const run=shot?1:Math.min(1,t/0.9); const fight=t>0.9&&t<2.1;
+  const gap=shot?92:24; // a distancia, los ejércitos quedan separados y vuelan flechas o hechizos
+  const fronts={};
+  const side2=(u,dir,start)=>{ const key=u===a?'a':'d'; const cap=u.type==='cab'?16:20; const nb=Math.max(3,Math.min(cap,Math.ceil(K.before[key]/25))); const na=Math.max(0,Math.min(nb,Math.ceil(K.after[key]/25)));
+    const fallN=fight||t>=2.1?Math.round((nb-na)*Math.min(1,(t-0.9)/1.0)):0; const sp=u.type==='cab'?46:u.type==='tir'?24:26; const sc=u.type==='cab'?0.6:0.64; const L=[];
+    for(let i=0;i<nb;i++){ const row=i%4, col=Math.floor(i/4); const tx=meet-dir*(gap+col*sp)+(row%2?-dir*sp/2:0); const sx=start-dir*col*sp; const melee=fight&&!shot;
+      const x=(shot?tx:sx+(tx-sx)*run)+(melee?Math.sin(t*20+i)*2+dir*Math.max(0,Math.sin(t*9+i*1.7))*5:0); const y=y0+h-12-row*17+col%2;
+      L.push({i,x,y,fallen:i>=nb-fallN}); }
+    fronts[key]={x:meet-dir*gap,dir,u};
+    L.sort((p,q)=>p.y-q.y).forEach(q=>{ if(q.fallen){ c.save(); c.globalAlpha=Math.max(0.25,1-(t-1.2)); c.translate(q.x,q.y); c.rotate(dir*-1.3); try{ troop(c,u,0,0,dir,t,false,sc)||miniSoldier(c,u,0,0,t,dir,false,sc); }catch(e){} c.restore(); }
+      else { const moving=!shot&&(run<1||fight); try{ if(!troop(c,u,q.x,q.y,dir,t+q.i*0.17,moving,sc)) miniSoldier(c,u,q.x,q.y,t,dir,moving,sc); }catch(e){} } });
+    // comandante adelante y sus subcomandantes a los costados
+    const lx=shot?meet-dir*(gap+70):start-dir*70+(meet-dir*120-(start-dir*70))*run; const an=fight&&(!shot||u===a)?'attack':(run<1?'walk':'idle');
+    (u.subs||[]).forEach((id,j)=>{ try{ SPR.draw(c,id,lx-dir*(22+j*16),y0+h-44+j*30,{anim:an,face:dir,t:t+j*0.3,scale:0.8}); }catch(e){} });
+    if(u.leader){ try{ SPR.draw(c,u.leader,lx,y0+h-6,{anim:an,face:dir,t,scale:1.0}); }catch(e){} } };
   side2(left,1,-30); side2(right,-1,W+30);
-  if(fight){ for(let i=0;i<6;i++){ const x=meet+(Math.sin(t*9+i*2)*24), y=y0+h-40+Math.cos(t*7+i)*14; c.fillStyle=i%2?'rgba(255,240,190,.9)':'rgba(255,170,80,.8)'; c.fillRect(x,y,2,2); }
-    c.fillStyle='rgba(200,180,140,.25)'; c.beginPath(); c.arc(meet,y0+h-24,26+Math.sin(t*5)*4,0,Math.PI*2); c.fill(); }
+  if(shot&&t>0.5&&t<2.0){ const A=fronts.a, D=fronts.d; const n=K.magic?5:14; const C=SCH[K.school]||SCH.fuego;
+    for(let i=0;i<n;i++){ const k=((t-0.5)*1.4+i/n)%1; const x=A.x+(D.x-A.x)*k, y=y0+h-30-((i*37)%40)+(K.magic?0:-Math.sin(k*Math.PI)*40);
+      if(K.magic){ c.fillStyle=C[1]; c.globalAlpha=0.35; c.beginPath(); c.arc(x,y,6,0,Math.PI*2); c.fill(); c.globalAlpha=1; c.fillStyle=C[0]; c.beginPath(); c.arc(x,y,3,0,Math.PI*2); c.fill(); }
+      else { const ang=Math.atan2(-Math.cos(k*Math.PI)*40*Math.PI,(D.x-A.x)); c.save(); c.translate(x,y); c.rotate(ang); c.fillStyle='#e8dcc0'; c.fillRect(-5,-0.5,10,1); c.fillStyle='#5a4630'; c.fillRect(-6,-1,2,2); c.restore(); } }
+    if(K.magic&&t>1.0){ const r=10+((t*30)%16); c.strokeStyle=C[0]; c.globalAlpha=0.6; c.lineWidth=2; c.beginPath(); c.arc(D.x+D.dir*30,y0+h-34,r,0,Math.PI*2); c.stroke(); c.globalAlpha=1; } }
+  if(fight&&!shot){ for(let i=0;i<8;i++){ const x=meet+(Math.sin(t*9+i*2)*28), y=y0+h-40+Math.cos(t*7+i)*18; c.fillStyle=i%2?'rgba(255,240,190,.9)':'rgba(255,170,80,.8)'; c.fillRect(x,y,2,2); }
+    c.fillStyle='rgba(200,180,140,.25)'; c.beginPath(); c.arc(meet,y0+h-30,30+Math.sin(t*5)*4,0,Math.PI*2); c.fill(); }
   c.restore(); c.strokeStyle='#b89a5a'; c.lineWidth=2; c.strokeRect(1,y0,W-2,h);
-  // cabecera: líderes, tropas que bajan y la ventaja
+  // cabecera: comandantes, tropas que bajan, la ventaja y la habilidad
   const k=Math.min(1,Math.max(0,(t-0.9)/1.0)); const num=(u,key)=>Math.round(K.before[key]+(K.after[key]-K.before[key])*k);
-  const tag=(x,u,key,al)=>{ c.fillStyle='rgba(20,16,12,.9)'; c.fillRect(x,y0-26,150,24); c.strokeStyle=u.side==='p'?COL.p:COL.e; c.strokeRect(x+0.5,y0-25.5,149,23);
-    try{ const hh=headOf(u.leader,20); if(hh) c.drawImage(hh,al==='l'?x+3:x+127,y0-24,20,20); }catch(e){}
+  const tagb=(x,u,key,al)=>{ c.fillStyle='rgba(20,16,12,.9)'; c.fillRect(x,y0-26,150,24); c.strokeStyle=u.side==='p'?COL.p:COL.e; c.strokeRect(x+0.5,y0-25.5,149,23);
+    try{ const hh=u.leader&&headOf(u.leader,20); if(hh) c.drawImage(hh,al==='l'?x+3:x+127,y0-24,20,20); }catch(e){}
     c.textAlign=al==='l'?'left':'right'; c.fillStyle='#f4e8c8'; c.font='11px "Marcellus SC", Georgia, serif'; c.fillText(u.name,al==='l'?x+27:x+123,y0-15);
     c.fillStyle='#e0b860'; c.font='700 10px "Alegreya Sans SC", system-ui, sans-serif'; c.fillText(TYPE[u.type].n+' · '+num(u,key),al==='l'?x+27:x+123,y0-5); };
-  tag(8,left,left===a?'a':'d','l'); tag(W-158,right,right===a?'a':'d','r');
-  if(K.tr!==1&&t>0.5){ c.textAlign='center'; c.font='16px "Marcellus SC", Georgia, serif'; c.fillStyle=K.tr>1?'#ffe08a':'#9fc4ff'; c.fillText(K.tr>1?'¡Ventaja de '+a.name+'!':'Desventaja',W/2,y0-8); }
+  tagb(8,left,left===a?'a':'d','l'); tagb(W-158,right,right===a?'a':'d','r');
+  c.textAlign='center';
+  if(K.label&&t>0.2){ c.font='17px "Marcellus SC", Georgia, serif'; c.fillStyle='rgba(20,16,12,.8)'; const w=c.measureText(K.label).width+24; c.fillRect(W/2-w/2,y0+6,w,22); c.fillStyle='#ffe08a'; c.fillText(K.label,W/2,y0+22);
+    if(K.extra){ c.font='11px Alegreya, Georgia, serif'; c.fillStyle='#f4e8c8'; c.fillText('…y llega hasta '+K.extra,W/2,y0+40); } }
+  else if(K.tr!==1&&t>0.5){ c.font='16px "Marcellus SC", Georgia, serif'; c.fillStyle=K.tr>1?'#ffe08a':'#9fc4ff'; c.fillText(K.tr>1?'¡Ventaja de '+a.name+'!':'Desventaja',W/2,y0-8); }
   c.textAlign='left'; }
+// consejo de guerra: cada división con su comandante, subcomandantes, habilidad, pasivas y estadísticas
+function pct(x){ return '×'+x.toFixed(2).replace('.',','); }
+function drawBrief(c,S){ const P=S.units.filter(u=>u.side==='p'); const x0=6, y0=36, w=292, rh=Math.min(46,Math.floor(226/Math.max(1,P.length)));
+  c.fillStyle='rgba(14,11,9,.9)'; c.fillRect(x0,y0,w,rh*P.length+22); c.strokeStyle='#b89a5a'; c.strokeRect(x0+0.5,y0+0.5,w-1,rh*P.length+21);
+  c.fillStyle='#e0b860'; c.font='700 10px "Alegreya Sans SC", system-ui, sans-serif'; c.textAlign='left'; c.fillText('CONSEJO DE GUERRA · '+String(S.cfg.armyP||'Cuervo Gris').toUpperCase(),x0+8,y0+14);
+  P.forEach((u,i)=>{ const y=y0+20+i*rh; if(S.pick===u.id){ c.fillStyle='rgba(240,192,74,.14)'; c.fillRect(x0+2,y,w-4,rh-2); }
+    try{ const hh=u.leader&&headOf(u.leader,24); if(hh) c.drawImage(hh,x0+6,y+3,24,24); }catch(e){}
+    (u.subs||[]).forEach((id,j)=>{ try{ const hh=headOf(id,14); if(hh) c.drawImage(hh,x0+4+j*15,y+28,14,14); }catch(e){} });
+    c.fillStyle='#f4e8c8'; c.font='12px "Marcellus SC", Georgia, serif'; c.fillText(u.name,x0+38,y+11);
+    c.fillStyle='#c8b890'; c.font='10px Alegreya, Georgia, serif'; c.fillText(SUB[u.type][u.sub].n.replace(' y ballesteros','').replace(' de espada y escudo','').replace('Guardia del general','Mando')+' · '+u.troops+' · Atq '+pct(u.atkM)+' · Def '+pct(u.defM)+' · Mor '+u.moral,x0+38,y+22);
+    c.fillStyle='#9fc4ff'; const sk=SKILL[u.skill]; c.fillText((sk?sk.n:'Sin habilidad')+' · '+RAZA[u.raza].n,x0+38,y+32);
+    const sb=(u.subs||[]).map(id=>{ const a=affinity(u,id); return nameOf(id)+' ('+a.n+')'; }); c.fillStyle='#e0b860'; c.fillText(u.cmd?(sb.length?'Sub: '+sb.join(', '):'Sin subcomandantes'):'Sin comandante',x0+38,y+42); }); }
 function draw(c,S,dt){ const t=performance.now()/1000; drawField(c,S,dt);
   alive(S).slice().sort((p,q)=>p.y-q.y).forEach(u=>drawUnit(c,S,u,t)); drawHud(c,S);
+  if(S.brief) drawBrief(c,S);
   if(S.clash&&S.clash.show) drawClash(c,S,dt); }
 
 /* ---------- partida ---------- */
@@ -29882,14 +30104,32 @@ function menuCorner(S){ try{ const B=UI.menuBox; ['mp-bot','mp-top','mp-tl','mp-
   const Q={'mp-bl':u=>u.x<=2&&u.y>=2,'mp-br':u=>u.x>=4&&u.y>=2,'mp-tr':u=>u.x>=4&&u.y<=1}; const cur=S.units.find(v=>v.id===S.cur);
   let best='mp-br',bc=1e9; Object.keys(Q).forEach(k=>{ let n=alive(S).filter(Q[k]).length; if(cur&&Q[k](cur)) n+=10; if(k==='mp-tr') n+=1.5; if(n<bc){ bc=n; best=k; } }); B.classList.add(best); }catch(e){} }
 async function showClash(S){ if(!S.clash) return; if(AUTO){ S.clash=null; return; } S.clash.show=true; S.clash.t=0; while(S.clash&&S.clash.t<2.6) await sleep(30); S.clash=null; }
-async function once(cfg){ const S=State(cfg); // visActors: el menú de órdenes se acomoda donde tapa menos unidades (ui.js · MPOS)
+// subcomandantes: el juego propone los de mayor afinidad; el jugador los cambia en el consejo de guerra
+function poolFree(S){ const used=new Set(); S.units.forEach(u=>{ if(u.side==='p'){ if(u.leader) used.add(u.leader); (u.subs||[]).forEach(id=>used.add(id)); } }); return (S.cfg.pool||[]).filter(id=>!used.has(id)); }
+function autoSubs(S){ const D=S.units.filter(u=>u.side==='p'&&u.cmd); D.forEach(u=>{ u.subs=[]; });
+  for(let r=0;r<2;r++) D.forEach(u=>{ const F=poolFree(S); if(!F.length) return; F.sort((p,q)=>affinity(u,q).lv-affinity(u,p).lv); u.subs.push(F[0]); });
+  D.forEach(applySubs); }
+async function council(S){ autoSubs(S); if(AUTO||S.cfg.council===false) return; S.brief=true;
+  while(true){ S.pick=null; const P=S.units.filter(u=>u.side==='p'&&u.cmd);
+    const opt=P.map(u=>({label:'Subcomandantes de '+(nameOf(u.leader)||u.name),sub:(u.subs.length?u.subs.map(id=>nameOf(id)+' · afinidad '+affinity(u,id).n).join(' · '):'Ninguno')+' · '+u.name,value:{k:'div',id:u.id},icon:'swap'}));
+    opt.push({label:'Comenzar la batalla',sub:'Las divisiones toman posición',value:{k:'go'},icon:'go',cls:'primary',auto:true});
+    const pr=choose(opt,'Consejo de guerra · elegí hasta 2 subcomandantes por comandante','cmd'); try{ const B=UI.menuBox; ['mp-bot','mp-top','mp-tl','mp-tr','mp-bl','mp-br'].forEach(c=>B.classList.remove(c)); B.classList.add('mp-br'); }catch(e){}
+    const v=await pr; if(!v||v.k==='go') break; const u=S.units.find(x=>x.id===v.id); if(!u) continue; S.pick=u.id;
+    while(true){ const cand=u.subs.concat(poolFree(S)); const o=cand.map(id=>{ const a=affinity(u,id), on=u.subs.includes(id), [rz,cl]=cmdOf(id);
+        return {label:(on?'✓ ':'')+nameOf(id),sub:cl+' · '+rz+' · afinidad '+a.n+' (Atq +'+Math.round(a.b.atk*100)+' %, Def +'+Math.round(a.b.def*100)+' %, Moral +'+a.b.mor+')'+(on?' · tocá para sacarlo':''),value:id,icon:on?'shield':'go'}; });
+      o.push({label:'Listo',sub:'Volver al consejo',value:'__ok',icon:'back',auto:true});
+      const pr2=choose(o,'Subcomandantes de '+(nameOf(u.leader)||u.name)+' ('+u.subs.length+'/2)','cmd'); try{ UI.menuBox.classList.add('mp-br'); }catch(e){}
+      const id=await pr2; if(id==='__ok'||!id) break; if(u.subs.includes(id)) u.subs=u.subs.filter(x=>x!==id); else { if(u.subs.length>=2) u.subs.shift(); u.subs.push(id); } applySubs(u); } }
+  S.brief=false; S.pick=null; }
+async function once(cfg){ try{ Object.keys(TM).forEach(timg); }catch(e){} const S=State(cfg); // visActors: el menú de órdenes se acomoda donde tapa menos unidades (ui.js · MPOS)
   setScene({draw:(c,dt)=>draw(c,S,dt),cam:{x:0,y:0},visActors:()=>alive(S).map(u=>({x:cx(u),y:cy(u)+4,spr:u.leader||'soldado'}))});
   try{ await fadeTo(0,400); }catch(e){}
+  await council(S);
   const Lc=cfg.lines||{}; if(Lc.start){ sayL(S,Lc.start[0],Lc.start[1]); if(!AUTO) await sleep(2200); }
   for(S.turn=1;S.turn<=cfg.turns;S.turn++){
     (cfg.waves&&cfg.waves[S.turn]||[]).forEach(d=>{ if(free(S,d.x,d.y)){ S.units.push(mk(d,'e')); S.log.push('Refuerzos de la Rosa: '+d.name+'.'); } });
     (cfg.joins&&cfg.joins[S.turn]||[]).forEach(d=>{ if(free(S,d.x,d.y)){ S.units.push(mk(d,'p')); S.log.push('¡Llegan los nuestros! '+d.name+'.'); } });
-    for(const u of side(S,'p')){ if(!side(S,'e').length) break; S.cur=u.id; const pr=choose(orders(S,u),'Turno '+S.turn+' · '+u.name+' · '+TYPE[u.type].n+' · '+u.troops+' soldados · Moral '+u.moral,'cmd'); menuCorner(S); const v=await pr;
+    upkeep(S,'p'); for(const u of side(S,'p')){ if(!side(S,'e').length) break; S.cur=u.id; const pr=choose(orders(S,u),'Turno '+S.turn+' · '+u.name+' · '+tag(u)+' · '+u.troops+' soldados · Moral '+u.moral+' · '+RAZA[u.raza].n,'cmd'); menuCorner(S); const v=await pr;
       apply(S,u,v); await showClash(S); await sleep(AUTO?10:220); if(lost(S)) break; }
     S.cur=null; if(lost(S)||!side(S,'e').length) break;
     for(const act of foeTurn(S)){ act(); await showClash(S); if(lost(S)) break; }
@@ -29902,7 +30142,7 @@ async function run(cfg){ let r=null, tries=0;
     const v=await choose([{label:'Reintentar la batalla',sub:'Empieza otra vez desde el turno 1',value:1,cls:'primary',icon:'swap',auto:true},{label:'Rendirse',sub:'Volver al último punto de guardado',value:0,icon:'back'}],'La línea no aguantó');
     if(!v){ try{ location.reload(); }catch(e){} await new Promise(()=>{}); } }
   r.tries=tries; return r; }
-return {run,_sim:{State,orders,apply,foeTurn,lost,side,alive,mk},TYPE,COLS,ROWS};
+return {run,_draw:(c,S,dt)=>drawClash(c,S,dt),_sim:{State,orders,apply,foeTurn,lost,side,alive,mk,upkeep,useSkill,canSkill,autoSubs,affinity},TYPE,SUB,SKILL,RAZA,CLS,COLS,ROWS};
 })();
 try{ window.LDC_WAR=WAR; }catch(e){} // para mirar la pantalla desde afuera (capturas de verificación)
 /* ==================== MÓDULO arco2/cap7_textos.js ==================== */
@@ -30082,14 +30322,16 @@ const heal=()=>Object.values(G.party).forEach(m=>{ const s=stats(m); m.pv=s.pv; 
 
 // Tresmolinos: primera batalla de guerra (decisión 19/11: 7×5, 4 divisiones por lado, 8 turnos, defender el molino)
 function tresmolinos(n){ const ilv=((G.party||{}).ilian||{}).lvl||n;
-  return {title:'Tresmolinos',turns:8,seed:1307,bg:'prados',hold:{x:0,y:2,name:'molino'},genLvl:{p:ilv,e:n+1},foeMul:1.35,
+  const ours=[{id:'p_gen',leader:'ilian',type:'gen',x:0,y:2},{id:'p_inf',leader:'ewald',x:1,y:2},{id:'p_cab',leader:'maela',x:1,y:1},{id:'p_tir',leader:'mirena',x:0,y:3}];
+  if(inParty('hedda')) ours.push({id:'p_mag',leader:'hedda',x:0,y:1}); // si salvaste las carretas, Hedda trae a sus sanadores
+  const cmds=ours.map(u=>u.leader); const pool=Object.keys(G.party||{}).filter(id=>!cmds.includes(id)&&id!=='olaf'&&id!=='simona');
+  return {title:'Tresmolinos',turns:8,seed:1307,bg:'prados',hold:{x:0,y:2,name:'molino'},genLvl:{p:ilv,e:n+1},foeMul:2.0,pool,
     armyP:'Cuervo Gris', armyE:'Rosa Ceniza',
-    lines:{start:['ilian','Que nadie pise el molino. Ni ellos ni nosotros, salvo yo.'],win:['ewald','¡Se van! ¡Se van ordenados, los muy...!'],arenga:'¡Ocho turnos! ¡Aguanten ocho turnos y es nuestro!',lluvia:'Las garzas no fallan. Nosotros tampoco.',carga:'¡Iskarra! ¡Detrás de mí!',muro:'¡Picas al frente! ¡Que choquen contra el molino!'},
-    ours:[{id:'p_gen',name:'Ilian',leader:'ilian',type:'gen',x:0,y:2,skill:'arenga',troops:200},{id:'p_inf',name:'Picas de Ewald',leader:'ewald',type:'inf',x:1,y:2,skill:'muro',troops:500},
-      {id:'p_cab',name:'Jinetes de Maela',leader:'maela',type:'cab',x:1,y:1,skill:'carga',troops:300},{id:'p_tir',name:'Arqueros de Mirena',leader:'mirena',type:'tir',x:0,y:3,skill:'lluvia',troops:300}],
-    foes:[{id:'e_gen',name:'Capitán de la Rosa',leader:'capitan_rosa',type:'gen',x:6,y:0,troops:200},{id:'e_inf',name:'Infantería de la Rosa',leader:'lancero_rosa',type:'inf',x:6,y:2,troops:500},
-      {id:'e_cab',name:'Jinetes de la Rosa',leader:'rc_caballero',type:'cab',x:6,y:1,troops:300},{id:'e_tir',name:'Ballesteros de la Rosa',leader:'ballestero',type:'tir',x:6,y:3,troops:300}],
-    waves:{2:[{id:'e_tir2',name:'Ballesteros de refuerzo',leader:'ballestero',type:'tir',x:6,y:2,troops:200}],3:[{id:'e_inf2',name:'Lanceros de la Rosa',leader:'lancero_rosa',type:'inf',x:6,y:4,troops:400}],5:[{id:'e_cab2',name:'Segunda columna',leader:'rc_caballero',type:'cab',x:6,y:0,troops:300}]}}; }
+    lines:{start:['ilian','Que nadie pise el molino. Ni ellos ni nosotros, salvo yo.'],win:['ewald','¡Se van! ¡Se van ordenados, los muy...!'],ojo:'Vienen por el flanco. Ocho turnos y es nuestro.',lluvia:'Las garzas no fallan. Nosotros tampoco.',atravesar:'¡Iskarra! ¡Detrás de mí, y de largo!',muro:'¡Escudos al frente! ¡Que choquen contra el molino!',sanar:'Levántense. Todavía no les toca.'},
+    ours,
+    foes:[{id:'e_gen',name:'Capitán de la Rosa',leader:'capitan_rosa',x:6,y:0},{id:'e_inf',name:'Infantería de la Rosa',leader:'lancero_rosa',x:6,y:2},
+      {id:'e_cab',name:'Jinetes de la Rosa',leader:'rc_caballero',x:6,y:1},{id:'e_tir',name:'Ballesteros de la Rosa',leader:'ballestero',x:6,y:3}],
+    waves:{2:[{id:'e_tir2',name:'Ballesteros de refuerzo',leader:'ballestero',x:6,y:2,troops:200}],3:[{id:'e_inf2',name:'Lanceros sin mando',type:'inf',sub:'lanza',x:6,y:4,troops:400}],5:[{id:'e_cab2',name:'Segunda columna',leader:'rc_caballero',x:6,y:0,troops:300}]}}; }
 
 ARC.cap(7,{
   order:['c7_titulo','c7_consejo','c7_grano','c7_tresmolinos','c7_feria','c7_lumbre3','c7_fin_t1'],
