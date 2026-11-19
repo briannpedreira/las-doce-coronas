@@ -29687,112 +29687,203 @@ ARC.cap(6,{
 })();
 /* ==================== MÓDULO arco2/guerra.js ==================== */
 /* ============================================================
-   BATALLA DE GUERRA · prototipo (decisión de Brian 19/11: «chica y clara»)
-   Mapa de 7×5 casillas. 4 divisiones por lado: infantería, caballería, tiradores y un general.
-   Triángulo: infantería > caballería > tiradores > infantería (×1,5 a favor, ×0,67 en contra). El general no entra en el triángulo.
-   Cada división tiene Fuerza (0–100) y Moral (0–100): el daño baja las dos; con Moral ≤ 20 la división se desbanda y sale del mapa.
-   Las órdenes se dan por menú (choose), una por división y por turno; el mapa se dibuja en el lienzo.
-   Duelo de generales: si los dos generales quedan pegados, se puede retar al otro (gana el de más nivel con algo de azar; el que pierde baja la Moral de todo su ejército).
-   Uso: const r=await WAR.run(cfg) → {win, turns, lost:[ids], log:[]}. Lo usa el Cap. 7 (Tresmolinos) y lo va a usar el reencuentro del Cap. 8.
-   cfg: {title, turns, hold:{x,y,name}, ours:[div], foes:[div], waves:{turno:[div]}, bg, genLvl:{p,e}, retry:true}
-   div: {id, name, type:'inf'|'cab'|'tir'|'gen', x, y, str?, moral?}
-   Solo lógica y dibujo: no toca G salvo el registro de la prueba automática (window.__LDC_GUERRA).
+   BATALLA DE GUERRA · v2 (pedido de Brian 19/11: estilo clásico de ejércitos con líder visible; las referencias son solo de estilo)
+   · Cada unidad es un LÍDER (un recluta, con su sprite de verdad) al frente de SU EJÉRCITO (soldaditos en formación y un número de tropa).
+   · El campo es abierto (fondo pintado + caminos); por debajo hay una grilla invisible de 7×5 para mover y medir alcances.
+   · Al chocar dos unidades se corta a un COMBATE SIMULADO EN MINIATURA: los dos ejércitos corren, chocan, caen soldados y bajan los contadores.
+   · Triángulo: infantería > caballería > tiradores > infantería (×1,5 / ×0,67). Moral ≤ 20 o tropa en 0 → la unidad se retira (el líder no muere).
+   · Cada líder tiene una habilidad propia (una vez por batalla). El general tiene la Arenga y el Duelo de generales.
+   · Órdenes por el menú de comandos (choose 'cmd'): mover (4 direcciones), atacar, sostener, habilidad.
+   Uso: const r=await WAR.run(cfg) → {win, turns, tries}. Lo usa Tresmolinos (Cap. 7) y lo va a usar el reencuentro (Cap. 8).
+   cfg: {title, turns, hold:{x,y,name}, ours:[u], foes:[u], waves:{turno:[u]}, joins:{turno:[u]}, bg, genLvl:{p,e}, foeMul, retry, armyP, armyE, lines:{start,win,lose}}
+   u: {id, name, leader:'idSprite', type:'inf'|'cab'|'tir'|'gen', x, y, troops?, moral?, skill?:'arenga'|'lluvia'|'carga'|'muro'}
    ============================================================ */
 const WAR=(()=>{
 const COLS=7, ROWS=5;
-const TYPE={ inf:{n:'Infantería',l:'I',atk:22,def:1.0,mv:1,rng:1}, cab:{n:'Caballería',l:'C',atk:26,def:0.9,mv:2,rng:1},
-  tir:{n:'Tiradores',l:'T',atk:18,def:0.8,mv:1,rng:2}, gen:{n:'General',l:'G',atk:16,def:1.1,mv:1,rng:1} };
+const TYPE={ inf:{n:'Infantería',atk:22,def:1.0,mv:1,rng:1}, cab:{n:'Caballería',atk:26,def:0.9,mv:2,rng:1},
+  tir:{n:'Tiradores',atk:18,def:0.8,mv:1,rng:2}, gen:{n:'Mando',atk:16,def:1.1,mv:1,rng:1} };
 const BEATS={inf:'cab',cab:'tir',tir:'inf'};
+const SKILL={ arenga:{n:'Arenga',d:'+20 de Moral a todo el ejército'}, lluvia:{n:'Lluvia de flechas',d:'Disparo a 3 casillas, daño ×1,5'},
+  carga:{n:'Carga',d:'Ataque con daño ×1,6 que además hunde la Moral'}, muro:{n:'Muro de picas',d:'Dos turnos recibiendo la mitad de daño'} };
+// soldaditos de cada tipo (ids de sprites.js: tropas de Brenmoor para nosotros, de la Rosa Ceniza para ellos)
+const MINI={ p:{inf:'br_miliciano',cab:'guardia',tir:'br_arquero',gen:'guardia'}, e:{inf:'soldado',cab:'rc_caballero',tir:'ballestero',gen:'rc_lancero'} };
 function tri(a,d){ if(a==='gen'||d==='gen') return 1; if(BEATS[a]===d) return 1.5; if(BEATS[d]===a) return 0.67; return 1; }
 const dist=(a,b)=>Math.abs(a.x-b.x)+Math.abs(a.y-b.y);
-function mk(d,side){ return Object.assign({str:100,moral:side==='p'?70:65,hold:false,side},d); }
+function mk(d,side){ const t=d.troops||({inf:500,cab:300,tir:300,gen:200}[d.type]||300); return Object.assign({max:t,troops:t,str:100,moral:side==='p'?70:65,hold:0,side,used:false},d); }
 function rng(seed){ let s=seed>>>0||1; return ()=>{ s^=s<<13; s>>>=0; s^=s>>>17; s^=s<<5; s>>>=0; return (s%10000)/10000; }; }
-
-function State(cfg){ const S={cfg,turn:1,units:[],log:[],R:rng(cfg.seed||1312),duel:false,arenga:false};
+function State(cfg){ const S={cfg,turn:1,units:[],log:[],R:rng(cfg.seed||1312),duel:false,say:null,clash:null};
   (cfg.ours||[]).forEach(d=>S.units.push(mk(d,'p'))); (cfg.foes||[]).forEach(d=>S.units.push(mk(d,'e'))); return S; }
-const alive=S=>S.units.filter(u=>u.str>0&&u.moral>20);
+const ok=u=>u.str>0&&u.moral>20;
+const alive=S=>S.units.filter(ok);
 const side=(S,s)=>alive(S).filter(u=>u.side===s);
 const at=(S,x,y)=>alive(S).find(u=>u.x===x&&u.y===y);
 const free=(S,x,y)=>x>=0&&y>=0&&x<COLS&&y<ROWS&&!at(S,x,y);
-function inRange(a,b){ return dist(a,b)<=TYPE[a.type].rng; }
-function targets(S,u){ return alive(S).filter(v=>v.side!==u.side&&inRange(u,v)); }
+const inRange=(a,b,r)=>dist(a,b)<=(r||TYPE[a.type].rng);
+const targets=(S,u,r)=>alive(S).filter(v=>v.side!==u.side&&inRange(u,v,r));
+const army=(S,s)=>S.units.filter(u=>u.side===s).reduce((a,u)=>a+(ok(u)?u.troops:0),0);
+const syncTroops=u=>{ u.troops=Math.max(0,Math.round(u.max*u.str/100)); };
 
-// ataque: daño = base × triángulo × Fuerza × Moral × azar; el que sostiene la posición recibe ×0,7; cuerpo a cuerpo devuelve la mitad
-function hit(S,a,d,counter){ const T=TYPE[a.type]; let dmg=T.atk*(a.side==='e'?(S.cfg.foeMul||1):1)*tri(a.type,d.type)*(a.str/100)*(0.5+a.moral/200)*(0.85+S.R()*0.3)/TYPE[d.type].def;
-  if(d.hold) dmg*=0.7; if(counter) dmg*=0.5; dmg=Math.max(1,Math.round(dmg));
-  d.str=Math.max(0,d.str-dmg); d.moral=Math.max(0,d.moral-Math.round(dmg*0.6)); a.moral=Math.min(100,a.moral+(counter?0:3));
-  const line=a.name+' → '+d.name+': −'+dmg+(tri(a.type,d.type)>1?' (ventaja)':tri(a.type,d.type)<1?' (desventaja)':'');
-  S.log.push(line); S.fx={a:a.id,d:d.id,dmg,t:0};
-  if(d.moral<=20||d.str<=0){ S.log.push(d.name+' se desbanda.'); side(S,d.side).forEach(v=>{ v.moral=Math.max(0,v.moral-8); }); }
-  else if(!counter&&TYPE[a.type].rng===1&&TYPE[d.type].rng===1) hit(S,d,a,true);
-  return dmg; }
+// choque: daño = base × triángulo × Fuerza × Moral × azar; sostener ×0,7, muro ×0,5; cuerpo a cuerpo devuelve la mitad
+function hit(S,a,d,o){ o=o||{}; const T=TYPE[a.type]; const tr=tri(a.type,d.type);
+  let dmg=T.atk*(a.side==='e'?(S.cfg.foeMul||1):1)*tr*(a.str/100)*(0.5+a.moral/200)*(0.85+S.R()*0.3)/TYPE[d.type].def*(o.mul||1);
+  if(d.hold) dmg*=(d.muro?0.5:0.7); if(o.counter) dmg*=0.5; dmg=Math.max(1,Math.round(dmg));
+  const before={a:a.troops,d:d.troops};
+  d.str=Math.max(0,d.str-dmg); d.moral=Math.max(0,d.moral-Math.round(dmg*(o.moralMul||0.6))); a.moral=Math.min(100,a.moral+(o.counter?0:3)); syncTroops(d);
+  let back=0; if(!o.counter&&ok(d)&&T.rng===1&&TYPE[d.type].rng===1&&!o.noBack){ back=hit(S,d,a,{counter:true,quiet:true}).dmg; }
+  if(!o.quiet){ S.log.push(a.name+' → '+d.name+': −'+(before.d-d.troops)+' soldados'+(tr>1?' (ventaja)':tr<1?' (desventaja)':''));
+    S.clash={a,d,tr,before,after:{a:a.troops,d:d.troops},t:0}; }
+  if(!ok(d)){ S.log.push(d.name+' se retira del campo.'); side(S,d.side).forEach(v=>{ v.moral=Math.max(0,v.moral-8); }); }
+  return {dmg,back}; }
+function nearest(S,u,list){ let b=null,bd=99; list.forEach(v=>{ const d=dist(u,v); if(d<bd){ bd=d; b=v; } }); return b; }
 function stepToward(S,u,goal){ let best=null,bd=dist(u,goal); const mv=TYPE[u.type].mv;
   for(let dx=-mv;dx<=mv;dx++) for(let dy=-mv;dy<=mv;dy++){ if(Math.abs(dx)+Math.abs(dy)>mv||(!dx&&!dy)) continue; const x=u.x+dx,y=u.y+dy; if(!free(S,x,y)) continue; const d=dist({x,y},goal); if(d<bd){ bd=d; best={x,y}; } }
   if(best){ u.x=best.x; u.y=best.y; return true; } return false; }
-function nearest(S,u,list){ let b=null,bd=99; list.forEach(v=>{ const d=dist(u,v); if(d<bd){ bd=d; b=v; } }); return b; }
-function bestTarget(S,u){ const T=targets(S,u); if(!T.length) return null; return T.slice().sort((p,q)=>(tri(u.type,q.type)-tri(u.type,p.type))||(p.str-q.str))[0]; }
+function bestTarget(S,u,r){ const T=targets(S,u,r); if(!T.length) return null; return T.slice().sort((p,q)=>(tri(u.type,q.type)-tri(u.type,p.type))||(p.str-q.str))[0]; }
+const DIRS=[[1,0,'→ hacia el enemigo'],[0,-1,'↑ arriba'],[0,1,'↓ abajo'],[-1,0,'← hacia atrás']];
 
-// órdenes de una división propia (la primera es la sensata: la elige la prueba automática)
-function orders(S,u){ const o=[]; const tg=bestTarget(S,u); const H=S.cfg.hold;
-  if(tg) o.push({label:'Atacar a '+tg.name,sub:TYPE[u.type].n+' contra '+TYPE[tg.type].n+(tri(u.type,tg.type)>1?' · con ventaja':tri(u.type,tg.type)<1?' · con desventaja':''),value:{k:'atk',t:tg.id},icon:'target',auto:true});
-  targets(S,u).filter(v=>!tg||v.id!==tg.id).slice(0,2).forEach(v=>o.push({label:'Atacar a '+v.name,sub:TYPE[u.type].n+' contra '+TYPE[v.type].n,value:{k:'atk',t:v.id},icon:'target'}));
+// órdenes de una unidad propia (la primera marcada auto es la sensata: la elige la prueba automática)
+function orders(S,u){ const o=[]; const tg=bestTarget(S,u); const Hd=S.cfg.hold;
+  if(tg) o.push({label:'Atacar a '+tg.name,sub:TYPE[u.type].n+' contra '+TYPE[tg.type].n+(tri(u.type,tg.type)>1?' · con ventaja':tri(u.type,tg.type)<1?' · con desventaja':'')+' · '+tg.troops+' soldados',value:{k:'atk',t:tg.id},icon:'target',auto:true});
+  targets(S,u).filter(v=>!tg||v.id!==tg.id).slice(0,2).forEach(v=>o.push({label:'Atacar a '+v.name,sub:TYPE[u.type].n+' contra '+TYPE[v.type].n+' · '+v.troops+' soldados',value:{k:'atk',t:v.id},icon:'target'}));
+  const sk=u.skill&&!u.used&&SKILL[u.skill]; if(sk){ const can=u.skill==='lluvia'?!!bestTarget(S,u,3):(u.skill==='carga'?!!tg:true); if(can) o.push({label:sk.n,sub:'Habilidad de '+u.name+' (una vez): '+sk.d,value:{k:'skill'},icon:'flame'}); }
   o.push({label:'Sostener la posición',sub:'Recibe un 30 % menos de daño este turno',value:{k:'hold'},icon:'shield',auto:!tg});
-  const foe=nearest(S,u,side(S,'e')); if(foe&&!tg) o.push({label:'Avanzar',sub:'Hacia '+foe.name,value:{k:'adv'},icon:'go'});
-  if(H&&dist(u,H)>1) o.push({label:'Volver al '+(H.name||'objetivo'),sub:'Cubrir lo que hay que defender',value:{k:'back'},icon:'back'});
-  if(u.type==='gen'&&!S.arenga) o.push({label:'Arenga',sub:'Una vez por batalla: +20 de Moral a todo el ejército',value:{k:'arenga'},icon:'flag'});
+  DIRS.forEach(([dx,dy,n])=>{ const mv=TYPE[u.type].mv; for(let s=mv;s>=1;s--){ const x=u.x+dx*s*(u.side==='p'?1:-1), y=u.y+dy*s; if(free(S,x,y)){ o.push({label:'Mover '+n,sub:s>1?'Dos casillas (caballería)':'Una casilla',value:{k:'mv',x,y},icon:'go'}); break; } } });
+  if(Hd&&dist(u,Hd)>1) o.push({label:'Volver al '+(Hd.name||'objetivo'),sub:'Cubrir lo que hay que defender',value:{k:'back'},icon:'back'});
   const eg=side(S,'e').find(v=>v.type==='gen'); if(u.type==='gen'&&eg&&dist(u,eg)===1&&!S.duel) o.push({label:'Duelo de generales',sub:'Retar a '+eg.name,value:{k:'duel',t:eg.id},icon:'chat'});
   return o; }
-function apply(S,u,v){ const H=S.cfg.hold; u.hold=false;
+function sayL(S,id,txt){ S.say={id,txt,t:0}; }
+function apply(S,u,v){ const Hd=S.cfg.hold; if(u.hold&&!u.muroT) u.hold=0; if(u.muroT){ u.muroT--; if(!u.muroT){ u.hold=0; u.muro=false; } }
   if(v.k==='atk'){ const t=S.units.find(x=>x.id===v.t); if(t) hit(S,u,t); }
-  else if(v.k==='hold'){ u.hold=true; S.log.push(u.name+' sostiene la posición.'); }
-  else if(v.k==='adv'){ const f=nearest(S,u,side(S,'e')); if(f) stepToward(S,u,f); S.log.push(u.name+' avanza.'); }
-  else if(v.k==='back'){ stepToward(S,u,H); S.log.push(u.name+' vuelve a cubrir.'); }
-  else if(v.k==='arenga'){ S.arenga=true; side(S,'p').forEach(w=>{ w.moral=Math.min(100,w.moral+20); }); S.log.push(u.name+' arenga al ejército: +20 de Moral.'); }
-  else if(v.k==='duel'){ S.duel=true; const t=S.units.find(x=>x.id===v.t); const G=S.cfg.genLvl||{p:14,e:13}; const win=(G.p-G.e)*0.08+0.5+(S.R()-0.5)*0.4>0.5;
-    const L=win?'e':'p'; side(S,L).forEach(w=>{ w.moral=Math.max(0,w.moral-25); }); if(win&&t){ t.str=Math.max(0,t.str-40); }
-    S.log.push(win?'Duelo de generales: '+u.name+' gana. La Moral enemiga se hunde.':'Duelo de generales: '+(t?t.name:'el general enemigo')+' gana. Nuestra Moral cae.'); } }
-// turno enemigo: atacar si puede (prefiere ventaja); si no, ir al objetivo
-function foeTurn(S){ const H=S.cfg.hold; side(S,'e').forEach(u=>{ if(!(u.str>0&&u.moral>20)) return; u.hold=false; const tg=bestTarget(S,u);
-    if(tg){ hit(S,u,tg); return; } const goal=(H&&!at(S,H.x,H.y))?H:(nearest(S,u,side(S,'p'))||H); if(goal) stepToward(S,u,goal); }); }
-function lost(S){ const H=S.cfg.hold; const o=H&&at(S,H.x,H.y); return (o&&o.side==='e')||!side(S,'p').length; }
+  else if(v.k==='hold'){ u.hold=1; S.log.push(u.name+' sostiene la posición.'); }
+  else if(v.k==='mv'){ if(free(S,v.x,v.y)){ u.x=v.x; u.y=v.y; } S.log.push(u.name+' se mueve.'); }
+  else if(v.k==='back'){ stepToward(S,u,Hd); S.log.push(u.name+' vuelve a cubrir.'); }
+  else if(v.k==='skill'){ u.used=true; const sk=u.skill;
+    if(sk==='arenga'){ side(S,'p').forEach(w=>{ w.moral=Math.min(100,w.moral+20); }); S.log.push(u.name+': Arenga. +20 de Moral.'); sayL(S,u.leader,(S.cfg.lines&&S.cfg.lines.arenga)||'¡Que nadie pise el molino!'); }
+    else if(sk==='lluvia'){ const t=bestTarget(S,u,3); if(t){ hit(S,u,t,{mul:1.5,noBack:true}); sayL(S,u.leader,(S.cfg.lines&&S.cfg.lines.lluvia)||'Ahora.'); } }
+    else if(sk==='carga'){ const t=bestTarget(S,u); if(t){ hit(S,u,t,{mul:1.6,moralMul:1.2}); sayL(S,u.leader,(S.cfg.lines&&S.cfg.lines.carga)||'¡Carguen!'); } }
+    else if(sk==='muro'){ u.hold=1; u.muro=true; u.muroT=2; S.log.push(u.name+': Muro de picas (2 turnos).'); sayL(S,u.leader,(S.cfg.lines&&S.cfg.lines.muro)||'Picas al frente.'); } }
+  else if(v.k==='duel'){ S.duel=true; const t=S.units.find(x=>x.id===v.t); const G2=S.cfg.genLvl||{p:14,e:13}; const win=(G2.p-G2.e)*0.08+0.5+(S.R()-0.5)*0.4>0.5;
+    side(S,win?'e':'p').forEach(w=>{ w.moral=Math.max(0,w.moral-25); }); if(win&&t){ t.str=Math.max(0,t.str-40); syncTroops(t); }
+    S.log.push(win?'Duelo de generales: gana '+u.name+'. La Moral enemiga se hunde.':'Duelo de generales: gana '+(t?t.name:'el enemigo')+'. Nuestra Moral cae.'); } }
+function foeTurn(S){ const Hd=S.cfg.hold; const acts=[]; side(S,'e').forEach(u=>{ if(!ok(u)) return; u.hold=0; const tg=bestTarget(S,u);
+    if(tg){ acts.push(()=>hit(S,u,tg)); return; } const goal=(Hd&&!at(S,Hd.x,Hd.y))?Hd:(nearest(S,u,side(S,'p'))||Hd); if(goal) stepToward(S,u,goal); }); return acts; }
+function lost(S){ const Hd=S.cfg.hold; const o=Hd&&at(S,Hd.x,Hd.y); return (o&&o.side==='e')||!side(S,'p').length; }
 
 /* ---------- dibujo ---------- */
-const CW=56, CH=40, OX=Math.round((480-COLS*56)/2), OY=58;
-const COL={p:'#3d6fb0',e:'#a8323a',pl:'#cfe0ff',el:'#ffd1d1'};
-function draw(c,S,dt){ try{ drawBG(c,S.cfg.bg||'prados',dt); }catch(e){ c.fillStyle='#2b3a2a'; c.fillRect(0,0,W,H); }
-  c.fillStyle='rgba(10,12,20,.42)'; c.fillRect(0,0,W,H);
-  c.textAlign='center'; c.fillStyle='#f4e8c8'; c.font='16px "Marcellus SC", Georgia, serif'; c.fillText(S.cfg.title||'Batalla de guerra',W/2,22);
-  c.fillStyle='#e0b860'; c.font='700 11px "Alegreya Sans SC", system-ui, sans-serif'; c.fillText('TURNO '+Math.min(S.turn,S.cfg.turns)+' DE '+S.cfg.turns+(S.cfg.hold?' · DEFENDER '+String(S.cfg.hold.name||'').toUpperCase():''),W/2,40);
-  for(let y=0;y<ROWS;y++) for(let x=0;x<COLS;x++){ const X=OX+x*CW, Y=OY+y*CH; c.fillStyle=(x+y)%2?'rgba(90,110,70,.55)':'rgba(110,130,84,.55)'; c.fillRect(X,Y,CW-1,CH-1); }
-  const Hd=S.cfg.hold; if(Hd){ const X=OX+Hd.x*CW, Y=OY+Hd.y*CH; c.strokeStyle='#f0d070'; c.lineWidth=2; c.strokeRect(X+1,Y+1,CW-3,CH-3);
-    c.fillStyle='#e8dcc0'; c.fillRect(X+4,Y+CH-18,7,14); c.save(); c.translate(X+7,Y+CH-16); c.scale(0.55,0.55); c.rotate((performance.now()/900)%(Math.PI*2)); c.fillStyle='#c9b27a'; for(let i=0;i<4;i++){ c.rotate(Math.PI/2); c.fillRect(-1,-14,3,14); } c.restore(); }
-  alive(S).forEach(u=>{ const X=OX+u.x*CW+CW/2, Y=OY+u.y*CH+CH/2; const f=S.fx&&(S.fx.d===u.id)?Math.max(0,1-S.fx.t):0;
-    if(S.cur===u.id){ const k=0.5+0.5*Math.sin(performance.now()/180); c.strokeStyle='rgba(255,255,255,'+(0.5+0.5*k)+')'; c.lineWidth=2; c.beginPath(); c.arc(X,Y-3,16+k*2,0,Math.PI*2); c.stroke(); }
-    c.fillStyle=COL[u.side]; c.beginPath(); c.arc(X+(f?Math.sin(f*30)*2:0),Y-3,13,0,Math.PI*2); c.fill(); c.strokeStyle=u.hold?'#f0d070':COL[u.side+'l']; c.lineWidth=u.hold?2.5:1.2; c.stroke();
-    c.fillStyle='#fff'; c.font='700 12px "Alegreya Sans SC", system-ui, sans-serif'; c.fillText(TYPE[u.type].l,X,Y+1);
-    c.fillStyle='rgba(0,0,0,.6)'; c.fillRect(X-16,Y+12,32,6); c.fillStyle='#8fd16a'; c.fillRect(X-16,Y+12,32*u.str/100,3); c.fillStyle='#f0c04a'; c.fillRect(X-16,Y+15,32*u.moral/100,3); });
-  if(S.fx){ S.fx.t+=dt*2; if(S.fx.t>1) S.fx=null; }
-  c.textAlign='left'; c.font='12px Alegreya, Georgia, serif'; const L=S.log.slice(-3); L.forEach((l,i)=>{ c.fillStyle=i===L.length-1?'#f4e8c8':'rgba(244,232,200,.6)'; c.fillText(l,OX,OY+ROWS*CH+14+i*13); });
-  c.textAlign='right'; c.fillStyle='rgba(244,232,200,.75)'; c.font='10px "Alegreya Sans SC", system-ui, sans-serif'; c.fillText('I > C > T > I · verde: fuerza · oro: moral',OX+COLS*CW,OY+ROWS*CH+14); c.textAlign='left'; }
+const CW=64, CH=40, OX=16, OY=50;
+const cx=u=>OX+u.x*CW+CW/2, cy=u=>OY+u.y*CH+CH/2+4;
+const COL={p:'#3a6db0',e:'#a23038',pd:'#1d3a66',ed:'#5a141a'};
+function spr(c,id,x,y,o){ try{ SPR.draw(c,id,x,y,o); return true; }catch(e){ return false; } }
+// caballito pixel por código (mira a la derecha; se espeja con face). M: cuerpo · D: crin, cola y cascos · E: ojo. Dos cuadros de patas al trote.
+const HORSE=['......................D.D...','.....................DMMD...','....................DMMMMD..','...................DMMEMMMD.','..................DMMMMMMMMD','.................DMMMD..DMD.','................DMMMD.......','..DD...........DMMMD........',
+  '.DDMDDDDDDDDDDMMMMD.........','DDMMMMMMMMMMMMMMMMMD........','D.DMMMMMMMMMMMMMMMMD........','D.DMMMMMMMMMMMMMMMMD........','...DMMMMMMMMMMMMMMD.........','...DMMDDDDDDDDDMMMD.........'];
+const HLEGA=['...DMD.DMD....DMD.DMD.......','...DMD.DMD....DMD.DMD.......','...DDD.DDD....DDD.DDD.......'], HLEGB=['..DMD...DMD..DMD...DMD......','.DMD.....DMD.DMD....DMD.....','.DD.......DD.DD......DD.....'];
+function horse(c,x,y,face,t,dark,sc){ sc=sc||1; const rows=HORSE.concat(Math.sin(t*14)>0?HLEGA:HLEGB); const w=28,h=rows.length;
+  const col={M:dark?'#3b2c22':'#7a5332',D:dark?'#17100b':'#2e1c10',E:'#0e0a08'};
+  c.save(); c.translate(Math.round(x),Math.round(y)); c.scale(face*sc,sc);
+  for(let r=0;r<h;r++){ const L=rows[r]; for(let q=0;q<w;q++){ const ch=L[q]; if(ch==='.') continue; c.fillStyle=col[ch]; c.fillRect(q-w/2,r-h,1,1); } }
+  c.restore(); }
+function miniSoldier(c,u,x,y,t,face,run){ const id=MINI[u.side][u.type]; const o={anim:run?'walk':'idle',face,t:t+(x*0.13),scale:0.42};
+  if(u.type==='cab'){ horse(c,x+face*3,y,face,t+(x*0.13),u.side==='e',0.85); spr(c,id,x-face*1,y-8,Object.assign(o,{scale:0.34})); } else spr(c,id,x,y,o); }
+// una unidad en el mapa: estandarte, soldaditos en formación, líder adelante, número de tropa y barras
+function drawUnit(c,S,u,t){ const X=cx(u), Y=cy(u), face=u.side==='p'?1:-1; const n=Math.max(1,Math.min(7,Math.ceil(u.troops/80)));
+  const hit=S.clash&&S.clash.d===u&&S.clash.t<0.6; const sh=hit?Math.sin(t*60)*1.5:0;
+  c.fillStyle='rgba(0,0,0,.22)'; c.beginPath(); c.ellipse(X,Y+3,26,7,0,0,Math.PI*2); c.fill();
+  if(S.cur===u.id){ const k=0.5+0.5*Math.sin(t*6); c.strokeStyle='rgba(255,240,180,'+(0.55+0.45*k)+')'; c.lineWidth=2; c.beginPath(); c.ellipse(X,Y+3,29+k*2,9+k,0,0,Math.PI*2); c.stroke(); }
+  if(u.hold){ c.strokeStyle=u.muro?'#f0c04a':'rgba(240,208,112,.7)'; c.lineWidth=1.5; c.beginPath(); c.ellipse(X,Y+3,24,6,0,0,Math.PI*2); c.stroke(); }
+  // estandarte
+  const bx=X-face*20+sh, by=Y-24; c.fillStyle='#5a4630'; c.fillRect(bx,by,1,22); c.fillStyle=COL[u.side]; c.beginPath(); c.moveTo(bx+1,by); c.lineTo(bx+1+face*10,by+2); c.lineTo(bx+1+face*7,by+5); c.lineTo(bx+1+face*10,by+8); c.lineTo(bx+1,by+9); c.fill();
+  c.fillStyle='#f4e8c8'; c.fillRect(bx+1+face*3,by+3,2,2);
+  // formación (atrás) y líder (adelante)
+  for(let i=0;i<n;i++){ const col=Math.floor(i/3), row=i%3; miniSoldier(c,u,X-face*(6+col*8)+(row===1?-face*3:0)+sh,Y-2+(row-1)*5,t,face,false); }
+  if(u.leader) spr(c,u.leader,X+face*10+sh,Y+4,{anim:'idle',face,t,scale:0.52});
+  // tropa y barras
+  c.font='700 9px "Alegreya Sans SC", system-ui, sans-serif'; c.textAlign='center'; const lab=String(u.troops); const w=c.measureText(lab).width+6;
+  c.fillStyle=u.side==='p'?COL.pd:COL.ed; c.fillRect(X-w/2,Y+8,w,10); c.fillStyle='#fff'; c.fillText(lab,X,Y+16);
+  c.fillStyle='rgba(0,0,0,.55)'; c.fillRect(X-14,Y+19,28,3); c.fillStyle='#f0c04a'; c.fillRect(X-14,Y+19,28*u.moral/100,3); }
+function drawField(c,S,dt){ try{ drawBG(c,S.cfg.bg||'prados',dt); }catch(e){ c.fillStyle='#4d6a38'; c.fillRect(0,0,W,H); }
+  c.fillStyle='rgba(20,30,10,.18)'; c.fillRect(0,0,W,H);
+  // camino viejo (de izquierda a derecha, pasando por el objetivo)
+  const Hd=S.cfg.hold; c.strokeStyle='rgba(196,170,120,.45)'; c.lineWidth=12; c.lineCap='round'; c.beginPath(); c.moveTo(OX-10,OY+2.5*CH); c.bezierCurveTo(OX+2*CW,OY+1.6*CH,OX+4.5*CW,OY+3.4*CH,OX+COLS*CW+10,OY+2.4*CH); c.stroke(); c.lineCap='butt';
+  // matas y piedras fijas (semilla)
+  const R=rng(77); for(let i=0;i<26;i++){ const x=OX+R()*COLS*CW, y=OY+R()*ROWS*CH; c.fillStyle=R()<0.5?'rgba(40,70,30,.55)':'rgba(70,95,45,.55)'; c.beginPath(); c.arc(x,y,2+R()*3,0,Math.PI*2); c.fill(); }
+  if(Hd){ const X=OX+Hd.x*CW+CW/2, Y=OY+Hd.y*CH+CH/2; // el molino
+    c.fillStyle='#d9cdb0'; c.fillRect(X-26,Y-22,12,22); c.fillStyle='#8a5a3a'; c.beginPath(); c.moveTo(X-28,Y-22); c.lineTo(X-20,Y-30); c.lineTo(X-12,Y-22); c.fill();
+    c.save(); c.translate(X-20,Y-22); c.rotate((performance.now()/1400)%(Math.PI*2)); c.fillStyle='#e8dcc0'; for(let i=0;i<3;i++){ c.rotate(Math.PI*2/3); c.fillRect(-1,-13,3,13); } c.restore();
+    c.strokeStyle='rgba(240,208,112,.55)'; c.setLineDash([3,3]); c.strokeRect(OX+Hd.x*CW+2,OY+Hd.y*CH+2,CW-4,CH-4); c.setLineDash([]); }
+  // alcance de la unidad activa
+  const cu=S.units.find(u=>u.id===S.cur); if(cu){ alive(S).filter(v=>v.side!==cu.side&&inRange(cu,v)).forEach(v=>{ c.strokeStyle='rgba(255,90,80,.8)'; c.lineWidth=1.5; c.beginPath(); c.ellipse(cx(v),cy(v)+3,28,9,0,0,Math.PI*2); c.stroke(); }); } }
+function drawHud(c,S){ const pa=army(S,'p'), ea=army(S,'e'); const nP=S.cfg.armyP||'Cuervo Gris', nE=S.cfg.armyE||'Rosa Ceniza';
+  const box=(x,w,col,name,num,al)=>{ c.fillStyle='rgba(20,16,12,.82)'; c.fillRect(x,4,w,26); c.strokeStyle='#b89a5a'; c.lineWidth=1; c.strokeRect(x+0.5,4.5,w-1,25);
+    c.fillStyle=col; c.fillRect(al==='l'?x+4:x+w-22,8,18,18); c.fillStyle='#f4e8c8'; c.fillRect(al==='l'?x+11:x+w-15,13,4,8);
+    c.textAlign=al==='l'?'left':'right'; c.fillStyle='#f4e8c8'; c.font='12px "Marcellus SC", Georgia, serif'; c.fillText(name,al==='l'?x+28:x+w-28,17);
+    c.fillStyle='#e0b860'; c.font='700 11px "Alegreya Sans SC", system-ui, sans-serif'; c.fillText(String(num).padStart(5,'0'),al==='l'?x+28:x+w-28,28); };
+  box(6,150,COL.p,nP,pa,'l'); box(W-156,150,COL.e,nE,ea,'r');
+  c.textAlign='center'; c.fillStyle='#f4e8c8'; c.font='14px "Marcellus SC", Georgia, serif'; c.fillText(S.cfg.title||'Batalla',W/2,17);
+  c.fillStyle='#e0b860'; c.font='700 10px "Alegreya Sans SC", system-ui, sans-serif'; c.fillText('TURNO '+Math.min(S.turn,S.cfg.turns)+' / '+S.cfg.turns+(S.cfg.hold?' · DEFENDER '+String(S.cfg.hold.name||'').toUpperCase():''),W/2,30);
+  // registro
+  c.textAlign='left'; c.font='11px Alegreya, Georgia, serif'; const L=S.log.slice(-2); L.forEach((l,i)=>{ c.fillStyle='rgba(15,12,10,.6)'; c.fillRect(6,H-30+i*13,c.measureText(l).width+8,13); c.fillStyle=i===L.length-1?'#f4e8c8':'rgba(244,232,200,.65)'; c.fillText(l,10,H-20+i*13); });
+  // diálogo del líder (retrato y frase)
+  if(S.say){ const s=S.say; s.t+=1/60; if(s.t>2.6){ S.say=null; } else { const y=H-64; c.fillStyle='rgba(20,16,12,.88)'; c.fillRect(W/2-150,y,300,30); c.strokeStyle='#b89a5a'; c.strokeRect(W/2-149.5,y+0.5,299,29);
+      try{ const h=headOf(s.id,26); if(h) c.drawImage(h,W/2-147,y+2,26,26); }catch(e){}
+      c.fillStyle='#e0b860'; c.font='700 9px "Alegreya Sans SC", system-ui, sans-serif'; c.fillText(String(nameOf(s.id)||'').toUpperCase(),W/2-116,y+11); c.fillStyle='#f4e8c8'; c.font='11px Alegreya, Georgia, serif'; c.fillText(s.txt,W/2-116,y+24); } } }
+// el combate simulado en miniatura: franja de campo, los dos ejércitos corren y chocan; caen soldados y bajan los contadores
+function drawClash(c,S,dt){ const K=S.clash; K.t+=dt; const t=K.t, a=K.a, d=K.d; const fa=a.side==='p'?1:-1;
+  c.fillStyle='rgba(0,0,0,'+Math.min(0.55,t*2)+')'; c.fillRect(0,0,W,H);
+  const y0=78, h=150; c.save(); c.beginPath(); c.rect(0,y0,W,h); c.clip();
+  try{ drawBG(c,S.cfg.bg||'prados',dt); }catch(e){ c.fillStyle='#4d6a38'; c.fillRect(0,y0,W,h); }
+  c.fillStyle='rgba(30,40,15,.25)'; c.fillRect(0,y0,W,h); c.fillStyle='rgba(120,100,60,.35)'; c.fillRect(0,y0+h-46,W,46);
+  const left=fa>0?a:d, right=fa>0?d:a; const meet=W/2; const run=Math.min(1,t/0.9); const fight=t>0.9&&t<2.1;
+  const side2=(u,dir,start)=>{ const nb=Math.max(2,Math.min(10,Math.ceil(K.before[u===a?'a':'d']/45))); const na=Math.max(0,Math.min(nb,Math.ceil(K.after[u===a?'a':'d']/45)));
+    const fallN=fight||t>=2.1?Math.round((nb-na)*Math.min(1,(t-0.9)/1.0)):0;
+    for(let i=0;i<nb;i++){ const row=i%3, col=Math.floor(i/3); const sp=u.type==='cab'?36:24; const tx=meet-dir*(22+col*sp)+(row===1?-dir*10:0); const sx=start-dir*col*sp; const x=sx+(tx-sx)*run+(fight?Math.sin(t*20+i)*2:0); const y=y0+h-22-row*20+col%2;
+      const fallen=i>=nb-fallN; if(fallen){ c.save(); c.globalAlpha=Math.max(0.25,1-(t-1.2)); c.translate(x,y); c.rotate(dir*-1.3); try{ miniSoldier(c,u,0,0,t,dir,false); }catch(e){} c.restore(); }
+      else{ c.save(); c.translate(0,0); const big={...u}; try{ const id=MINI[u.side][u.type]; if(u.type==='cab') horse(c,x+dir*6,y,dir,t,u.side==='e',1.7); SPR.draw(c,id,x-dir*1,u.type==='cab'?y-15:y,{anim:u.type==='cab'?(fight?'attack':'idle'):(run<1?'walk':(fight?'attack':'idle')),face:dir,t:t+i*0.17,scale:u.type==='cab'?0.6:0.8}); }catch(e){} c.restore(); } }
+    if(u.leader){ const lx=start-dir*70+(meet-dir*120-(start-dir*70))*run; try{ SPR.draw(c,u.leader,lx,y0+h-8,{anim:fight?'attack':(run<1?'walk':'idle'),face:dir,t,scale:1.05}); }catch(e){} } };
+  side2(left,1,-30); side2(right,-1,W+30);
+  if(fight){ for(let i=0;i<6;i++){ const x=meet+(Math.sin(t*9+i*2)*24), y=y0+h-40+Math.cos(t*7+i)*14; c.fillStyle=i%2?'rgba(255,240,190,.9)':'rgba(255,170,80,.8)'; c.fillRect(x,y,2,2); }
+    c.fillStyle='rgba(200,180,140,.25)'; c.beginPath(); c.arc(meet,y0+h-24,26+Math.sin(t*5)*4,0,Math.PI*2); c.fill(); }
+  c.restore(); c.strokeStyle='#b89a5a'; c.lineWidth=2; c.strokeRect(1,y0,W-2,h);
+  // cabecera: líderes, tropas que bajan y la ventaja
+  const k=Math.min(1,Math.max(0,(t-0.9)/1.0)); const num=(u,key)=>Math.round(K.before[key]+(K.after[key]-K.before[key])*k);
+  const tag=(x,u,key,al)=>{ c.fillStyle='rgba(20,16,12,.9)'; c.fillRect(x,y0-26,150,24); c.strokeStyle=u.side==='p'?COL.p:COL.e; c.strokeRect(x+0.5,y0-25.5,149,23);
+    try{ const hh=headOf(u.leader,20); if(hh) c.drawImage(hh,al==='l'?x+3:x+127,y0-24,20,20); }catch(e){}
+    c.textAlign=al==='l'?'left':'right'; c.fillStyle='#f4e8c8'; c.font='11px "Marcellus SC", Georgia, serif'; c.fillText(u.name,al==='l'?x+27:x+123,y0-15);
+    c.fillStyle='#e0b860'; c.font='700 10px "Alegreya Sans SC", system-ui, sans-serif'; c.fillText(TYPE[u.type].n+' · '+num(u,key),al==='l'?x+27:x+123,y0-5); };
+  tag(8,left,left===a?'a':'d','l'); tag(W-158,right,right===a?'a':'d','r');
+  if(K.tr!==1&&t>0.5){ c.textAlign='center'; c.font='16px "Marcellus SC", Georgia, serif'; c.fillStyle=K.tr>1?'#ffe08a':'#9fc4ff'; c.fillText(K.tr>1?'¡Ventaja de '+a.name+'!':'Desventaja',W/2,y0-8); }
+  c.textAlign='left'; }
+function draw(c,S,dt){ const t=performance.now()/1000; drawField(c,S,dt);
+  alive(S).slice().sort((p,q)=>p.y-q.y).forEach(u=>drawUnit(c,S,u,t)); drawHud(c,S);
+  if(S.clash&&S.clash.show) drawClash(c,S,dt); }
 
 /* ---------- partida ---------- */
-async function once(cfg){ const S=State(cfg); setScene({draw:(c,dt)=>draw(c,S,dt)});
+// el menú de comandos va a la esquina con menos unidades (sin tapar la unidad activa ni el marcador de arriba)
+function menuCorner(S){ try{ const B=UI.menuBox; ['mp-bot','mp-top','mp-tl','mp-tr','mp-bl','mp-br'].forEach(c=>B.classList.remove(c));
+  const Q={'mp-bl':u=>u.x<=2&&u.y>=2,'mp-br':u=>u.x>=4&&u.y>=2,'mp-tr':u=>u.x>=4&&u.y<=1}; const cur=S.units.find(v=>v.id===S.cur);
+  let best='mp-br',bc=1e9; Object.keys(Q).forEach(k=>{ let n=alive(S).filter(Q[k]).length; if(cur&&Q[k](cur)) n+=10; if(k==='mp-tr') n+=1.5; if(n<bc){ bc=n; best=k; } }); B.classList.add(best); }catch(e){} }
+async function showClash(S){ if(!S.clash) return; if(AUTO){ S.clash=null; return; } S.clash.show=true; S.clash.t=0; while(S.clash&&S.clash.t<2.6) await sleep(30); S.clash=null; }
+async function once(cfg){ const S=State(cfg); // visActors: el menú de órdenes se acomoda donde tapa menos unidades (ui.js · MPOS)
+  setScene({draw:(c,dt)=>draw(c,S,dt),cam:{x:0,y:0},visActors:()=>alive(S).map(u=>({x:cx(u),y:cy(u)+4,spr:u.leader||'soldado'}))});
   try{ await fadeTo(0,400); }catch(e){}
+  const Lc=cfg.lines||{}; if(Lc.start){ sayL(S,Lc.start[0],Lc.start[1]); if(!AUTO) await sleep(2200); }
   for(S.turn=1;S.turn<=cfg.turns;S.turn++){
-    (cfg.waves&&cfg.waves[S.turn]||[]).forEach(d=>{ if(free(S,d.x,d.y)){ S.units.push(mk(d,'e')); S.log.push('Llegan refuerzos enemigos: '+d.name+'.'); } });
+    (cfg.waves&&cfg.waves[S.turn]||[]).forEach(d=>{ if(free(S,d.x,d.y)){ S.units.push(mk(d,'e')); S.log.push('Refuerzos de la Rosa: '+d.name+'.'); } });
     (cfg.joins&&cfg.joins[S.turn]||[]).forEach(d=>{ if(free(S,d.x,d.y)){ S.units.push(mk(d,'p')); S.log.push('¡Llegan los nuestros! '+d.name+'.'); } });
-    for(const u of side(S,'p')){ if(!side(S,'e').length) break; S.cur=u.id; const v=await choose(orders(S,u),'Turno '+S.turn+' · '+u.name+' ('+TYPE[u.type].n+') · Fuerza '+u.str+' · Moral '+u.moral); apply(S,u,v); await sleep(AUTO?10:320); if(lost(S)) break; }
-    S.cur=null; if(lost(S)) break; if(!side(S,'e').length) break;
-    foeTurn(S); await sleep(AUTO?10:420); if(lost(S)) break; }
-  const win=!lost(S);
-  return {win,turns:Math.min(S.turn,cfg.turns),lost:S.units.filter(u=>u.side==='p'&&!(u.str>0&&u.moral>20)).map(u=>u.id),log:S.log,S}; }
+    for(const u of side(S,'p')){ if(!side(S,'e').length) break; S.cur=u.id; const pr=choose(orders(S,u),'Turno '+S.turn+' · '+u.name+' · '+TYPE[u.type].n+' · '+u.troops+' soldados · Moral '+u.moral,'cmd'); menuCorner(S); const v=await pr;
+      apply(S,u,v); await showClash(S); await sleep(AUTO?10:220); if(lost(S)) break; }
+    S.cur=null; if(lost(S)||!side(S,'e').length) break;
+    for(const act of foeTurn(S)){ act(); await showClash(S); if(lost(S)) break; }
+    await sleep(AUTO?10:300); if(lost(S)) break; }
+  const win=!lost(S); if(win&&Lc.win){ sayL(S,Lc.win[0],Lc.win[1]); if(!AUTO) await sleep(2200); }
+  return {win,turns:Math.min(S.turn,cfg.turns),log:S.log,S}; }
 async function run(cfg){ let r=null, tries=0;
   while(true){ tries++; r=await once(cfg); try{ window.__LDC_GUERRA=(window.__LDC_GUERRA||[]).concat([{t:cfg.title,win:r.win,turns:r.turns,tries}]); }catch(e){}
     if(r.win||cfg.retry===false) break;
     const v=await choose([{label:'Reintentar la batalla',sub:'Empieza otra vez desde el turno 1',value:1,cls:'primary',icon:'swap',auto:true},{label:'Rendirse',sub:'Volver al último punto de guardado',value:0,icon:'back'}],'La línea no aguantó');
     if(!v){ try{ location.reload(); }catch(e){} await new Promise(()=>{}); } }
   r.tries=tries; return r; }
-return {run,_sim:{State,orders,apply,foeTurn,lost,side,alive},TYPE,COLS,ROWS};
+return {run,_sim:{State,orders,apply,foeTurn,lost,side,alive,mk},TYPE,COLS,ROWS};
 })();
 try{ window.LDC_WAR=WAR; }catch(e){} // para mirar la pantalla desde afuera (capturas de verificación)
 /* ==================== MÓDULO arco2/cap7_textos.js ==================== */
@@ -29973,9 +30064,13 @@ const heal=()=>Object.values(G.party).forEach(m=>{ const s=stats(m); m.pv=s.pv; 
 // Tresmolinos: primera batalla de guerra (decisión 19/11: 7×5, 4 divisiones por lado, 8 turnos, defender el molino)
 function tresmolinos(n){ const ilv=((G.party||{}).ilian||{}).lvl||n;
   return {title:'Tresmolinos',turns:8,seed:1307,bg:'prados',hold:{x:0,y:2,name:'molino'},genLvl:{p:ilv,e:n+1},foeMul:1.35,
-    ours:[{id:'p_gen',name:'Ilian',type:'gen',x:0,y:2},{id:'p_inf',name:'Picas de Ewald',type:'inf',x:1,y:2},{id:'p_cab',name:'Jinetes de los barones',type:'cab',x:1,y:1},{id:'p_tir',name:'Arqueros de Mirena',type:'tir',x:0,y:3}],
-    foes:[{id:'e_gen',name:'Capitán de la Rosa',type:'gen',x:6,y:0},{id:'e_inf',name:'Infantería de la Rosa',type:'inf',x:6,y:2},{id:'e_cab',name:'Jinetes de la Rosa',type:'cab',x:6,y:1},{id:'e_tir',name:'Ballesteros de la Rosa',type:'tir',x:6,y:3}],
-    waves:{2:[{id:'e_tir2',name:'Ballesteros de refuerzo',type:'tir',x:6,y:2}],3:[{id:'e_inf2',name:'Lanceros de la Rosa',type:'inf',x:6,y:4}],5:[{id:'e_cab2',name:'Segunda columna',type:'cab',x:6,y:0}]}}; }
+    armyP:'Cuervo Gris', armyE:'Rosa Ceniza',
+    lines:{start:['ilian','Que nadie pise el molino. Ni ellos ni nosotros, salvo yo.'],win:['ewald','¡Se van! ¡Se van ordenados, los muy...!'],arenga:'¡Ocho turnos! ¡Aguanten ocho turnos y es nuestro!',lluvia:'Las garzas no fallan. Nosotros tampoco.',carga:'¡Iskarra! ¡Detrás de mí!',muro:'¡Picas al frente! ¡Que choquen contra el molino!'},
+    ours:[{id:'p_gen',name:'Ilian',leader:'ilian',type:'gen',x:0,y:2,skill:'arenga',troops:200},{id:'p_inf',name:'Picas de Ewald',leader:'ewald',type:'inf',x:1,y:2,skill:'muro',troops:500},
+      {id:'p_cab',name:'Jinetes de Maela',leader:'maela',type:'cab',x:1,y:1,skill:'carga',troops:300},{id:'p_tir',name:'Arqueros de Mirena',leader:'mirena',type:'tir',x:0,y:3,skill:'lluvia',troops:300}],
+    foes:[{id:'e_gen',name:'Capitán de la Rosa',leader:'capitan_rosa',type:'gen',x:6,y:0,troops:200},{id:'e_inf',name:'Infantería de la Rosa',leader:'lancero_rosa',type:'inf',x:6,y:2,troops:500},
+      {id:'e_cab',name:'Jinetes de la Rosa',leader:'rc_caballero',type:'cab',x:6,y:1,troops:300},{id:'e_tir',name:'Ballesteros de la Rosa',leader:'ballestero',type:'tir',x:6,y:3,troops:300}],
+    waves:{2:[{id:'e_tir2',name:'Ballesteros de refuerzo',leader:'ballestero',type:'tir',x:6,y:2,troops:200}],3:[{id:'e_inf2',name:'Lanceros de la Rosa',leader:'lancero_rosa',type:'inf',x:6,y:4,troops:400}],5:[{id:'e_cab2',name:'Segunda columna',leader:'rc_caballero',type:'cab',x:6,y:0,troops:300}]}}; }
 
 ARC.cap(7,{
   order:['c7_titulo','c7_consejo','c7_grano','c7_tresmolinos','c7_feria','c7_lumbre3','c7_fin_t1'],
