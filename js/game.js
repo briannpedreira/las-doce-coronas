@@ -29076,7 +29076,7 @@ const ARC2_LATER={
   lamar:  {name:'Lamar',  row:'back',  elem:'viento', base:{pv:210,pm:32,atk:22,mag:24,def:10,res:14,vel:22,pre:92,eva:12,cri:10}, gr:{pv:25,pm:4.5,atk:2.4,mag:2.8,def:1.5,res:2.2,vel:1.4}, tech:['marcha_gaita'], link:['ysa','tessa']},
   casimir:{name:'Casimir',row:'back',  elem:'fuego',  base:{pv:200,pm:40,atk:20,mag:34,def:10,res:18,vel:20,pre:92,eva:10,cri:12}, gr:{pv:23,pm:5,  atk:2,  mag:3.6,def:1.4,res:2.6,vel:1.3}, tech:['estocada_hielo','llama_carmesi'], link:['severo','ilian']}
 };
-const ARC2_ON=['mirena','teo','kett']; // los que ya juegan en esta versión (v30: Teo y Kett, tramo 2 del Cap. 6)
+const ARC2_ON=['mirena','teo','kett','lamar','casimir']; // los que ya juegan en esta versión (v30: Teo y Kett · v31: Lamar y Casimir)
 Object.keys(ARC2_REC).forEach(k=>{ if(!ARC2_ON.includes(k)) delete ARC2_REC[k]; });
 Object.keys(ARC2_LATER).forEach(k=>{ if(ARC2_ON.includes(k)) ARC2_REC[k]=ARC2_LATER[k]; });
 const ARC2_START={
@@ -29101,14 +29101,24 @@ const ARC2_IMP={
   casimir:[{name:'Jaque',desc:'Fuego mágico enorme a un enemigo',target:'enemy',poder:200,kind:'mag',elem:'fuego'},null,{name:'Jaque al Rey',desc:'Definitiva: fuego sobre todos y anula sus mejoras',target:'all',poder:240,kind:'mag',elem:'fuego',strip:true,def:true}],
   mirena:[{name:'Tiro de la Garza',desc:'Clava al enemigo: retrasa mucho su turno',target:'enemy',poder:150,ranged:true,knock:300},null,{name:'La Garza y la Lanza',desc:'Definitiva: un tiro enorme que deja al enemigo clavado',target:'enemy',poder:300,ranged:true,knock:600,elem:'tierra',def:true}]
 };
-const ARC2_GRADE={mirena:'tessa',teo:'dov',kett:'nach'}; // de quién toma letras de equipo y armas del mismo tipo
+const ARC2_GRADE={mirena:'tessa',teo:'dov',kett:'nach',lamar:'ysa',casimir:'severo'}; // de quién toma letras de equipo y armas del mismo tipo
 /* ---------- enemigo nuevo del Cap. 6: guardián asterii (variante de Kett por código: tools/sprites/variante.py --receta guardian_asterii) ---------- */
 const ARC2_ENEMY={
-  guardian_asterii:{name:'Guardián asterii',lvl:13,pv:880,atk:52,def:40,res:16,vel:14,pre:90,eva:2,cri:6,weak:['rayo'],exp:300,oro:0,spr:'guardian_asterii'}
+  guardian_asterii:{name:'Guardián asterii',lvl:13,pv:880,atk:52,def:40,res:16,vel:14,pre:90,eva:2,cri:6,weak:['rayo'],exp:300,oro:0,spr:'guardian_asterii'},
+  // v31: jefe del tramo 3 · Casimir Vey (fase Fuego → al 50 % fase Escarcha); el duelo termina por guion al 25 %
+  casimir_jefe:{name:'Casimir Vey',lvl:15,pv:4200,atk:58,mag:64,def:30,res:40,vel:30,pre:96,eva:10,cri:12,weak:['viento'],exp:520,oro:0,spr:'casimir',boss:true}
 };
 const ARC2_AI={
-  guardian_asterii: async(B,e,cfg,X)=>{ if(!X.sealed&&LR()<0.3){ await X.atk('Golpe sellado',{poder:125,pierce:true}); return; } await X.atk('Puño de piedra',{poder:105}); }
+  guardian_asterii: async(B,e,cfg,X)=>{ if(!X.sealed&&LR()<0.3){ await X.atk('Golpe sellado',{poder:125,pierce:true}); return; } await X.atk('Puño de piedra',{poder:105}); },
+  casimir_jefe: async(B,e,cfg,X)=>{ try{ bossBark(B,e); }catch(err){}
+    if(!e.fase&&e.pv<=e.pvMax*0.5){ e.fase='hielo'; e.weak=['fuego']; B.log='Casimir Vey cambia el foco: Escarcha.'; await X.fxOnly('en_soldado_formacion',[],()=>{ addFloat(B,e,'Escarcha','#9fd8ff'); }); return; }
+    if(e.fase==='hielo'){ if(!X.sealed&&LR()<0.5){ const r=await X.atk('Estocada de Escarcha',{poder:125,elem:'viento'}); if(r&&!r.r.miss&&alive(r.t)){ r.t.ct-=180; addFloat(B,{x:r.t.x,y:r.t.y+12},'Helado','#9fd8ff'); } return; } await X.atk('Estoque',{poder:105}); return; }
+    if(!X.sealed&&e.turns%3===0){ const ps=arcAllies(B).slice(0,3); B.log='Casimir Vey: Llama Carmesí.'; for(const t of ps){ if(alive(t)) await X.atk('Llama Carmesí',{poder:85,elem:'fuego'},t); } return; }
+    await X.atk('Brasa',{poder:115,elem:'fuego'}); }
 };
+// v31: ficha de sprite por código de respaldo para los del Arco II (si la hoja PixelLab todavía no cargó, se dibuja la figura base y no se rompe el combate).
+// sprites.js carga después de este módulo: la llaman los tramos del Arco II (cap6_mundo.js) antes de cada escena.
+function arc2SpFix(){ try{ if(typeof SP==='undefined') return; [['mirena','tessa'],['teo','severo'],['kett','bram'],['lamar','severo'],['casimir','severo'],['ismena','tessa'],['guardian_asterii','bram']].forEach(([id,b])=>{ if(!SP[id]&&SP[b]) SP[id]=Object.assign({},SP[b],{id}); }); }catch(e){} }
 (function arc2Register(){ try{
   Object.keys(ARC2_REC).forEach(id=>{ const R=ARC2_REC[id], st=ARC2_START[id];
     CHAR[id]={name:R.name,row:R.row,base:R.base,gr:R.gr,ranged:!!R.ranged,reach:!!R.reach,elem:R.elem||null,tech:R.tech.slice(),link:R.link.slice()}; if(!R.elem) delete CHAR[id].elem;
@@ -29125,10 +29135,11 @@ const ARC2_AI={
   });
   Object.assign(TECH,ARC2_TECH);
   Object.assign(ARC_ENEMY,ARC2_ENEMY); Object.assign(ENEMY,ARC2_ENEMY); Object.assign(ARC_AI,ARC2_AI);
-  Object.assign(SPRMAP,{guardian_asterii:'guardian_asterii'});
-  Object.assign(ARC_FXB,{mirena:'atk_arco',teo:'atk_ballesta',kett:'atk_maza',guardian_asterii:'atk_maza'});
-  Object.assign(ARC_FXA,{flecha_garza:'atravesante',triangular:'virote',golpe_bronce:'mordida',imp_teo_0:'imp_severo_1',imp_teo_2:'imp_bertram_2',imp_kett_0:'defensa',imp_kett_2:'imp_nach_1',imp_mirena_0:'imp_bertram_0',imp_mirena_2:'imp_ilian_1'});
-  try{ CXT.enemies.guardian_asterii={tipo:'Constructo asterii',zona:'Bastión Gris (Cap. 6)',lore:'Piedra gris con una luz violeta en el pecho. Duermen en el patio del Bastión y se levantan cuando alguien entra sin haber leído la puerta. No los hicieron para matar: los hicieron para pedir permiso.'}; }catch(e){}
+  Object.assign(SPRMAP,{guardian_asterii:'guardian_asterii',casimir_jefe:'casimir'}); // el combate busca la hoja por la clave del enemigo
+
+  Object.assign(ARC_FXB,{mirena:'atk_arco',teo:'atk_ballesta',kett:'atk_maza',lamar:'atk_dagas',casimir:'atk_espada',guardian_asterii:'atk_maza',casimir_jefe:'atk_espada'});
+  Object.assign(ARC_FXA,{flecha_garza:'atravesante',triangular:'virote',golpe_bronce:'mordida',imp_teo_0:'imp_severo_1',imp_teo_2:'imp_bertram_2',imp_kett_0:'defensa',imp_kett_2:'imp_nach_1',imp_mirena_0:'imp_bertram_0',imp_mirena_2:'imp_ilian_1',marcha_gaita:'aullido',estocada_hielo:'virote',llama_carmesi:'imp_severo_2',imp_lamar_0:'aullido',imp_lamar_2:'imp_simona_1',imp_casimir_0:'imp_severo_2',imp_casimir_2:'imp_lina_2'});
+  try{ CXT.enemies.guardian_asterii={tipo:'Constructo asterii',zona:'Bastión Gris (Cap. 6)',lore:'Piedra gris con una luz violeta en el pecho. Duermen en el patio del Bastión y se levantan cuando alguien entra sin haber leído la puerta. No los hicieron para matar: los hicieron para pedir permiso.'}; CXT.enemies.casimir_jefe={tipo:'Mago rojo · contrato del Regente',zona:'Muelle del Bastión (Cap. 6)',lore:'Llama en una mano, escarcha en el estoque. Cuando el fuego no alcanza, cambia de foco y enfría: lo que quemaba se vuelve lento.'}; }catch(e){}
   Object.assign(NPCNAME,{mirena:'Mirena',ismena:'Ismena',kett:'Kett',teo:'Teo',lamar:'Lamar',casimir:'Casimir'});
 }catch(e){ console.error('[arco2] registro',e); } })();
 /* ==================== MÓDULO arco2/cap6_textos.js ==================== */
@@ -29137,12 +29148,12 @@ const ARC2_AI={
    Tramo 1 · «El blanco del mapa» (v29): la huida al sur por el Pantano de Murgo, Mirena Sol, el pacto del Viejo del Juncal
    (solo si en el Arco I lo dejaron ir), la primera lumbre de Ismena Vardo y el umbral del Bastión.
    Tramo 2 · «La toma del Bastión» (v30): la puerta y los guardianes asterii, Teo Arlen, Kett y el primer Eco, la segunda lumbre (Saloma) y la base mínima.
-   Tramo 3 (la lectura de las trece Casas, Lamar, Casimir y los barones) entra en la próxima versión.
+   Tramo 3 · «Trece Casas» (v31): Lamar y la misión «La Viuda», la sala de las trece columnas, el duelo con Casimir Vey y la carta de los barones. Cierra el capítulo.
    Plan: docs/arco2/plan-produccion.md §2. Canon: enciclopedia (fichas de Mirena, Ismena, Saloma y el Viejo del Juncal).
    ============================================================ */
 LINES.cap6 = {
   cartel: { n:6, titulo:'El Bastión Gris', fecha:'4 de Virgo de 3012' },
-  toasts: { teo:'Teo Arlen se suma al grupo.', kett:'Kett (Unidad K-7) se suma al grupo.', kettDuerme:'Kett sigue dormido en la sala redonda.', eco:'Eco: el Viejo del Juncal embiste.', base:'El Bastión Gris: ruina recuperada.', mirena:'Mirena Sol se suma al grupo.', pacto:'El Viejo del Juncal responde a Mirena.', lumbre:'Lumbre de paso: el grupo descansa.', continuara:'Fin del tramo 1 · Sigue en la próxima versión' },
+  toasts: { lamar:'Lamar se suma al grupo.', casimir:'Casimir Vey se suma al grupo.', lectura:'Diario: la Casa del Umbral.', capFin:'Fin del Capítulo 6 · El Bastión Gris', teo:'Teo Arlen se suma al grupo.', kett:'Kett (Unidad K-7) se suma al grupo.', kettDuerme:'Kett sigue dormido en la sala redonda.', eco:'Eco: el Viejo del Juncal embiste.', base:'El Bastión Gris: ruina recuperada.', mirena:'Mirena Sol se suma al grupo.', pacto:'El Viejo del Juncal responde a Mirena.', lumbre:'Lumbre de paso: el grupo descansa.', continuara:'Fin del tramo 1 · Sigue en la próxima versión' },
   scenes: {
     c6_titulo: [],
     c6_murgo: [
@@ -29406,9 +29417,115 @@ LINES.cap6 = {
       ['say','nach','Por eso.','d'],
       ['hook','base'],
       ['narr','Esa noche, por primera vez desde el Puente Viejo, nadie hace guardia con el arco en la mano. La hace el Bastión.']
+    ],
+    /* ---------- tramo 3 · «Trece Casas» (v31) ---------- */
+    c6_lamar: [
+      ['title','Trece Casas','12 de Virgo de 3012',1.6], ['vig',0.3],
+      ['narr','La gaita se oye desde el amanecer. Mal. Muy mal. Como un ganso al que le pisaron la cola, pero con fuelle.'],
+      ['say','dov','Si eso es un ataque, ya ganaron.','a'],
+      ['narr','En el puente hundido, con el agua por las rodillas, un hombre de casaca militar toca una gaita de feria, de esas que se compran por dos sueldos. Le quedan tres botones de doce.'],
+      ['show','lamar'],
+      ['say','lamar','¡No disparen! ¡Soy músico! ¡Bueno, era soldado, pero ahora soy músico! ¡No disparen a ninguno de los dos!','o'],
+      ['say','maela','Bajá la gaita.','t'],
+      ['say','lamar','Si la bajo, me tiembla la mano. Si la toco, me tiembla menos. Ustedes elijan.','n'],
+      ['narr','Se llama Lamar. Era gaitero del Tercio del Norte, el regimiento que la Rosa desarmó en Molle por negarse a quemar el pueblo. A los que se negaron los colgaron. A él no, porque se escondió en el carro de los tambores.'],
+      ['say','lamar','Se llevaron la gaita del regimiento. «La Viuda», le decíamos, porque sonaba en todos los entierros. La tienen en un campamento al borde del pantano, colgada de la tienda del capitán. Como trofeo.','s'],
+      ['say','lamar','Toco esta porquería para no olvidarme de los dedos. Pero no es lo mismo.','s'],
+      ['if',{flag:'rec_tessa'},[['say','tessa','¡Una gaita de guerra! Papá, ¿te acordás de la que sonaba en la feria de Hollin?','h'],['say','bram','Me acuerdo. Sonaba fuerte.','t']],[]],
+      ['say','ilian','¿Cuántos son?','n'],
+      ['say','lamar','Una patrulla. Un capitán, un par de ballesteros. Dos fogones. El capitán ronca.','n'],
+      ['say','mirena','El borde del pantano lo conozco. Hay un juncal que llega hasta las tiendas.','n'],
+      ['?',[
+        {label:'«Vamos a buscar a la Viuda.»', do:[['say','ilian','Vamos a buscar a tu Viuda. Y después tocás algo que no sea eso.','h'],['say','lamar','¡Hecho! ¡Lo que quieras! Menos marchas fúnebres, que esas ya las sé todas.','h'],['hook','viudaSi']]},
+        {label:'«No es asunto nuestro.»', do:[['say','ilian','No es asunto nuestro.','t'],['say','lamar','Ya sé. Nunca es asunto de nadie. Por eso la tienen ellos.','s'],['narr','Ilian se queda mirando la gaita de feria un rato largo. Nach no dice nada; no hace falta.'],['say','ilian','Está bien. Vamos.','n'],['hook','viudaSi']]}
+      ],'Lamar pide ayuda']
+    ],
+    c6_viuda: [
+      ['vig',0.4],
+      ['narr','El campamento de la Rosa está donde Lamar dijo: dos fogones, una tienda con banderín de capitán y, colgada del poste, una gaita de cuero negro con los tubos de hueso.'],
+      ['say','lamar','Ahí está. Mi Viuda.','s'],
+      ['?',[
+        {label:'Entrar por el juncal, sin ruido', do:[['narr','Mirena va adelante. Pisan donde ella pisa. Un ballestero se aleja a orinar y no vuelve: Zarpa, o Ysa, o el pantano, nadie lo dice.'],['hook','sigilo'],['say','mirena','Ahora.','d']]},
+        {label:'Cargar de frente', do:[['say','nach','¡Cuervo!','d'],['narr','Nach sale del juncal gritando. La sorpresa dura lo que dura un grito, que con Nach es bastante.']]}
+      ],'El campamento'],
+      ['hook','battle'],
+      ['narr','Lamar descuelga la gaita del poste con las dos manos, como se levanta a un chico dormido. Le pasa la manga por los tubos. Sopla.'],
+      ['narr','Suena. Fuerte, grave, llena. Las garzas del pantano levantan vuelo todas juntas.'],
+      ['say','lamar','Hola, vieja.','s'],
+      ['say','agnes','Ahora sí parece música.','h'],
+      ['say','lamar','Me quedo. Si me dejan. Toco cuando hay miedo, y me parece que con ustedes va a haber bastante.','n'],
+      ['hook','joinLamar']
+    ],
+    c6_lectura: [
+      ['title','La sala de las trece columnas','Claustro, nivel alto',1.4], ['vig',0.45],
+      ['narr','Teo la encontró midiendo: una sala detrás del muro norte del claustro, tapiada con piedra más nueva que el resto. Kett la abre de un empujón. No pide permiso: para eso lo hicieron.'],
+      ['narr','Adentro, trece columnas en círculo. Doce tienen tallado un signo: el carnero, el toro, los gemelos, todos los que cualquiera conoce. La decimotercera está lisa, como si la hubieran raspado con cuchillo. En el centro, en el piso, la escritura sellada da vueltas en un anillo.'],
+      ['say','severo','Doce Casas. Las del Tribunal. Las que se enseñan.','t'],
+      ['say','teo','Trece columnas.','o'],
+      ['narr','Ilian se arrodilla en el centro. Esta vez no le arde: le pesa. Como si el ojo fuera de plomo.'],
+      ['emote','ilian','tear'],
+      ['narr','Lee. En voz baja, una palabra por vez. Las letras del anillo se prenden de violeta a medida que las nombra, y la luz corre por el piso hasta la columna lisa.'],
+      ['say','ilian','«Trece Casas en el cielo. Doce que miran y una que guarda la puerta».','o'],
+      ['say','ilian','«Esta es la casa de la que guarda. Aster-Vel. La Casa del Umbral».','o'],
+      ['say','ilian','Y un nombre. Vel.','t'],
+      ['narr','En la columna lisa, donde no había nada, aparece un signo de luz: una serpiente que se muerde la cola, y adentro, un ojo.'],
+      ['say','severo','El Serpentario.','o'],
+      ['narr','Severo se sienta en el piso, cosa que nunca hace, con la toga sucia.'],
+      ['say','severo','En Equinoccia hay un acta que dice trece. La robé. Por eso me condenaron. Creí que era un error de copista.','t'],
+      ['say','severo','Esto no es un error de copista. Es un fuerte entero, con su nombre en la puerta, borrado de todos los mapas. El Tribunal no se equivocó: lo tapó.','t'],
+      ['say','nach','¿Y qué tiene que ver mi hermano?','a'],
+      ['say','severo','Que es el único que puede leerlo. Y que alguien, hace diecisiete años, anotó que lo había perdido.','t'],
+      ['narr','Kett, en la puerta, prende todas las luces del pecho a la vez. Después las apaga. Olaf ronronea.'],
+      ['hook','lectura']
+    ],
+    c6_casimir: [
+      ['vig',0.5],
+      ['narr','Esa noche hay niebla en el muelle del Bastión, la poca piedra que queda de un embarcadero viejo. Ilian hace guardia solo, porque no puede dormir.'],
+      ['narr','Del agua sale una barca sin remos. Adelante, un hombre de capa carmesí con forro de seda, de pie, como si la barca lo llevara por respeto.'],
+      ['show','casimir'],
+      ['say','casimir','Ilian Varre. El batidor del ojo de dos colores. Tardé nueve días en encontrarte, y eso que soy muy bueno encontrando.','n'],
+      ['say','ilian','¿Quién te manda?','t'],
+      ['say','casimir','El Regente de Corvaine. Mil coronas por tu cabeza, y otras mil si la cabeza conserva el ojo. Casimir Vey, para servirte. Bueno, para servir al Regente.','h'],
+      ['narr','En la mano izquierda le crece una llama roja. En la derecha, el estoque se cubre de escarcha.'],
+      ['say','casimir','Fui el secretario de Edric. Le escribía las cartas. Ustedes lo mataron.','a'],
+      ['say','ilian','No lo matamos.','d'],
+      ['say','casimir','Eso dicen todos los carteles que no dicen nada.','a'],
+      ['narr','Nach baja corriendo la escalera, a medio vestir, con Don Pico en la mano. Detrás, Maela. Detrás, todos.'],
+      ['hook','battle'],
+      ['narr','Casimir cae de rodillas en la piedra mojada. La llama se le apaga en la mano. El estoque sigue frío.'],
+      ['say','casimir','Termínenlo. No me gusta esperar.','t'],
+      ['say','severo','No.','t'],
+      ['narr','Severo baja con unos papeles atados con cinta gris. Los papeles del traslado: la orden del Tribunal, el sello, la firma, la hora.'],
+      ['say','severo','Usted escribía las cartas del príncipe. Conoce las firmas. Lea esta.','n'],
+      ['narr','Casimir lee. Lee otra vez. Se le va el color de la cara, que ya era poco.'],
+      ['say','casimir','Esta orden sale del Tribunal seis días antes de la muerte de Edric. Seis días antes. Con la hora del puente.','o'],
+      ['say','severo','Los carteles con sus caras también estaban impresos seis días antes.','t'],
+      ['say','casimir','Había un hombre en el despacho del Regente. Dos veces. No se sacaba los guantes, ni para beber. Grises. Pensé que era un banquero de Vesper.','t'],
+      ['say','ilian','Guantes grises.','o'],
+      ['narr','Ilian se toca el ojo. Hace diecisiete años, en un valle de pinos, un capataz con guantes grises le preguntó qué decía la piedra.'],
+      ['say','casimir','Me mandaron a matar a los únicos que no lo hicieron. Qué elegancia.','t'],
+      ['say','casimir','Me quedo. No por ustedes: por Edric. Alguien le debe una carta.','d'],
+      ['hook','joinCasimir']
+    ],
+    c6_barones: [
+      ['vig',0.25],
+      ['narr','Dos días después llega un jinete por el camino del juncal, guiado por una garza de Mirena. Trae barro hasta la cintura y una carta sellada con tres sellos distintos.'],
+      ['say','severo','Tres barones de Brenmoor. Ewald Carsell, de Tresmolinos, y otros dos que firman con miedo.','t'],
+      ['say','severo','«El rey Odran ofrece a su hija Elowen en matrimonio a Varek Mor, Gran Maestre de la Rosa, a cambio de la paz».','t'],
+      ['say','casimir','Varek. El Mastín. Lo vi una vez en Corvaine: quemó un granero porque el granjero no se sacó el sombrero.','t'],
+      ['say','severo','«Los barones no van a entregar a la princesa ni el reino. Buscan dónde reunirse sin que el rey lo sepa».','t'],
+      ['narr','Silencio en la sala del consejo. La mesa de piedra es redonda: nadie se sienta en la cabecera porque no tiene.'],
+      ['say','maela','Una rebelión. De barones. Con nosotros en el medio.','n'],
+      ['say','nach','Ya estamos en el medio. Tenemos los carteles.','n'],
+      ['narr','Ilian mira el plano de Teo en la pared. Trece varas de muro. Un puente hundido que solo cruza quien sabe. Un pantano que no tiene caminos.'],
+      ['say','ilian','Que vengan acá.','d'],
+      ['say','ilian','Respondé que el Bastión Gris los espera. Que no está en ningún mapa, y que por eso es el mejor lugar del reino para hablar.','d'],
+      ['narr','Severo escribe. Casimir le corrige una coma. Severo la deja como estaba.'],
+      ['hook','finCap']
     ]
   },
   cast: {
+
     c6_titulo:[],
     c6_murgo:['ilian','nach','maela','severo','dov','bram','tessa','mirena','simona','olaf','agnes','ysa'],
     c6_pacto:['mirena','ilian','nach','olaf','simona'],
@@ -29419,9 +29536,14 @@ LINES.cap6 = {
     c6_pedestal:['ilian','nach','maela','severo','teo','mirena','olaf','simona'],
     c6_eco:['mirena'],
     c6_lumbre2:['ilian','maela','agnes','teo','ismena','olaf','simona'],
-    c6_base:['ilian','nach','agnes','severo','dov','mirena','teo','olaf']
+    c6_base:['ilian','nach','agnes','severo','dov','mirena','teo','olaf'],
+    c6_lamar:['ilian','nach','maela','dov','lamar','mirena','tessa','bram'],
+    c6_viuda:['ilian','nach','mirena','lamar','agnes'],
+    c6_lectura:['ilian','nach','severo','teo','kett','olaf'],
+    c6_casimir:['ilian','nach','maela','severo','casimir','olaf'],
+    c6_barones:['ilian','nach','maela','severo','casimir','mirena']
   },
-  aff: { scene: { c6_murgo:[['mirena','tessa',3],['mirena','bram',2]], c6_pacto:[['mirena','ilian',3]], c6_lumbre1:[['ilian','nach',2]], c6_teo:[['teo','dov',3]], c6_pedestal:[['ilian','olaf',2]], c6_lumbre2:[['ismena','maela',2]], c6_base:[['ilian','nach',2],['agnes','dov',1]] } },
+  aff: { scene: { c6_murgo:[['mirena','tessa',3],['mirena','bram',2]], c6_pacto:[['mirena','ilian',3]], c6_lumbre1:[['ilian','nach',2]], c6_teo:[['teo','dov',3]], c6_pedestal:[['ilian','olaf',2]], c6_lumbre2:[['ismena','maela',2]], c6_base:[['ilian','nach',2],['agnes','dov',1]], c6_viuda:[['lamar','agnes',2],['lamar','tessa',2]], c6_lectura:[['ilian','severo',3]], c6_casimir:[['casimir','severo',3],['ilian','casimir',1]] } },
   fichas: {
     mirena: { numero:15, nombre:'Mirena Sol', edad:'29', raza:'Humana', clase:'Cazador', faccion:'Pantano de Murgo',
       cita:'Las garzas no leen carteles.',
@@ -29434,7 +29556,13 @@ LINES.cap6 = {
       nota:'Agrimensor por accidente; prolijo, ansioso, obsesivo con medir. Se escapó de la Garfio y llegó al Bastión antes que nadie. Midió el lugar entero. Tierra / Virgo.' },
     kett: { numero:19, nombre:'Kett (Unidad K-7)', edad:'más de 3.000 años', raza:'Constructo asterii', clase:'Autómata de Guerra', faccion:'Bastión Gris (Casa del Umbral)',
       cita:'«Nuevo portador de la llave» (en luces).',
-      nota:'Gigante de bronce de la sala redonda. No habla: se comunica con las luces del núcleo. Leal, literal y tierno con Olaf, a quien obedece. Sin elemento / Capricornio.' }
+      nota:'Gigante de bronce de la sala redonda. No habla: se comunica con las luces del núcleo. Leal, literal y tierno con Olaf, a quien obedece. Sin elemento / Capricornio.' },
+    lamar: { numero:29, nombre:'Lamar', edad:'28', raza:'Humano', clase:'Bardo', faccion:'Tercio del Norte (desarmado)',
+      cita:'Toco cuando hay miedo.',
+      nota:'Gaitero de un regimiento que la Rosa desarmó. Ruidoso, simpático, bocón y miedoso: toca más fuerte cuando tiene miedo. Recuperó su gaita, «la Viuda», de un campamento de la Rosa. Viento / Acuario.' },
+    casimir: { numero:16, nombre:'Casimir Vey', edad:'29', raza:'Humano', clase:'Mago rojo', faccion:'Corvaine (ex secretario del príncipe Edric)',
+      cita:'Alguien le debe una carta.',
+      nota:'Brillante, elegante y arrogante. Lo mandó el Regente a matar a Ilian. Con los papeles del traslado, Severo le mostró quién mató a Edric. Vio dos veces al hombre de guantes grises en el despacho del Regente. Fuego e Hielo / Acuario.' }
   },
   diario: {
     chron: { c6_murgo:{h:'El blanco del mapa',t:['Tres días en el Pantano de Murgo. Mirena Sol, la cazadora que cazaba con el padre de Bram, nos encontró antes que la Rosa. Dice que las garzas no duermen desde que se prendió la luz.']},
@@ -29444,8 +29572,12 @@ LINES.cap6 = {
       c6_teo:{h:'Trece varas',t:['Un agrimensor, Teo Arlen, llevaba dos días adentro midiendo. Todo en el Bastión mide trece. Nadie construye en trece.']},
       c6_pedestal:{h:'La sala redonda',t:['Abajo hay un gigante de bronce que le hace caso a Olaf. Si lo leo, despierta. Las luces dijeron «nuevo portador de la llave». No tengo ninguna llave.']},
       c6_lumbre2:{h:'Segunda lumbre',t:['Ismena volvió, adentro, sin huellas. Pidió el hueso y llamó a Saloma, una mujer de agua que era de su abuela. El aljibe quedó un palmo más alto.']},
-      c6_base:{h:'Ruina recuperada',t:['Nach ató la bandera del cuervo en la torre entera. Para que la vea quien tenga que verla. El Bastión es nuestro, o nosotros somos del Bastión.']} },
-    people: { mirena:'Mirena Sol. Cazadora del Pantano de Murgo. Habla poco, y casi nunca con personas.', ismena:'Ismena Vardo, de Vesper. Tira los huesos de su abuela. Sabe algo de mi ojo.', teo:'Teo Arlen. Agrimensor. Mide todo dos veces, y la segunda cuenta más fuerte que Dov.', kett:'Kett. Bronce, luces y paciencia de tres mil años. Le hace caso a Olaf.' }
+      c6_base:{h:'Ruina recuperada',t:['Nach ató la bandera del cuervo en la torre entera. Para que la vea quien tenga que verla. El Bastión es nuestro, o nosotros somos del Bastión.']},
+      c6_viuda:{h:'La Viuda',t:['Un gaitero, Lamar, nos pidió su gaita. La tenía la Rosa colgada como trofeo. Ahora suena en el patio, y las garzas se acostumbraron.']},
+      c6_lectura:{h:'Trece Casas',t:['Leí la sala de las trece columnas. «Doce que miran y una que guarda la puerta». Aster-Vel, la Casa del Umbral. Un nombre: Vel. La columna lisa tenía una serpiente con un ojo adentro.']},
+      c6_casimir:{h:'Guantes grises',t:['Casimir Vey vino a matarme por mil coronas. Severo le mostró la orden del traslado, seis días antes del puente. Casimir vio a un hombre de guantes grises en el despacho del Regente. Guantes grises. Como el capataz.']},
+      c6_barones:{h:'Los barones',t:['El rey Odran ofrece a Elowen a Varek Mor. Los barones se rebelan y buscan dónde reunirse. Les dije que vengan al Bastión. No está en ningún mapa.']} },
+    people: { mirena:'Mirena Sol. Cazadora del Pantano de Murgo. Habla poco, y casi nunca con personas.', ismena:'Ismena Vardo, de Vesper. Tira los huesos de su abuela. Sabe algo de mi ojo.', teo:'Teo Arlen. Agrimensor. Mide todo dos veces, y la segunda cuenta más fuerte que Dov.', kett:'Kett. Bronce, luces y paciencia de tres mil años. Le hace caso a Olaf.', lamar:'Lamar. Gaitero. Tiene miedo de todo y lo dice; después va igual.', casimir:'Casimir Vey. Vino a matarme. Corrige las comas de Severo.' }
   }
 };
 LINES.epigrafe[6] = { t:'«Al sur del Linde, el cuero está en blanco. Ningún trazo.»', de:'Diario de Ilian Varre' };
@@ -29456,13 +29588,14 @@ try{ ARC.merge(6); }catch(e){ console.error('[arco2] textos cap 6',e); }
    Tramo 1 (v29): escenas pintadas en el pantano y el fogón. La zona explorable del Pantano de Murgo y el Bastión entran con el tramo 2.
    Combate: patrulla de la Rosa (soldado + capitán + lancero, Nv 13) con Mirena recién sumada.
    Tramo 2 (v30): la puerta y los guardianes asterii, Teo, Kett (si Ilian lee el pedestal) y el primer Eco (si hubo pacto), la segunda lumbre y la base mínima.
-   c6_fin_t2 es el último tramo de esta versión. El autoguardado viejo en c6_avance (v29) se redirige a c6_puerta con CPALIAS (final/guion.js).
+   Tramo 3 (v31): Lamar y «La Viuda», la lectura de las trece Casas, el duelo con Casimir (jefe: Fuego → Escarcha) y la carta de los barones; cierra con capEnd(6).
+   c6_fin es el último tramo de esta versión. Autoguardados viejos: c6_avance (v29) → c6_puerta y c6_fin_t2 (v30) → c6_lamar, con CPALIAS (final/guion.js).
    ============================================================ */
 (function(){
 const L6=()=>LINES.cap6||{};
 const tst=k=>{ if(!AUTO) toast((L6().toasts||{})[k]||'',2400); };
 const mark=x=>{ try{ window.__LDC_ARCO2=(window.__LDC_ARCO2||[]).concat([x]); }catch(e){} }; // rastro para la prueba automática
-async function painted(bg,name,hk,opt){ opt=opt||{}; mark('>'+name); if(opt.music) playMusic(opt.music); const st=await stageIn(bg,name,opt.ms||600,opt);
+async function painted(bg,name,hk,opt){ opt=opt||{}; mark('>'+name); arc2SpFix(); if(opt.music) playMusic(opt.music); const st=await stageIn(bg,name,opt.ms||600,opt);
   await playScene(name,stageCtx(st,ARC.hooks(typeof hk==='function'?hk(st):(hk||{})))); hideDialog(); mark('<'+name); await PFXI.cover('C9',opt.out||400); return st; }
 const noche=k=>(c)=>{ c.fillStyle='rgba(10,14,40,'+k+')'; c.fillRect(0,0,W,H); };
 // Eco del Viejo del Juncal (C-07): embestida a todo el frente (≈30 % de su vida) y los derriba (pierden turno); una vez por combate
@@ -29471,8 +29604,8 @@ function eco(B){ const L=LINES.cap6||{}; try{ if(!AUTO) toast((L.toasts||{}).eco
   B.log='Eco · Embestida del Juncal'; ARC.log('eco:viejo_juncal'); ARC.set('eco_usado'); }
 const lvlCore=()=>{ try{ const v=Object.values(G.party||{}).map(m=>m.lvl|0).sort((a,b)=>b-a).slice(0,6); return Math.max(12,Math.round(v.reduce((a,b)=>a+b,0)/Math.max(1,v.length))); }catch(e){ return 13; } };
 ARC.cap(6,{
-  order:['c6_titulo','c6_murgo','c6_pacto','c6_lumbre1','c6_umbral','c6_puerta','c6_teo','c6_pedestal','c6_lumbre2','c6_base','c6_fin_t2'],
-  names:{c6_titulo:'Capítulo 6',c6_murgo:'El blanco del mapa',c6_pacto:'El Viejo del Juncal',c6_lumbre1:'Lumbre de paso',c6_umbral:'El umbral',c6_puerta:'La puerta',c6_teo:'Trece varas',c6_pedestal:'La sala redonda',c6_lumbre2:'Segunda lumbre',c6_base:'Ruina recuperada',c6_fin_t2:'Continuará'},
+  order:['c6_titulo','c6_murgo','c6_pacto','c6_lumbre1','c6_umbral','c6_puerta','c6_teo','c6_pedestal','c6_lumbre2','c6_base','c6_lamar','c6_viuda','c6_lectura','c6_casimir','c6_barones','c6_fin'],
+  names:{c6_titulo:'Capítulo 6',c6_murgo:'El blanco del mapa',c6_pacto:'El Viejo del Juncal',c6_lumbre1:'Lumbre de paso',c6_umbral:'El umbral',c6_puerta:'La puerta',c6_teo:'Trece varas',c6_pedestal:'La sala redonda',c6_lumbre2:'Segunda lumbre',c6_base:'Ruina recuperada',c6_lamar:'La gaita de feria',c6_viuda:'La Viuda',c6_lectura:'Trece Casas',c6_casimir:'El muelle',c6_barones:'Los barones',c6_fin:'Fin del capítulo'},
   steps:{
     async c6_titulo(){ if(!G.arco1){ try{ arco1Resumen(); }catch(e){} } await ARC.card(6); },
     async c6_murgo(){ const n=lvlCore();
@@ -29501,11 +29634,25 @@ ARC.cap(6,{
     async c6_lumbre2(){ await painted('ruinas','c6_lumbre2',{lumbre:async()=>{ ARC.set('ismena_lumbre2'); try{ SAVES.auto('lumbre'); }catch(e){} tst('lumbre'); }},{music:'fogon',over:noche(0.42)});
       Object.values(G.party).forEach(m=>{ const s=stats(m); m.pv=s.pv; m.pm=s.pm; }); },
     async c6_base(){ await painted('ruinas','c6_base',{base:async()=>{ ARC.set('base_bastion'); ARC.set('c6_tramo2'); try{ const w=WORLD.ensure(); w.places.bastion=Math.max(2,w.places.bastion||0); }catch(e){} tst('base'); }},{music:'calma'}); },
-    async c6_fin_t2(){ // fin de lo jugable en esta versión: el autoguardado de este tramo queda; la próxima versión sigue desde acá (tramo 3)
+    async c6_lamar(){ await painted('ruinas','c6_lamar',{viudaSi:async()=>{ ARC.set('mision_viuda'); }},{music:'calma'}); },
+    async c6_viuda(){ const n=lvlCore(); let sig=false;
+      await painted('pantano','c6_viuda',st=>({ sigilo:async()=>{ sig=true; ARC.set('viuda_sigilo'); },
+        battle:async()=>{ const E=sig?[['capitan_rosa',n],['ballestero',n]]:[['capitan_rosa',n],['ballestero',n],['soldado',n],[typeof lanceroKey==='function'?lanceroKey():'soldado',n]];
+          await ARC.fightIn(st,{zone:'pantano',party:null,enemies:E}); },
+        joinLamar:async()=>{ ARC.join('lamar',n); tst('lamar'); ARC.log('rec:lamar'); ARC.set('viuda_ok'); } }),{music:'intriga',over:noche(0.3)}); },
+    async c6_lectura(){ await painted('ruinas','c6_lectura',{lectura:async()=>{ ARC.set('trece_casas'); ARC.set('aster_vel'); tst('lectura'); }},{music:'serpentario',over:noche(0.38)}); },
+    async c6_casimir(){ const n=lvlCore();
+      await painted('ruinas','c6_casimir',st=>({
+        battle:async()=>{ Object.values(G.party).forEach(m=>{ if(m) m.imp=0; });
+          await ARC.fightIn(st,{zone:'ruinas',party:null,boss:true,music:'jefe',must:['ilian'],enemies:[['casimir_jefe',n+2]],endAt:{key:'casimir_jefe',pv:0.25}}); },
+        joinCasimir:async()=>{ ARC.join('casimir',n); tst('casimir'); ARC.log('rec:casimir'); } }),{music:'intriga',over:noche(0.5)});
+      Object.values(G.party).forEach(m=>{ const s=stats(m); if(m.pv<=0) m.pv=1; }); },
+    async c6_barones(){ await painted('ruinas','c6_barones',{finCap:async()=>{ ARC.set('barones_bastion'); await ARC.capEnd(6); }},{music:'intriga'}); },
+    async c6_fin(){ // fin de lo jugable en esta versión: el Capítulo 6 terminó; el autoguardado queda acá y la próxima versión sigue con el Cap. 7
       mark('avance'); if(AUTO){ await new Promise(r=>setTimeout(r,3000)); return; } // la prueba automática toma la foto final acá (huella estable)
       stopMusic(); playMusic('title'); hideDialog();
-      setScene({draw(c,dt){ drawBG(c,'noche',dt); c.fillStyle='rgba(0,0,0,.4)'; c.fillRect(0,80,W,120); c.textAlign='center'; c.fillStyle='#f4e8c8'; c.font='24px "Marcellus SC", Georgia, serif'; c.fillText('Capítulo 6 · El Bastión Gris',W/2,118);
-        c.fillStyle='#e0b860'; c.font='700 '+FSZ(13)+'px "Alegreya Sans SC", system-ui, sans-serif'; c.fillText('FIN DEL TRAMO 2 · SIGUE EN LA PRÓXIMA VERSIÓN',W/2,146); c.fillStyle='#d9dfec'; c.font='14px Alegreya, Georgia, serif'; c.fillText('Tu partida quedó guardada acá.',W/2,172); }});
+      setScene({draw(c,dt){ drawBG(c,'noche',dt); c.fillStyle='rgba(0,0,0,.4)'; c.fillRect(0,80,W,120); c.textAlign='center'; c.fillStyle='#f4e8c8'; c.font='24px "Marcellus SC", Georgia, serif'; c.fillText('Fin del Capítulo 6 · El Bastión Gris',W/2,118);
+        c.fillStyle='#e0b860'; c.font='700 '+FSZ(13)+'px "Alegreya Sans SC", system-ui, sans-serif'; c.fillText('EL CAPÍTULO 7 LLEGA EN LA PRÓXIMA VERSIÓN',W/2,146); c.fillStyle='#d9dfec'; c.font='14px Alegreya, Georgia, serif'; c.fillText('Tu partida quedó guardada acá.',W/2,172); }});
       await fadeTo(0,600); await choose([{label:'Volver al título',value:1,cls:'primary',icon:'back'}],'Arco II · avance'); try{ location.reload(); }catch(e){} await new Promise(()=>{}); }
   }});
 })();
@@ -30571,7 +30718,7 @@ function presoPuesta(){ const S=LINES.scenes&&LINES.scenes.campamento; if(!Array
     presoSienta:async()=>{ if(!sv) return; if(walk){ await walk; walk=null; } sv.base='sit'; sv.at=T; } }; }}; }
 // rec: registro de ranura con el que se retoma (para no repetir combates ya ganados en ese tramo)
 /* fix27 M4 · guardados: alias de tramos renombrados (Arco II: 'viejo':'nuevo') y tramo desconocido sin volver al prólogo en silencio */
-const CPALIAS={c6_avance:'c6_puerta'}; // v30: el fin del tramo 1 (v29) sigue en el tramo 2
+const CPALIAS={c6_avance:'c6_puerta',c6_fin_t2:'c6_lamar'}; // v30/v31: el fin de cada tramo de una versión sigue en el tramo siguiente
 function cpOk(cp){ if(ORDER.includes(cp)) return cp; const a=CPALIAS[cp]; return (a&&ORDER.includes(a))?a:null; }
 function lastValid(skip){ let b=null; SLOTS.forEach(id=>{ if(id===skip) return; const r=SAVES.read(id); if(!r||!cpOk(r.cp)||['prologo','titulo'].includes(r.cp)) return; if(!b||(r.ts||0)>(b.rec.ts||0)) b={id,rec:r}; }); return b; }
 async function badSave(id,rec){ SAVES.block=true; hideDialog(); if(id==='auto'&&rec) try{ store.set('slot_auto_aparte',rec); }catch(e){} /* el autoguardado de tramo desconocido queda aparte antes de que otro lo pise */ try{ await fadeTo(0,200); }catch(e){}
