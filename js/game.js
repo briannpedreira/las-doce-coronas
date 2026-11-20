@@ -30484,13 +30484,13 @@ Object.assign(L.scenes,{
       {label:'Señalar que el estante del Tomo era bajo: alguien de arco corto, que tira agachada', do:[['hook','debOk'],['say','merith','…Buen ojo, para un pueblo breve.','t']]}
     ],'Segunda pregunta del juicio'],
     ['?',[
-      {label:'Preguntarle a Merith por qué volvió', do:[['hook','debOk'],['say','merith','Porque leí lo que había en el Tomo, sobre la Guerra del Eclipse. Y no podía ser la única que lo supiera.','s'],['say','merith','Lo robé yo. Él cargó con la culpa. Le debo cien años de exilio.','s']]},
+      {label:'Preguntarle a Merith por qué volvió', do:[['hook','debOk'],['say','merith','Porque leí lo que había en el Tomo, sobre la Guerra del Eclipse. Y no podía ser la única que lo supiera.','s'],['say','merith','Lo robé yo. Él cargó con la culpa. Le debo cuarenta años de exilio.','s']]},
       {label:'Pedir que juren por el bosque', do:[['say','faelan','El bosque no toma juramentos de exiliados.','s']]}
     ],'Tercera pregunta del juicio'],
     ['hook','debateFin'],
     ['if',{flag:'debate_ok'},
       [['say','severo','Juicio cerrado. La verdad está dicha. Lo demás es entre ustedes.','n'],
-       ['say','faelan','Cien años… Me hubieras dicho. Te hubiera ayudado a esconderlo mejor.','t'],
+       ['say','faelan','Cuarenta años… Me hubieras dicho. Te hubiera ayudado a esconderlo mejor.','t'],
        ['say','merith','Me quedo. Alguien tiene que corregirte las fechas. Y vamos a buscar ese Tomo al río.','h'],
        ['hook','joinMerith']],
       [['say','severo','No hay verdad, no hay juicio. Hay dos elfos enojados.','n'],
@@ -30512,7 +30512,7 @@ Object.assign(L.scenes,{
       {label:'Ofrecerle tasar a Kett', do:[['if',{flag:'kett_on'},[['say','kett','Antigüedad estimada: tres mil años. Precisión: alta.','n'],['say','sasquatch','No… no tengo precio para esto. Es lo más hermoso que tasé en mi vida. El Tomo es suyo. Déjenme mirarlo un rato más.','h'],['hook','tasacion']],[['say','sasquatch','No hay nada en ustedes que no haya tasado antes. Entonces, a las armas.','a'],['hook','pelea']]]]}
     ],'El Tomo de la Corteza'],
     ['if',{flag:'tomo_ok'},
-      [['say','faelan','El Tomo. Huele a lo mismo que hace cien años: a corteza y a error.','t'],
+      [['say','faelan','El Tomo. Huele a lo mismo que hace cuarenta años: a corteza y a error.','t'],
        ['say','faelan','Me quedo con ustedes. Un libro así no se lee solo, y ustedes leen poco.','h'],
        ['hook','joinFaelan']],
       []]
@@ -30550,7 +30550,7 @@ Object.assign(L.fichas,{
 Object.assign(L.diario.chron,{
   c7_entrega:{h:'La entrega',t:['El rey mandó a su hija a casarse con Varek Mor. Elowen Brenn baja de las carrozas con una lanza y opina.']},
   c7_capilla:{h:'La capilla',t:['La Rosa quemó una capilla con la gente adentro. De la cripta salió una novicia, Clemence, con quemaduras de vela en las manos.']},
-  c7_corteza:{h:'El juicio de los elfos',t:['Severo armó un juicio en la biblioteca. Dos elfos, un libro robado y cien años de culpa mal repartida.']},
+  c7_corteza:{h:'El juicio de los elfos',t:['Severo armó un juicio en la biblioteca. Dos elfos, un libro robado y cuarenta años de culpa mal repartida.']},
   c7_barcaza:{h:'La barcaza',t:['Un tasador en el río le puso precio a todo. A mí no pudo. Dice que eso lo pone nervioso.']},
   c7_sal:{h:'La sal',t:['Holgar voló el vado de Corvaine. Cuatro turnos de mecha. Ewald todavía no le perdona el molino viejo.']} });
 Object.assign(L.diario.people,{ elowen:'Elowen Brenn. Princesa con lanza. Pregunta.', clemence:'Clemence. Novicia. Tartamudea cuando miente.', faelan:'Faelan. Elfo pedante. Cargó la culpa de otra.', merith:'Merith. Tira agachada. Confesó.', holgar:'Holgar. Vuela cosas por contrato.' });
