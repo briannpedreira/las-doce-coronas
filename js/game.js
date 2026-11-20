@@ -29993,52 +29993,88 @@ function miniSoldier(c,u,x,y,t,face,run,sc){ const tt=t+(x*0.13);
   const id=MINI[u.side][u.type]; const o={anim:run?'walk':'idle',face,t:tt,scale:0.32};
   if(u.type==='cab'){ horse(c,x+face*3,y,face,tt,u.side==='e',0.65); spr(c,id,x-face*1,y-6,Object.assign(o,{scale:0.26})); } else spr(c,id,x,y,o); }
 // una unidad en el mapa: estandarte, el ejército en bloque (hasta 12 soldados en 4 filas), líder adelante, número de tropa y barras
-function drawUnit(c,S,u,t){ const X=cx(u), Y=cy(u), face=u.side==='p'?1:-1; const n=Math.max(2,Math.min(12,Math.ceil(u.troops/40)));
+// v36 (pedido de Brian 20/11, referencias de estilo): el mapa es una vista CENITAL pintada (pasto, bosques, rocas, agua, camino y el objetivo),
+// sin grilla a la vista. Cada unidad es el modelo de la v34 (g3a): el comandante grande adelante y su ejército detrás, con un estandarte alto.
+function drawUnit(c,S,u,t){ const X=cx(u), Y=cy(u), face=u.side==='p'?1:-1; const n=Math.max(3,Math.min(8,Math.ceil(u.troops/60)));
   const hit=S.clash&&S.clash.d===u&&S.clash.t<0.6; const sh=hit?Math.sin(t*60)*1.5:0;
-  c.fillStyle='rgba(0,0,0,.24)'; c.beginPath(); c.ellipse(X-face*2,Y+3,30,8,0,0,Math.PI*2); c.fill();
-  if(S.cur===u.id){ const k=0.5+0.5*Math.sin(t*6); c.strokeStyle='rgba(255,240,180,'+(0.55+0.45*k)+')'; c.lineWidth=2; c.beginPath(); c.ellipse(X-face*2,Y+3,32+k*2,10+k,0,0,Math.PI*2); c.stroke(); }
-  if(u.hold){ c.strokeStyle=u.muro?'#f0c04a':'rgba(240,208,112,.7)'; c.lineWidth=1.5; c.beginPath(); c.ellipse(X-face*2,Y+3,27,7,0,0,Math.PI*2); c.stroke(); }
+  c.fillStyle='rgba(10,30,5,.28)'; c.beginPath(); c.ellipse(X-face*3,Y+3,30,8,0,0,Math.PI*2); c.fill();
+  if(S.cur===u.id){ const k=0.5+0.5*Math.sin(t*6); c.strokeStyle='rgba(255,250,200,'+(0.55+0.45*k)+')'; c.lineWidth=2; c.beginPath(); c.ellipse(X-face*3,Y+3,32+k*2,10+k,0,0,Math.PI*2); c.stroke(); }
+  if(u.hold){ c.strokeStyle=u.muro?'#f0c04a':'rgba(240,208,112,.7)'; c.lineWidth=1.5; c.beginPath(); c.ellipse(X-face*3,Y+3,27,7,0,0,Math.PI*2); c.stroke(); }
   if(u.burnT>0){ for(let i=0;i<4;i++){ c.fillStyle=i%2?'rgba(255,150,60,.8)':'rgba(255,90,30,.7)'; c.fillRect(X-12+i*7,Y-14-((t*30+i*7)%10),2,3); } }
-  // estandarte
-  const bx=X-face*25+sh, by=Y-26; c.fillStyle='#5a4630'; c.fillRect(bx,by,1,24); c.fillStyle=COL[u.side]; c.beginPath(); c.moveTo(bx+1,by); c.lineTo(bx+1+face*10,by+2); c.lineTo(bx+1+face*7,by+5); c.lineTo(bx+1+face*10,by+8); c.lineTo(bx+1,by+9); c.fill();
-  c.fillStyle='#f4e8c8'; c.fillRect(bx+1+face*3,by+3,2,2);
-  // el ejército en bloque: 4 filas, de atrás hacia adelante para que se tapen bien
-  const sp=u.type==='cab'?11:7, rows=4, cols=Math.ceil(n/rows); const list=[];
-  for(let i=0;i<n;i++){ const row=i%rows, col=Math.floor(i/rows); list.push({x:X-face*(2+col*sp)+(row%2?-face*sp/2:0)+sh,y:Y-8+row*5}); }
-  list.sort((p,q)=>p.y-q.y).forEach(q=>miniSoldier(c,u,q.x,q.y,t,face,false));
-  (u.subs||[]).forEach((id,j)=>spr(c,id,X+face*(9+j*13)+sh,Y-3+j*2,{anim:'idle',face,t:t+j*0.4,scale:0.36}));
-  if(u.leader) spr(c,u.leader,X+face*15+sh,Y+5,{anim:'idle',face,t,scale:0.48});
-  // tropa y barras
+  // el ejército: hasta 8 soldados en 3 filas, detrás del comandante (de atrás hacia adelante)
+  const sp=u.type==='cab'?14:10, list=[];
+  for(let i=0;i<n;i++){ const col=Math.floor(i/3), row=i%3; list.push({x:X-face*(4+col*sp)+(row===1?-face*5:0)+sh,y:Y-1+(row-1)*7}); }
+  list.sort((p,q)=>p.y-q.y).forEach(q=>miniSoldier(c,u,q.x,q.y,t,face,false,u.type==='cab'?0.34:0.36));
+  (u.subs||[]).forEach((id,j)=>spr(c,id,X+face*(7+j*3)+sh,Y-9+j*15,{anim:'idle',face,t:t+j*0.4,scale:0.4}));
+  if(u.leader) spr(c,u.leader,X+face*16+sh,Y+5,{anim:'idle',face,t,scale:0.52});
+  // estandarte alto del comandante (como el de las referencias): asta, banderín del ejército y punta de acero
+  const bx=Math.round(X+face*16+sh-face*6), by=Y-40; c.fillStyle='#3a2a1a'; c.fillRect(bx,by,2,30); c.fillStyle='#e8eef6'; c.beginPath(); c.moveTo(bx-1,by); c.lineTo(bx+1,by-6); c.lineTo(bx+3,by); c.fill();
+  const fl=Math.sin(t*4+u.x)*1.2; const fx=bx+(face>0?2:0); c.fillStyle=COL[u.side]; c.beginPath();
+  c.moveTo(fx,by+2); c.lineTo(fx+face*12,by+3+fl); c.lineTo(fx+face*9,by+6); c.lineTo(fx+face*12,by+9+fl); c.lineTo(fx,by+10); c.fill();
+  c.fillStyle='#f4e8c8'; c.fillRect(fx+face*4-1,by+5,2,2); if(!u.cmd){ c.fillStyle='rgba(0,0,0,.4)'; c.fillRect(fx+(face>0?0:-12),by+2,12,8); }
+  // tropa (cajita como en las referencias) y moral
   c.font='700 9px "Alegreya Sans SC", system-ui, sans-serif'; c.textAlign='center'; const lab=String(u.troops); const w=c.measureText(lab).width+6;
-  c.fillStyle=u.side==='p'?COL.pd:COL.ed; c.fillRect(X-w/2,Y+9,w,10); c.fillStyle='#fff'; c.fillText(lab,X,Y+17);
-  c.fillStyle='rgba(0,0,0,.55)'; c.fillRect(X-14,Y+20,28,3); c.fillStyle='#f0c04a'; c.fillRect(X-14,Y+20,28*u.moral/100,3);
-  if(u.skill&&!u.used&&SKILL[u.skill]){ c.fillStyle='#f0c04a'; c.beginPath(); c.arc(X+17,Y+15,2.2,0,Math.PI*2); c.fill(); } }
-function drawField(c,S,dt){ try{ drawBG(c,S.cfg.bg||'prados',dt); }catch(e){ c.fillStyle='#4d6a38'; c.fillRect(0,0,W,H); }
-  c.fillStyle='rgba(20,30,10,.18)'; c.fillRect(0,0,W,H);
-  // camino viejo (de izquierda a derecha, pasando por el objetivo)
-  const Hd=S.cfg.hold; c.strokeStyle='rgba(196,170,120,.45)'; c.lineWidth=12; c.lineCap='round'; c.beginPath(); c.moveTo(OX-10,OY+2.5*CH); c.bezierCurveTo(OX+2*CW,OY+1.6*CH,OX+4.5*CW,OY+3.4*CH,OX+COLS*CW+10,OY+2.4*CH); c.stroke(); c.lineCap='butt';
-  // matas y piedras fijas (semilla)
-  const R=rng(77); for(let i=0;i<26;i++){ const x=OX+R()*COLS*CW, y=OY+R()*ROWS*CH; c.fillStyle=R()<0.5?'rgba(40,70,30,.55)':'rgba(70,95,45,.55)'; c.beginPath(); c.arc(x,y,2+R()*3,0,Math.PI*2); c.fill(); }
-  if(Hd){ const X=OX+Hd.x*CW+CW/2, Y=OY+Hd.y*CH+CH/2; // el molino
-    c.fillStyle='#d9cdb0'; c.fillRect(X-26,Y-22,12,22); c.fillStyle='#8a5a3a'; c.beginPath(); c.moveTo(X-28,Y-22); c.lineTo(X-20,Y-30); c.lineTo(X-12,Y-22); c.fill();
-    c.save(); c.translate(X-20,Y-22); c.rotate((performance.now()/1400)%(Math.PI*2)); c.fillStyle='#e8dcc0'; for(let i=0;i<3;i++){ c.rotate(Math.PI*2/3); c.fillRect(-1,-13,3,13); } c.restore();
-    c.strokeStyle='rgba(240,208,112,.55)'; c.setLineDash([3,3]); c.strokeRect(OX+Hd.x*CW+2,OY+Hd.y*CH+2,CW-4,CH-4); c.setLineDash([]); }
-  // alcance de la unidad activa
-  const cu=S.units.find(u=>u.id===S.cur); if(cu){ alive(S).filter(v=>v.side!==cu.side&&inRange(cu,v)).forEach(v=>{ c.strokeStyle='rgba(255,90,80,.8)'; c.lineWidth=1.5; c.beginPath(); c.ellipse(cx(v),cy(v)+3,28,9,0,0,Math.PI*2); c.stroke(); }); } }
+  c.fillStyle='rgba(8,20,8,.75)'; c.fillRect(X-w/2-1,Y+8,w+2,12); c.fillStyle=u.side==='p'?COL.pd:COL.ed; c.fillRect(X-w/2,Y+9,w,10); c.fillStyle='#fff'; c.fillText(lab,X,Y+17);
+  c.fillStyle='rgba(0,0,0,.55)'; c.fillRect(X-14,Y+21,28,3); c.fillStyle='#8be04a'; c.fillRect(X-14,Y+21,28*u.moral/100,3);
+  if(u.skill&&!u.used&&SKILL[u.skill]){ c.fillStyle='#f0c04a'; c.beginPath(); c.arc(X+w/2+4,Y+14,2.4,0,Math.PI*2); c.fill(); } }
+// ---- terreno cenital por código (se pinta una vez por batalla en un lienzo aparte) ----
+const TERR_DEF={ forests:[[1.6,-0.4,1.6],[3.4,4.7,1.9],[5.9,3.6,1.3],[0.2,4.6,1.1]], rocks:[[5.4,-0.3,1.5],[6.9,1.4,0.9]], water:[[3.2,-0.35,1.1]], road:true, trees:22 };
+let TERR=null;
+function terrain(S){ const key=(S.cfg.title||'')+(S.cfg.seed||0); if(TERR&&TERR.key===key) return TERR.cv; const cv=document.createElement('canvas'); cv.width=W; cv.height=H; const c=cv.getContext('2d');
+  const T=Object.assign({},TERR_DEF,S.cfg.terrain||{}); const R=rng((S.cfg.seed||7)*31+5); const gx=x=>OX+x*CW+CW/2, gy=y=>OY+y*CH+CH/2;
+  // pasto: bloques de 2 px en cuatro verdes, con manchones más claros
+  const G=['#5b9a38','#63a33e','#6dac44','#569134']; for(let y=0;y<H;y+=2) for(let x=0;x<W;x+=2){ c.fillStyle=G[(R()*4)|0]; c.fillRect(x,y,2,2); }
+  for(let i=0;i<18;i++){ const x=R()*W, y=R()*H, r=20+R()*40; const g=c.createRadialGradient(x,y,0,x,y,r); g.addColorStop(0,'rgba(170,220,110,.22)'); g.addColorStop(1,'rgba(170,220,110,0)'); c.fillStyle=g; c.fillRect(x-r,y-r,r*2,r*2); }
+  for(let i=0;i<220;i++){ const x=(R()*W)|0, y=(R()*H)|0; c.fillStyle=R()<0.5?'#477e2a':'#8cc45a'; c.fillRect(x,y,1,2); c.fillRect(x+2,y+1,1,1); }
+  // camino de tierra que pasa por el objetivo
+  if(T.road){ const Hd=S.cfg.hold||{x:0,y:2}; const pts=[[-20,gy(Hd.y)],[gx(Hd.x)+30,gy(Hd.y)+2],[gx(2.5),gy(Hd.y+0.9)],[gx(4.5),gy(Hd.y-0.6)],[W+20,gy(Hd.y-1.1)]];
+    [[14,'#9c8352'],[10,'#c9b07a'],[4,'#d8c290']].forEach(([w,col])=>{ c.strokeStyle=col; c.lineWidth=w; c.lineCap='round'; c.lineJoin='round'; c.beginPath(); c.moveTo(pts[0][0],pts[0][1]); for(let i=1;i<pts.length-1;i++){ const m=[(pts[i][0]+pts[i+1][0])/2,(pts[i][1]+pts[i+1][1])/2]; c.quadraticCurveTo(pts[i][0],pts[i][1],m[0],m[1]); } c.lineTo(pts[pts.length-1][0],pts[pts.length-1][1]); c.stroke(); }); c.lineCap='butt'; }
+  const blob=(x,y,r,n,j)=>{ const P=[]; for(let i=0;i<n;i++){ const a=i/n*Math.PI*2, rr=r*(1-j/2+R()*j); P.push([x+Math.cos(a)*rr,y+Math.sin(a)*rr*0.7]); } return P; };
+  const poly=P=>{ c.beginPath(); c.moveTo(P[0][0],P[0][1]); P.forEach(p=>c.lineTo(p[0],p[1])); c.closePath(); };
+  // agua (laguna con borde de piedra y reflejos)
+  (T.water||[]).forEach(([x,y,r])=>{ const P=blob(gx(x),gy(y),r*CW,22,0.35); c.fillStyle='#6f6a5c'; poly(P.map(p=>[p[0]+(p[0]-gx(x))*0.12,p[1]+(p[1]-gy(y))*0.16])); c.fill();
+    c.fillStyle='#4e8bb8'; poly(P); c.fill(); c.save(); poly(P); c.clip(); const g=c.createLinearGradient(0,gy(y)-r*CH,0,gy(y)+r*CH); g.addColorStop(0,'#cfe6f2'); g.addColorStop(0.5,'#8fbcd8'); g.addColorStop(1,'#5f96c0'); c.fillStyle=g; c.fillRect(0,0,W,H);
+    for(let i=0;i<40;i++){ c.fillStyle='rgba(255,255,255,'+(0.3+R()*0.5)+')'; c.fillRect(gx(x)-r*CW+R()*r*CW*2,gy(y)-r*CH+R()*r*CH*2,4+R()*10,1); } c.restore();
+    c.strokeStyle='#3e3a32'; c.lineWidth=2; poly(P); c.stroke(); });
+  // rocas y peñascos (gris con cara clara arriba y grietas)
+  (T.rocks||[]).forEach(([x,y,r])=>{ for(let k=0;k<5;k++){ const px=gx(x)+(R()-0.5)*r*CW, py=gy(y)+(R()-0.5)*r*CH, rr=(0.35+R()*0.4)*r*CH; const P=blob(px,py,rr*1.4,9,0.5);
+      c.fillStyle='#4a4a44'; poly(P.map(p=>[p[0],p[1]+3])); c.fill(); c.fillStyle='#8c8b82'; poly(P); c.fill(); c.fillStyle='#b4b2a6'; poly(P.map(p=>[px+(p[0]-px)*0.7,py-2+(p[1]-py)*0.5])); c.fill();
+      c.strokeStyle='#5e5d56'; c.lineWidth=1; c.beginPath(); c.moveTo(px-rr*0.4,py); c.lineTo(px,py+rr*0.2); c.lineTo(px+rr*0.3,py-rr*0.1); c.stroke(); } });
+  // árboles: copas redondas con sombra, base oscura y luz arriba a la izquierda (sueltos y en bosques)
+  const trees=[]; (T.forests||[]).forEach(([x,y,r])=>{ const N=Math.round(r*r*20); for(let i=0;i<N;i++){ const a=R()*Math.PI*2, d=Math.sqrt(R())*r; trees.push([gx(x)+Math.cos(a)*d*CW*0.62,gy(y)+Math.sin(a)*d*CH*0.8,4.5+R()*2.5]); } });
+  for(let i=0;i<(T.trees||0);i++) trees.push([R()*W,OY-10+R()*(H-OY),2+R()*1.2]);
+  trees.sort((p,q)=>p[1]-q[1]).forEach(([x,y,r])=>{ x=Math.round(x); y=Math.round(y); c.fillStyle='rgba(20,45,10,.45)'; c.beginPath(); c.ellipse(x+2,y+r*0.8,r*1.1,r*0.55,0,0,Math.PI*2); c.fill();
+    c.fillStyle='#24481a'; c.beginPath(); c.arc(x,y,r,0,Math.PI*2); c.fill(); c.fillStyle='#356b24'; c.beginPath(); c.arc(x-r*0.15,y-r*0.2,r*0.8,0,Math.PI*2); c.fill();
+    c.fillStyle='#4f8f30'; c.beginPath(); c.arc(x-r*0.35,y-r*0.4,r*0.45,0,Math.PI*2); c.fill(); if(r>4){ c.fillStyle='#78b048'; c.fillRect(x-r*0.5,y-r*0.6,2,2); } });
+  TERR={key,cv}; return cv; }
+// el objetivo (molino): patio de piedra visto desde arriba, casa y aspas que giran
+function drawHold(c,S,t){ const Hd=S.cfg.hold; if(!Hd) return; const X=OX+Hd.x*CW+CW/2-6, Y=OY+Hd.y*CH+CH/2-4;
+  c.fillStyle='rgba(0,0,0,.3)'; c.fillRect(X-24,Y-14,52,34); c.fillStyle='#8f8a7a'; c.fillRect(X-26,Y-18,52,34); c.fillStyle='#b9b3a0'; c.fillRect(X-23,Y-15,46,28); c.fillStyle='#a49d88'; for(let i=0;i<6;i++) c.fillRect(X-23+i*8,Y-15,1,28);
+  c.fillStyle='#d9cdb0'; c.fillRect(X-10,Y-30,16,20); c.fillStyle='#8a5a3a'; c.beginPath(); c.moveTo(X-13,Y-30); c.lineTo(X-2,Y-38); c.lineTo(X+9,Y-30); c.fill(); c.fillStyle='#5a3a26'; c.fillRect(X-4,Y-17,5,7);
+  c.save(); c.translate(X-2,Y-30); c.rotate((t/1.4)%(Math.PI*2)); for(let i=0;i<4;i++){ c.rotate(Math.PI/2); c.fillStyle='#5a4630'; c.fillRect(-1,-16,2,16); c.fillStyle='#efe4c8'; c.fillRect(1,-15,4,11); } c.restore();
+  c.fillStyle='#6a5236'; c.beginPath(); c.arc(X-2,Y-30,2,0,Math.PI*2); c.fill();
+  c.font='700 8px "Alegreya Sans SC", system-ui, sans-serif'; c.textAlign='center'; c.fillStyle='rgba(20,16,12,.7)'; const nm=String(Hd.name||'').toUpperCase(); const w=c.measureText(nm).width+6; c.fillRect(X-w/2,Y-50,w,10); c.fillStyle='#f0d070'; c.fillText(nm,X,Y-42); }
+function drawField(c,S,dt){ const t=performance.now()/1000; try{ c.drawImage(terrain(S),0,0); }catch(e){ c.fillStyle='#5b9a38'; c.fillRect(0,0,W,H); }
+  drawHold(c,S,t);
+  // alcance de la unidad activa: casillas a las que llega (claras) y enemigos a tiro (rojo), como en las referencias
+  const cu=S.units.find(u=>u.id===S.cur); if(cu&&!S.brief){ const mv=mvOf(cu);
+    for(let x=0;x<COLS;x++) for(let y=0;y<ROWS;y++){ const d=Math.abs(x-cu.x)+Math.abs(y-cu.y); if(!d||d>mv||!free(S,x,y)) continue; c.fillStyle='rgba(255,255,210,'+(0.16+0.05*Math.sin(t*4))+')'; c.fillRect(OX+x*CW+2,OY+y*CH+2,CW-4,CH-4); c.strokeStyle='rgba(255,255,220,.35)'; c.lineWidth=1; c.strokeRect(OX+x*CW+2.5,OY+y*CH+2.5,CW-5,CH-5); }
+    alive(S).filter(v=>v.side!==cu.side&&inRange(cu,v)).forEach(v=>{ c.fillStyle='rgba(255,80,60,.18)'; c.fillRect(OX+v.x*CW+2,OY+v.y*CH+2,CW-4,CH-4); c.strokeStyle='rgba(255,110,90,.8)'; c.lineWidth=1.5; c.strokeRect(OX+v.x*CW+2.5,OY+v.y*CH+2.5,CW-5,CH-5); }); } }
 function drawHud(c,S){ const pa=army(S,'p'), ea=army(S,'e'); const nP=S.cfg.armyP||'Cuervo Gris', nE=S.cfg.armyE||'Rosa Ceniza';
   const box=(x,w,col,name,num,al)=>{ c.fillStyle='rgba(20,16,12,.82)'; c.fillRect(x,4,w,26); c.strokeStyle='#b89a5a'; c.lineWidth=1; c.strokeRect(x+0.5,4.5,w-1,25);
     c.fillStyle=col; c.fillRect(al==='l'?x+4:x+w-22,8,18,18); c.fillStyle='#f4e8c8'; c.fillRect(al==='l'?x+11:x+w-15,13,4,8);
     c.textAlign=al==='l'?'left':'right'; c.fillStyle='#f4e8c8'; c.font='12px "Marcellus SC", Georgia, serif'; c.fillText(name,al==='l'?x+28:x+w-28,17);
     c.fillStyle='#e0b860'; c.font='700 11px "Alegreya Sans SC", system-ui, sans-serif'; c.fillText(String(num).padStart(5,'0'),al==='l'?x+28:x+w-28,28); };
   box(6,150,COL.p,nP,pa,'l'); box(W-156,150,COL.e,nE,ea,'r');
+  c.fillStyle='rgba(20,16,12,.82)'; c.fillRect(W/2-84,4,168,30); c.strokeStyle='#b89a5a'; c.lineWidth=1; c.strokeRect(W/2-83.5,4.5,167,29);
   c.textAlign='center'; c.fillStyle='#f4e8c8'; c.font='14px "Marcellus SC", Georgia, serif'; c.fillText(S.cfg.title||'Batalla',W/2,17);
   c.fillStyle='#e0b860'; c.font='700 10px "Alegreya Sans SC", system-ui, sans-serif'; c.fillText('TURNO '+Math.min(S.turn,S.cfg.turns)+' / '+S.cfg.turns+(S.cfg.hold?' · DEFENDER '+String(S.cfg.hold.name||'').toUpperCase():''),W/2,30);
   // registro
   c.textAlign='left'; c.font='11px Alegreya, Georgia, serif'; const L=S.log.slice(-2); L.forEach((l,i)=>{ c.fillStyle='rgba(15,12,10,.6)'; c.fillRect(6,H-30+i*13,c.measureText(l).width+8,13); c.fillStyle=i===L.length-1?'#f4e8c8':'rgba(244,232,200,.65)'; c.fillText(l,10,H-20+i*13); });
-  // diálogo del líder (retrato y frase)
-  if(S.say){ const s=S.say; s.t+=1/60; if(s.t>2.6){ S.say=null; } else { const y=H-64; c.fillStyle='rgba(20,16,12,.88)'; c.fillRect(W/2-150,y,300,30); c.strokeStyle='#b89a5a'; c.strokeRect(W/2-149.5,y+0.5,299,29);
-      try{ const h=headOf(s.id,26); if(h) c.drawImage(h,W/2-147,y+2,26,26); }catch(e){}
-      c.fillStyle='#e0b860'; c.font='700 9px "Alegreya Sans SC", system-ui, sans-serif'; c.fillText(String(nameOf(s.id)||'').toUpperCase(),W/2-116,y+11); c.fillStyle='#f4e8c8'; c.font='11px Alegreya, Georgia, serif'; c.fillText(s.txt,W/2-116,y+24); } } }
+  // diálogo del comandante: retrato grande enmarcado, nombre y frase (cuadro de abajo, como en las referencias)
+  if(S.say){ const s2=S.say; s2.t+=1/60; if(s2.t>2.8){ S.say=null; } else { const y=H-58, x=8, w=W-16, h=52; c.fillStyle='rgba(18,28,22,.92)'; c.fillRect(x,y,w,h); c.strokeStyle='#c9a85a'; c.lineWidth=2; c.strokeRect(x+1,y+1,w-2,h-2); c.strokeStyle='#5a4a2a'; c.lineWidth=1; c.strokeRect(x+4.5,y+4.5,w-9,h-9);
+      c.fillStyle='#2a2216'; c.fillRect(x+8,y-18,62,62); c.strokeStyle='#c9a85a'; c.lineWidth=2; c.strokeRect(x+8,y-18,62,62); try{ const hh=headOf(s2.id,58); if(hh) c.drawImage(hh,x+10,y-16,58,58); }catch(e){}
+      c.textAlign='left'; c.fillStyle='#7fe0d0'; c.font='13px "Marcellus SC", Georgia, serif'; c.fillText(String(nameOf(s2.id)||''),x+80,y+18); c.fillStyle='#f4f0e0'; c.font='13px Alegreya, Georgia, serif'; c.fillText('«'+s2.txt+'»',x+80,y+36); } } }
 // el combate simulado: franja de campo, los dos ejércitos corren y chocan (o se disparan); caen soldados y bajan los contadores
 function drawClash(c,S,dt){ const K=S.clash; K.t+=dt; const t=K.t, a=K.a, d=K.d; const fa=a.side==='p'?1:-1;
   c.fillStyle='rgba(0,0,0,'+Math.min(0.55,t*2)+')'; c.fillRect(0,0,W,H);
@@ -30142,7 +30178,7 @@ async function run(cfg){ let r=null, tries=0;
     const v=await choose([{label:'Reintentar la batalla',sub:'Empieza otra vez desde el turno 1',value:1,cls:'primary',icon:'swap',auto:true},{label:'Rendirse',sub:'Volver al último punto de guardado',value:0,icon:'back'}],'La línea no aguantó');
     if(!v){ try{ location.reload(); }catch(e){} await new Promise(()=>{}); } }
   r.tries=tries; return r; }
-return {run,_draw:(c,S,dt)=>drawClash(c,S,dt),_sim:{State,orders,apply,foeTurn,lost,side,alive,mk,upkeep,useSkill,canSkill,autoSubs,affinity},TYPE,SUB,SKILL,RAZA,CLS,COLS,ROWS};
+return {run,_draw:(c,S,dt)=>drawClash(c,S,dt),_full:(c,S)=>draw(c,S,0.016),_sim:{State,orders,apply,foeTurn,lost,side,alive,mk,upkeep,useSkill,canSkill,autoSubs,affinity},TYPE,SUB,SKILL,RAZA,CLS,COLS,ROWS};
 })();
 try{ window.LDC_WAR=WAR; }catch(e){} // para mirar la pantalla desde afuera (capturas de verificación)
 /* ==================== MÓDULO arco2/cap7_textos.js ==================== */
