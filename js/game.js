@@ -19851,7 +19851,11 @@ function sayNow(who,text,expr,style){
     if(AUTO||SKIP.on) setTimeout(()=>{ if(advanceFn){ advanceFn(); if(advanceFn) advanceFn(); } },SKIP.on?0:3);
   });
 }
-UI.dialog.addEventListener('click',e=>{ if(e.target&&e.target.closest&&e.target.closest('#dbtns')) return; if(advanceFn) advanceFn(); });
+// v40.1: un toque = un avance. En celulares el mismo toque puede llegar dos veces (pointerdown en el lienzo y click en el cuadro, o un click fantasma);
+// los avances por toque que llegan a menos de 220 ms del anterior se ignoran. El teclado y el modo Rápido no pasan por acá.
+let LASTTAP=0; function tapAdvance(){ const n=performance.now(); if(n-LASTTAP<220) return; LASTTAP=n; if(advanceFn) advanceFn(); }
+let LASTPT='mouse'; window.addEventListener('pointerdown',e=>{ LASTPT=e.pointerType||'mouse'; },true);
+UI.dialog.addEventListener('click',e=>{ if(e.target&&e.target.closest&&e.target.closest('#dbtns')) return; tapAdvance(); });
 // botón «Rápido»: muestra cada línea entera y avanza sola (se apaga tocándolo otra vez)
 const DBTN=document.createElement('div'); DBTN.id='dbtns';
 const FASTB=document.createElement('button'); FASTB.type='button'; FASTB.id='dfast'; FASTB.setAttribute('aria-pressed','false');
@@ -19862,10 +19866,10 @@ function dlgKeyHints(){ FASTB.innerHTML='<b>»</b> Rápido '+kbd('rapido'); FAST
 dlgKeyHints(); KEYS.onChange(dlgKeyHints);
 function setFast(v){ FASTTXT=v; FASTB.setAttribute('aria-pressed',String(v)); FASTB.classList.toggle('on',v); if(v&&advanceFn) advanceFn(); }
 // saltar: el primer pedido avisa; el segundo (dentro de 2 s) salta. La escena se resuelve igual que vista (ganchos, oro y decisiones se aplican).
-function askSkip(){ if(!SKIP.ok||SKIP.on) return; const now=performance.now(); if(now-SKIP.arm<2000){ SKIP.on=true; SKIP.arm=0; SKIPB.classList.remove('arm'); SKIPB.innerHTML=SKIPTXT(); if(advanceFn){ advanceFn(); if(advanceFn) advanceFn(); } return; }
+function askSkip(touch){ if(!SKIP.ok||SKIP.on) return; const now=performance.now(); if(touch&&SKIP.arm&&now-SKIP.arm<450) return; /* v40.1: en táctil, un doble toque rápido no confirma: hay que tocar «Otra vez» con intención */ if(now-SKIP.arm<(touch?3000:2000)){ SKIP.on=true; SKIP.arm=0; SKIPB.classList.remove('arm'); SKIPB.innerHTML=SKIPTXT(); if(advanceFn){ advanceFn(); if(advanceFn) advanceFn(); } return; }
   SKIP.arm=now; SKIPB.classList.add('arm'); SKIPB.innerHTML=SKIPARM(); setTimeout(()=>{ if(SKIP.arm&&performance.now()-SKIP.arm>=1990){ SKIP.arm=0; SKIPB.classList.remove('arm'); SKIPB.innerHTML=SKIPTXT(); } },2000); }
-FASTB.addEventListener('click',e=>{ e.stopPropagation(); setFast(!FASTTXT); });
-SKIPB.addEventListener('click',e=>{ e.stopPropagation(); askSkip(); });
+FASTB.addEventListener('click',e=>{ e.stopPropagation(); setFast(!FASTTXT); if(LASTPT!=='mouse') toast(FASTTXT?'Avance rápido: prendido (tocá «Rápido» otra vez para apagarlo)':'Avance rápido: apagado',1800); });
+SKIPB.addEventListener('click',e=>{ e.stopPropagation(); askSkip(LASTPT==='touch'||LASTPT==='pen'); });
 DBTN.appendChild(FASTB); DBTN.appendChild(SKIPB); UI.dialog.appendChild(DBTN);
 function syncSkipBtn(){ SKIPB.hidden=!SKIP.ok; }
 window.addEventListener('keydown',e=>{ if(KEYS.capturing||document.querySelector('.pz')||UI.dialog.hidden) return;
@@ -20094,7 +20098,7 @@ cv.addEventListener('pointerdown',e=>{
   AU.init(); AU.resume();
   if(document.body.classList.contains('pzon')) return;
   const r=cv.getBoundingClientRect(); const x=(e.clientX-r.left)/r.width*W, y=(e.clientY-r.top)/r.height*H;
-  if(advanceFn){ advanceFn(); return; }
+  if(advanceFn){ tapAdvance(); return; }
   if(scene && scene.onTap) scene.onTap(x,y);
 });
 
