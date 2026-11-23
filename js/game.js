@@ -30646,7 +30646,7 @@ async function council(S){ autoSubs(S); if(AUTO||S.cfg.council===false) return; 
       const pr2=choose(o,'Subcomandantes de '+(nameOf(u.leader)||u.name)+' ('+u.subs.length+'/2)','cmd'); try{ UI.menuBox.classList.add('mp-br'); }catch(e){}
       const id=await pr2; if(id==='__ok'||!id) break; if(u.subs.includes(id)) u.subs=u.subs.filter(x=>x!==id); else { if(u.subs.length>=2) u.subs.shift(); u.subs.push(id); } applySubs(u); } }
   S.brief=false; S.pick=null; }
-async function once(cfg){ try{ const EJ=new Set([TK.p,TK.e].concat((cfg.ours||[]).concat(cfg.foes||[]).map(u=>u.ej).filter(Boolean))); Object.keys(TM).filter(k=>EJ.has(k.split('_')[0])).forEach(timg); OBJK.forEach(oimg); }catch(e){} // v42: precarga solo las tiras de los ejércitos en juego const S=State(cfg); // visActors: el menú de órdenes se acomoda donde tapa menos unidades (ui.js · MPOS)
+async function once(cfg){ try{ const EJ=new Set([TK.p,TK.e].concat((cfg.ours||[]).concat(cfg.foes||[]).map(u=>u.ej).filter(Boolean))); Object.keys(TM).filter(k=>EJ.has(k.split('_')[0])).forEach(timg); OBJK.forEach(oimg); }catch(e){} /* v42: precarga solo las tiras de los ejércitos en juego */ const S=State(cfg); // visActors: el menú de órdenes se acomoda donde tapa menos unidades (ui.js · MPOS)
   setScene({draw:(c,dt)=>draw(c,S,dt),cam:{x:0,y:0},visActors:()=>alive(S).map(u=>({x:cx(u)-S.cam.x,y:cy(u)+4-S.cam.y,spr:u.leader||'soldado'}))});
   try{ await fadeTo(0,400); }catch(e){}
   await council(S);
