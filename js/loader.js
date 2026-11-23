@@ -70,6 +70,31 @@
   // ---------- arranque ----------
   function boot(){
     window.LDC_ASSET=function(p){ var u=URLS[p]; if(u==null){ if(LAZY[p]) return p; throw new Error('LDC_ASSET: imagen no cargada: '+p); } return u; };
+    // v43: paquetes (G.paq = {hoja: {ruta: [x,y,w,h]}}): muchas piezas chicas en pocas imágenes compartidas (tope de archivos del artifact).
+    // LDC_IMG(ruta) devuelve algo que se dibuja igual que una imagen: si la ruta está empaquetada, un lienzo con su recorte
+    // (complete/naturalWidth/naturalHeight y evento 'load' como un <img>); si no, un Image común. Si la hoja falla, pide el archivo suelto.
+    (function(){ var PQ=Object.create(null), HOJA=Object.create(null), PAQ=G.paq||{};
+      Object.keys(PAQ).forEach(function(h){ var m=PAQ[h]; Object.keys(m).forEach(function(r){ PQ[r]=[h].concat(m[r]); }); });
+      function plain(src){ var im=new Image(); im.src=src; return im; }
+      function hoja(h){ var e=HOJA[h]; if(e) return e; e=HOJA[h]={im:new Image(),ok:false,bad:false,wait:[]};
+        e.im.onload=function(){ e.ok=!!e.im.naturalWidth; e.bad=!e.ok; var w=e.wait; e.wait=[]; w.forEach(function(f){ f(); }); };
+        e.im.onerror=function(){ e.bad=true; var w=e.wait; e.wait=[]; w.forEach(function(f){ f(); }); };
+        e.im.src=URLS[h]!=null?URLS[h]:h; return e; }
+      window.LDC_IMG=function(src){ var q=src&&PQ[src]; if(!q||typeof document==='undefined') return plain(src);
+        var e=hoja(q[0]), c=document.createElement('canvas'), st={done:false,w:0,h:0};
+        c.width=q[3]; c.height=q[4];
+        Object.defineProperty(c,'complete',{get:function(){ return st.done; }});
+        Object.defineProperty(c,'naturalWidth',{get:function(){ return st.w; }});
+        Object.defineProperty(c,'naturalHeight',{get:function(){ return st.h; }});
+        c.decode=function(){ return new Promise(function(res,rej){ if(st.done) return st.w?res():rej(new Error('img')); c.addEventListener('load',function(){ res(); },{once:true}); c.addEventListener('error',function(){ rej(new Error('img')); },{once:true}); }); };
+        Object.defineProperty(c,'src',{get:function(){ return src; },set:function(){}});
+        function fin(ok){ st.done=true; if(ok){ st.w=q[3]; st.h=q[4]; } c.dispatchEvent(new Event(ok?'load':'error')); }
+        function cortar(){ if(e.ok){ var g=c.getContext('2d'); g.imageSmoothingEnabled=false; g.drawImage(e.im,q[1],q[2],q[3],q[4],0,0,q[3],q[4]); fin(true); return; }
+          // la hoja no cargó: el archivo suelto, si el servidor lo tiene (Pages)
+          var im=plain(src); im.onload=function(){ var g=c.getContext('2d'); g.imageSmoothingEnabled=false; g.drawImage(im,0,0); fin(!!im.naturalWidth); }; im.onerror=function(){ fin(false); }; }
+        if(e.ok||e.bad) cortar(); else e.wait.push(cortar);
+        return c; };
+    })();
     if(atlasIdx){ var dir=G.atlas.slice(0,G.atlas.lastIndexOf('/')+1);
       window.LDC_BAKED={v:atlasIdx.v,made:atlasIdx.made,sheets:atlasIdx.sheets.map(function(f){ return URLS[dir+f]; }),groups:atlasIdx.groups,m:atlasIdx.m};
       atlasIdx.sheets.forEach(function(f){ delete URLS[dir+f]; }); atlasIdx=null; } // una sola copia de cada cadena (la de LDC_BAKED)
