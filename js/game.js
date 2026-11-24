@@ -20070,6 +20070,12 @@ const SAYFX={side:null,beat:null}; let FASTTXT=false; let SAYPREV={who:null,expr
 const TXTSPD={lenta:0.6,normal:1,rapida:1.7}; let TXTMODE=store.get('txtspd','normal'); if(!TXTSPD[TXTMODE]) TXTMODE='normal';
 let FASTHOLD=false; // Shift apretado: avance rápido mientras se mantiene
 const SKIP={on:false,ok:false,arm:0}; // saltar escena (lo habilita playScene/playChat con SKIP.ok)
+/* v44.3 (bug de Brian: «si salteás una, se saltean todas las siguientes» y «cambiar la velocidad no hace nada»):
+   el salteo (SKIP.on) y el avance «Rápido» (FASTTXT) valen solo para la conversación en curso. Al terminar la escena o charla
+   más externa (SCDEPTH vuelve a 0) se apagan los dos; fuera de escenas, «Rápido» se apaga al cerrar el diálogo. */
+let SCDEPTH=0;
+function sceneEnter(){ SCDEPTH++; }
+function sceneExit(){ SCDEPTH=Math.max(0,SCDEPTH-1); if(SCDEPTH) return; SKIP.on=false; SKIP.arm=0; try{ SKIPB.classList.remove('arm'); syncSkipBtn(); }catch(e){} try{ if(FASTTXT) setFast(false); }catch(e){} }
 const NAMECOL={ilian:'#5f9a62',ilianNino:'#5f9a62',ilianNinoV:'#5f9a62',nach:'#c9612f',maela:'#a8343e',severo:'#4f63a8',bertram:'#8f7346',lina:'#c99024',simona:'#4a4652',olaf:'#7fb3cf',olafNino:'#7fb3cf',
   hagen:'#7a6a4c',agnes:'#b36a48',bram:'#5c5f6a',tessa:'#6f9a3a',odo:'#b8a06a',comerciante:'#8a4a8a',guardia:'#4e6a5a',peregrino:'#4a4a62',encap:'#3c3c46',oswin:'#8e2232',valdris:'#22222a'};
 const VOICE={ilian:62,ilianNino:74,ilianNinoV:74,nach:52,maela:58,severo:50,bertram:48,lina:66,simona:44,olaf:86,olafNino:88,hagen:47,agnes:64,bram:45,tessa:72,odo:55,comerciante:60,guardia:53,peregrino:49,encap:46,oswin:47,valdris:40,cocinera:65,parroquiano:51,aprendiz:60,aldeano:54,aldeana:66,anciano:49,nino:76};
@@ -20097,7 +20103,7 @@ function restartAnim(el,cls){ el.classList.remove(cls); void el.offsetWidth; el.
 // A del pad durante un diálogo: se habilita con la etiqueta «Seguir» y, al pasar o cerrar el diálogo, vuelve a como estaba
 function actDlg(on){ const b=UI.act; if(on){ if(UI.pad.hidden||b._dlg) return; b._dlg={d:b.disabled,t:b.textContent}; b.disabled=false; b.textContent='Seguir'; }
   else if(b._dlg){ const o=b._dlg; b._dlg=null; b.disabled=o.d; b.textContent=o.t; } }
-function hideDialog(){ actDlg(false); UI.dialog.hidden=true; UI.dialog.classList.remove('low','side'); SPK.id=null; SPK.typing=false; SAYPREV.who=null; }
+function hideDialog(){ if(!SCDEPTH&&FASTTXT){ try{ setFast(false); }catch(e){} } actDlg(false); UI.dialog.hidden=true; UI.dialog.classList.remove('low','side'); SPK.id=null; SPK.typing=false; SAYPREV.who=null; }
 // style: 'think' (pensamiento), 'whisper' (susurro)
 // personajes sin retrato en el diálogo (al capataz nunca se le ve la cara)
 const NOPORT={capataz:1};
@@ -22435,11 +22441,11 @@ const SKIPOPS={say:1,narr:1,think:1,whisper:1,emote:1,wait:1,title:1,sfx:1,shake
 async function playScene(name,ctx){
   const cmds=LINES.scenes[name]; if(!cmds){ console.warn('escena sin datos',name); return; }
   pxWarmCmds(cmds); // v26-fix: retratos pixel del elenco pedidos antes de la primera línea
-  const prevOk=SKIP.ok; SKIP.ok=!AUTO; syncSkipBtn();
+  const prevOk=SKIP.ok; SKIP.ok=!AUTO; syncSkipBtn(); sceneEnter();
   try{
   await runCmds(cmds,ctx,name);
   if(!(ctx&&ctx.noAff)) try{ affList(((LINES.aff||{}).scene||{})[name]); }catch(e){}
-  } finally { SKIP.ok=prevOk; if(!prevOk) SKIP.on=false; syncSkipBtn(); }
+  } finally { SKIP.ok=prevOk; if(!prevOk) SKIP.on=false; syncSkipBtn(); sceneExit(); }
 }
 // cuerpo del intérprete (escenas v2: lo reusan '?' e 'if' para sus comandos anidados; respeta SKIP)
 async function runCmds(cmds,ctx,name){
@@ -22970,11 +22976,11 @@ async function playChat(S,ch,ni){
   fadeTo(0,140);
   // llegan caminando y se sientan alrededor del fuego (en paralelo con el fundido)
   await Promise.all(st.list.map((a,k)=>sleep(k*30).then(()=>tweenTo(a,a.seat[0],a.seat[1],200)).then(()=>{ a.walking=false; a.base=a.sits?'sit':null; a.at=T; a.face=a.x<FX.x?1:-1; })));
-  const prevOk=SKIP.ok; SKIP.ok=!AUTO;
+  const prevOk=SKIP.ok; SKIP.ok=!AUTO; sceneEnter();
   let bonus=0;
   try{ for(const ln of ch.lines){ if(SKIP.on&&ln[0]!=='?') continue;
       if(ln[0]==='?'){ hideDialog(); const o=await choose(ln[1].map((x,k)=>({label:x.label,value:k,cls:k===0?'primary':'',auto:k===0,icon:'chat'})),ln[2]||'¿Qué respondés?'); const x=ln[1][o]; bonus+=x.aff||0; for(const [w,t,e] of (x.lines||[])){ if(SKIP.on) break; await say(w,t,e||'n'); } continue; }
-      const [who,text,expr]=ln; await say(who,text,expr||'n'); } } finally { SKIP.ok=prevOk; SKIP.on=false; syncSkipBtn(); }
+      const [who,text,expr]=ln; await say(who,text,expr||'n'); } } finally { SKIP.ok=prevOk; SKIP.on=false; syncSkipBtn(); sceneExit(); }
   try{ if(ch.pair){ const e=affEntry(ch.pair[0],ch.pair[1]); if(e&&!e.seen.includes(ch.id)) e.seen.push(ch.id); if(bonus) affAdd(ch.pair[0],ch.pair[1],bonus); } }catch(e){}
   hideDialog(); (G.flags.chats||(G.flags.chats={}))[ch.id]=true;
   st.cam.tbars=0; await fadeTo(1,110); setScene(S); S.cast=null; S.olafProxy=null; S.dim=0; fadeTo(0,140);
@@ -31963,7 +31969,7 @@ const PTIRO=(()=>{
       await at(3.32+fl+0.62); tween(N,HIT.x-26,244,0.3,{walk:true,run:1.8}); if(!REDUCED){ K.tz=1.2; camFocus(K,B,1.2); K.fast=false; }
       await at(3.32+fl+0.95); N.base='low'; N.at=T; N.face=1; N.walking=false;
       await at(3.32+fl+1.7);
-    } catch(e){ if(e!==SKIPX) console.error(e); } finally { finalTiro(st); skipUI(false); SKIP.ok=prevOk; syncSkipBtn(); }
+    } catch(e){ if(e!==SKIPX) console.error(e); } finally { finalTiro(st); skipUI(false); SKIP.ok=prevOk; if(!prevOk) SKIP.on=false; syncSkipBtn(); /* v44.3: el salteo del tiro no se arrastra a lo que sigue */ }
   }
 
   /* ---------- el derrumbe del carruaje (gancho 'derrumbe') ---------- */
@@ -32728,7 +32734,7 @@ async function start(data){
   SAVES.fresh(); await fadeTo(1,400); runSafe('prologo');
 }
 window.__LDC={get G(){return G}, arteTest:()=>({SPR,troop:WAR._troop,ICONOS,artImage}), // v42: control del arte del lote (tools/verify/lote_arte.js)
-  miniTest:()=>({miniReal,miniDraw,town:ENV.town,zones:ZONES}), // v43: capturas del minimapa (tools/verify/minimapa.js)
+  miniTest:()=>({miniReal,miniDraw,town:ENV.town,zones:ZONES}), get skip(){ return {on:SKIP.on,ok:SKIP.ok,fast:FASTTXT,auto:AUTO,txt:TXTMODE}; }, cerrarDialogo:()=>hideDialog(), sceneProbe:(cmds)=>{ LINES.scenes.__probe=cmds; return playScene('__probe',{get:()=>null,hooks:{},noAff:true}).then(()=>{ hideDialog(); return 'ok'; }); }, // v44.3: control del salteo (tools/verify/salteo.js) // v43: capturas del minimapa (tools/verify/minimapa.js)
   // stageTest: reproduce una escena suelta (para capturas y pruebas de puesta)
   chatTest:async(ni,id)=>escenaTest(id||'af_hermanos'), escenaTest:(id,zone)=>escenaTest(id,zone), get town(){ return CUR.town; }, esc:{avail:escenaAvail,pend:escenasPendientes,meta:escenaMeta,lost:escenaLost,seen:escenaSeen,play:playEscena,affKey}, migrar:()=>{ migrarEscenas(); return {chats:Object.keys(G.flags.chats||{}),parcial:G.flags.escParcial||{},choice:G.flags.escChoice||{}}; },
   stageTest:async(zone,name,flags)=>{ Object.assign(ENV.flags,flags||{}); const pz=name==='campamento'?presoPuesta():null; const st=await stageIn(zone,name,200); if(name==='emboscada_post'){ PTIRO.dress(st); await PTIRO.tiro(st); } else if(zone==='puente'&&name==='puente') PTIRO.dress(st,'puente'); await playScene(name,stageCtx(st,Object.assign({valdrisVisible:async()=>{ ENV.flags.valdris=true; },silencio:async()=>{},partyChange:async()=>{},battle:async()=>{},derrumbe:async()=>{ await PTIRO.derrumbe(st); }},pz?pz.hooks(st):{}))); hideDialog(); return 'ok'; }, get scene(){return scene}, get B(){return CUR.B}, get bossTurns(){return CUR.bossTurns}, get ended(){return (CUR.endCount||0)>0}, get bossLog(){return CUR.bossLog||[]},
