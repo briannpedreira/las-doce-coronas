@@ -8933,7 +8933,7 @@ function finishRoom(K,def){ const {w,h,WH}=K; if(def.stairs) stairGapHD(K); else
     c.globalCompositeOperation='lighter'; for(const l of K.lights){ if(!l.flick) continue; const f=0.75+0.18*Math.sin(T*7+l.ph)+0.08*Math.sin(T*17+l.ph*2); c.globalAlpha=clamp(l.a*l.flick*f,0,1); const r=l.r*(0.95+0.05*f); c.drawImage(sprGlow(l.col),l.x-r,l.y-r,r*2,r*2); }
     c.globalAlpha=1; c.globalCompositeOperation='source-over'; c.restore(); }
   function drawOver(c,cam,dt){ if(!def.motes) return; c.save(); c.translate(-Math.round(cam.x),-Math.round(cam.y)); c.fillStyle='rgba(255,236,190,.55)'; for(let i=0;i<18;i++){ const ph=hash2(i,3,def.seed||1)*9; const x=def.motes[0]+((i*37+T*(3+i%3))%def.motes[2]), y=def.motes[1]+((i*23+Math.sin(T*0.6+ph)*8+T*2)%def.motes[3]); if(Math.sin(T*1.5+ph)>-0.2) c.fillRect(Math.round(x),Math.round(y),1,1); } c.restore(); }
-  return {id:def.id,name:def.name,w,h,wallH:WH,spawn,exit,spots:K.spots,collide,draw,drawOver,_objs:K.objs}; }
+  return {id:def.id,name:def.name,w,h,wallH:WH,spawn,exit,spots:K.spots,collide,draw,drawOver,_objs:K.objs,world:()=>base}; }
 // hogar de piedra (pecho de chimenea saliente, repisa, boca con brasas) — pintado en el muro
 function hearthHD(K,x0,ww,mouthW,mouthH,o){ const {g,M,WH}=K; o=o||{}; const top=o.top==null?0:o.top, mx=x0+ww/2;
   M.stoneWall(g,x0,top,ww,WH+6-top,{seed:x0+3,rh:6.6}); const sg=g.createLinearGradient(x0,0,x0+ww,0); sg.addColorStop(0,'rgba(255,230,190,.1)'); sg.addColorStop(0.6,'rgba(0,0,0,0)'); sg.addColorStop(1,'rgba(10,8,14,.35)'); g.fillStyle=sg; g.fillRect(x0,top,ww,WH+6-top);
@@ -9218,7 +9218,8 @@ const spots={ agnes:{x:452,y:400}, maela:{x:556,y:402}, taberna_puerta:{x:490,y:
   herreria_puerta:{x:860,y:394}, capilla_puerta:{x:475,y:722}, pozo:{x:660,y:526}, tablon:{x:574,y:466}, puente:{x:Math.round(bx),y:577}, molino:{x:MILLD.x,y:MILLD.y+12}, campo_tiro:{x:210,y:184}, huerta:{x:302,y:652}, fardos_cofre:{x:340,y:132}, tablon_ex:{x:571,y:462}, carreta:{x:868,y:648}, pozo_ex:{x:660,y:512}, tome:{x:690,y:424} };
 return { w:TW, h:TH, start:{x:490,y:412}, spots, chestOpen:false, cofre:COFRE,
   wander:[{x:560,y:430,w:200,h:36},{x:560,y:536,w:130,h:24},{x:40,y:446,w:330,h:18},{x:648,y:600,w:28,h:300},{x:664,y:170,w:26,h:230},{x:870,y:560,w:120,h:14}],
-  collide, draw, drawOver, build, room, rooms:Object.keys(ROOMDEF), doors:DOORS, secret:SECRET, camp:CAMP, _tm:TM,
+  collide, draw, drawOver, build, room, rooms:Object.keys(ROOMDEF), world:()=>{ townFinish(); return WORLD; }, // v43: lienzo completo (minimapa)
+  doors:DOORS, secret:SECRET, camp:CAMP, _tm:TM,
   _objs:()=>{ townFinish(); return OBJ; }, // diagnóstico: objetos del pueblo (chequeo de lienzos recortados)
   // horneado: lienzos registrados (solo en la herramienta), conteo de fantasmas y huella del armado para verificar que la lógica no cambió
   _pb:{rec:PBREC,st:PBST,sig:()=>{ townFinish(); return {obj:OBJ.map(o=>[o.x,o.y,o.ox||0,o.oy||0,o.kind||'',o.sway==null?'':+o.sway.toFixed(4),o.spr?o.spr.width+'x'+o.spr.height:'',o.draw?1:0]),
@@ -9817,6 +9818,7 @@ function makeZone(def){
   z._world=()=>WORLD; z._mask=()=>({MASK,MW,MH}); z._anims=()=>ANIMS; z._objs=()=>OBJ; // escenarios (js/ambiente.js): bases de objetos quietos para las sombras de contacto
   // cámara: centrada en zonas chicas
   const camX=cam=>w<=W?Math.round((w-W)/2):Math.round(clamp(cam.x,0,w-W)), camY=cam=>h<=H?Math.round((h-H)/2):Math.round(clamp(cam.y,0,h-H));
+  z.world=()=>{ z.build(); return WORLD; }; // v43: lienzo completo (minimapa)
   z.draw=(c,cam,dt,ents)=>{ z.build(); dt=clamp(dt||0,0,0.1); const cx=camX(cam), cy=camY(cam); lastEnts=!!ents;
     c.save(); const sm=c.imageSmoothingEnabled; c.imageSmoothingEnabled=false;
     if(cx<0||cy<0){ c.fillStyle='#0a0a0e'; c.fillRect(0,0,W,H); }
@@ -20310,6 +20312,25 @@ const GAP={on:false,mini:false,el:$('#gapinfo'),slot:$('#gtoast'),cv:$('#gmini')
 function gapPortrait(){ return !WIDE&&!LAND; }
 function gapToast(){ const want=GAP.on?GAP.slot:UI.stage; if(UI.toast.parentNode!==want) want.appendChild(UI.toast); }
 // lienzo del minimapa en el hueco: coordenadas lógicas 108 × 66 (el minimapa de 94 × 62 con su marco y el farol a la izquierda) a escala entera
+/* v43 · minimapa con los espacios reales (pedido de Brian): en vez de muestrear la colisión en bloques, se achica el lienzo
+   completo del lugar (suelo, caminos, agua, casas y árboles: ENV.town.world(), room.world(), zona.world()) a 3 veces el recuadro
+   de 88 × 56, por mitades sucesivas con suavizado (sin moiré), con un toque de tinta de mapa. Se dibuja con suavizado en 88 × 56.
+   Devuelve null si el lugar no tiene lienzo: quien llama usa el minimapa de bloques de siempre. */
+const MINIREAL=new WeakMap();
+function miniReal(src,solid,ww,hh){ if(!src||!src.width||!src.height) return null; const hit=MINIREAL.get(src); if(hit) return hit;
+  try{ const TWm=264, THm=168; let cur=src, cw=src.width, ch=src.height;
+    while(cw/2>=TWm*1.5||ch/2>=THm*1.5){ const nw=Math.max(TWm,Math.round(cw/2)), nh=Math.max(THm,Math.round(ch/2)); const k=document.createElement('canvas'); k.width=nw; k.height=nh; const g=k.getContext('2d'); g.imageSmoothingEnabled=true; g.imageSmoothingQuality='high'; g.drawImage(cur,0,0,cw,ch,0,0,nw,nh); cur=k; cw=nw; ch=nh; }
+    const out=document.createElement('canvas'); out.width=TWm; out.height=THm; const g=out.getContext('2d'); g.imageSmoothingEnabled=true; g.imageSmoothingQuality='high'; g.drawImage(cur,0,0,cw,ch,0,0,TWm,THm);
+    // tinta de mapa: un poco más cálido y menos saturado, y un borde que oscurece apenas (se lee como mapa, no como captura)
+    g.globalCompositeOperation='soft-light'; g.fillStyle='rgba(214,180,120,.35)'; g.fillRect(0,0,TWm,THm); g.globalCompositeOperation='source-over';
+    const vg=g.createRadialGradient(TWm/2,THm/2,THm*0.35,TWm/2,THm/2,TWm*0.62); vg.addColorStop(0,'rgba(30,18,8,0)'); vg.addColorStop(1,'rgba(30,18,8,.35)'); g.fillStyle=vg; g.fillRect(0,0,TWm,THm);
+    // lo transitable se lee: se oscurece suave lo que no se pisa y se aclara apenas el resto (bordes difusos: máscara a 88 × 56 ampliada con suavizado)
+    if(solid&&ww&&hh){ const m=document.createElement('canvas'); m.width=88; m.height=56; const mg=m.getContext('2d'), id=mg.createImageData(88,56);
+      for(let y=0;y<56;y++) for(let x=0;x<88;x++){ const q=(y*88+x)*4; let s0=false; try{ s0=!!solid((x+0.5)*ww/88,(y+0.5)*hh/56); }catch(e){} if(s0){ id.data[q]=18; id.data[q+1]=11; id.data[q+2]=4; id.data[q+3]=115; } else { id.data[q]=255; id.data[q+1]=238; id.data[q+2]=200; id.data[q+3]=40; } }
+      mg.putImageData(id,0,0); g.imageSmoothingEnabled=true; g.drawImage(m,0,0,88,56,0,0,TWm,THm); }
+    MINIREAL.set(src,out); return out; }catch(e){ return null; } }
+// dibuja el minimapa real (o el de bloques) en el recuadro de 88 × 56
+function miniDraw(c,real,blocks,mx,my){ if(real){ const sm=c.imageSmoothingEnabled; c.imageSmoothingEnabled=true; c.imageSmoothingQuality='high'; c.drawImage(real,mx,my,88,56); c.imageSmoothingEnabled=sm; } else if(blocks) c.drawImage(blocks,mx,my); }
 function gapMiniCtx(){ const cv=GAP.cv, k=(cv.clientWidth||216)/108, dpr=Math.min(3,window.devicePixelRatio||1), w=Math.round(108*k*dpr), h=Math.round(66*k*dpr);
   if(cv.width!==w||cv.height!==h){ cv.width=w; cv.height=h; } const c=GAP.ctx||(GAP.ctx=cv.getContext('2d')); c.setTransform(k*dpr,0,0,k*dpr,0,0); c.imageSmoothingEnabled=false; c.clearRect(0,0,108,66); return c; }
 function gapTick(){ try{
@@ -22713,8 +22734,8 @@ function townExplore(cfg){ cfg=cfg||null;
       if(S.place!=='town'&&S.room){ const e=S.room.exit; return {x:e.x,y:e.y,bx:e.x,by:e.y-34,place:S.place,label:lb,via:'salida',n}; }
       const d=DOORS.find(q=>q.room===pl); return d?{x:d.x,y:d.y,bx:d.x,by:d.y-50,place:'town',label:lb,via:'puerta',n}:null; }).filter(Boolean);
     const MINI={}; const miniOf=()=>{ const k=S.place; if(MINI[k]) return MINI[k]; const R=S.room, w=R?R.w:TW.w, h=R?R.h:TW.h, col=R?R.collide.bind(R):TW.collide.bind(TW); const mm=document.createElement('canvas'); mm.width=88; mm.height=56; const mx=mm.getContext('2d'), id=mx.createImageData(88,56);
-      for(let y=0;y<56;y++) for(let x=0;x<88;x++){ const q=(y*88+x)*4, c=col((x+0.5)*w/88,(y+0.5)*h/56)?[120,98,70]:[214,196,156]; id.data[q]=c[0]; id.data[q+1]=c[1]; id.data[q+2]=c[2]; id.data[q+3]=235; } mx.putImageData(id,0,0); return MINI[k]={cv:mm,w,h}; };
-    function goalHud(c0){ const G0=goalPts(); if(!cfg||!cfg.goal) return; const M=miniOf(); let c=c0, mx=W-92, my=4; if(GAP.mini){ c=gapMiniCtx(); mx=16; my=5; GAP.drawn=performance.now(); } c.save(); /* fix27 M5: en vertical, al hueco */ c.fillStyle='rgba(40,26,14,.85)'; c.fillRect(mx-3,my-3,94,62); c.strokeStyle='#c99b45'; c.lineWidth=1; c.strokeRect(mx-2.5,my-2.5,93,61); c.drawImage(M.cv,mx,my);
+      for(let y=0;y<56;y++) for(let x=0;x<88;x++){ const q=(y*88+x)*4, c=col((x+0.5)*w/88,(y+0.5)*h/56)?[120,98,70]:[214,196,156]; id.data[q]=c[0]; id.data[q+1]=c[1]; id.data[q+2]=c[2]; id.data[q+3]=235; } mx.putImageData(id,0,0); let real=null; try{ real=miniReal(R?(R.world&&R.world()):(TW.world&&TW.world()),col,w,h); }catch(e){} return MINI[k]={cv:mm,real,w,h}; }; // v43: real = lienzo achicado del lugar
+    function goalHud(c0){ const G0=goalPts(); if(!cfg||!cfg.goal) return; const M=miniOf(); let c=c0, mx=W-92, my=4; if(GAP.mini){ c=gapMiniCtx(); mx=16; my=5; GAP.drawn=performance.now(); } c.save(); /* fix27 M5: en vertical, al hueco */ c.fillStyle='rgba(40,26,14,.85)'; c.fillRect(mx-3,my-3,94,62); c.strokeStyle='#c99b45'; c.lineWidth=1; c.strokeRect(mx-2.5,my-2.5,93,61); miniDraw(c,M.real,M.cv,mx,my);
       const sx=88/M.w, sy=56/M.h; for(const g of G0) gStar(c,mx+g.x*sx,my+g.y*sy); const px=mx+P.x*sx, py=my+P.y*sy; c.fillStyle='#1a1008'; c.fillRect(Math.round(px)-2,Math.round(py)-2,4,4); c.fillStyle='#fff6c0'; c.fillRect(Math.round(px)-1,Math.round(py)-1,2,2); c.restore(); c=c0;
       for(const g of G0){ const ex=g.x-S.cam.x, ey=g.y-S.cam.y; if(ex>=0&&ex<=W&&ey>=0&&ey<=H) continue; const cx=W/2, cy=H/2, ang=Math.atan2(ey-cy,ex-cx); const k=Math.min((W/2-14)/Math.abs(Math.cos(ang)||1e-3),(H/2-14)/Math.abs(Math.sin(ang)||1e-3)); const pu=1+0.15*Math.max(0,Math.sin(T*Math.PI));
         c.save(); c.translate(cx+Math.cos(ang)*k,cy+Math.sin(ang)*k); c.rotate(ang); c.scale(pu,pu); c.fillStyle='rgba(20,8,8,.6)'; c.beginPath(); c.moveTo(7,0); c.lineTo(-5,-6); c.lineTo(-5,6); c.closePath(); c.fill(); c.fillStyle='#9e2f37'; c.beginPath(); c.moveTo(6,0); c.lineTo(-4,-5); c.lineTo(-4,5); c.closePath(); c.fill(); c.fillStyle='#e0b860'; c.fillRect(-2,-1,2,2); c.restore(); } }
@@ -26002,7 +26023,7 @@ function compile(def){
   function blockR(x,y,ww,hh){ for(let yy=Math.floor(y/MS);yy<Math.ceil((y+hh)/MS);yy++) for(let xx=Math.floor(x/MS);xx<Math.ceil((x+ww)/MS);xx++) if(xx>=0&&yy>=0&&xx<mw&&yy<mh) mask[yy*mw+xx]=1; }
   function blockE(cx,cy,rx,ry){ for(let yy=Math.floor((cy-ry)/MS);yy<=Math.ceil((cy+ry)/MS);yy++) for(let xx=Math.floor((cx-rx)/MS);xx<=Math.ceil((cx+rx)/MS);xx++){ const u=(xx*MS+MS/2-cx)/rx, v=(yy*MS+MS/2-cy)/ry; if(u*u+v*v<=1.05&&xx>=0&&yy>=0&&xx<mw&&yy<mh) mask[yy*mw+xx]=1; } }
   function solidM(x,y){ if(x<1||y<1||x>Z.w-1||y>Z.h-1) return true; return !!mask[Math.floor(y/MS)*mw+Math.floor(x/MS)]; }
-  Z.prep=prep;
+  Z.prep=prep; Z.world=()=>{ prep(); return ground; }; // v43: lienzo completo (minimapa)
   Z.solid=(x,y)=>{ prep(); return solidM(x,y); };
   Z.road=(x,y)=>{ prep(); return Z._road(x,y); };
   Z.draw=(c,cam,t)=>{ prep(); const sx=Math.max(0,cam.x|0), sy=Math.max(0,cam.y|0), dx=sx-(cam.x|0), dy=sy-(cam.y|0); const ww=Math.min(W-dx,Z.w-sx), hh=Math.min(H-dy,Z.h-sy); if(ww>0&&hh>0) c.drawImage(ground,sx,sy,ww,hh,dx,dy,ww,hh);
@@ -26722,7 +26743,7 @@ function drawHud(c0){ const Z=S.Z; if(!Z) return;
   // minimapa (88 × 56) con brújula y farol de peligro · fix27 M5: en el teléfono vertical va al hueco de abajo (#gmini, ×2), no arriba a la derecha
   let c=c0, mx=W-92, my=4; if(GAP.mini){ c=gapMiniCtx(); mx=16; my=5; GAP.drawn=performance.now(); } c.save(); c.fillStyle='rgba(40,26,14,.85)'; c.fillRect(mx-3,my-3,94,62); c.strokeStyle='#c99b45'; c.lineWidth=1; c.strokeRect(mx-2.5,my-2.5,93,61);
   if(S.global){ c.imageSmoothingEnabled=true; c.drawImage(globalImg(),mx,my,88,56); c.drawImage(fogCanvas(),mx,my,88,56); c.imageSmoothingEnabled=false; try{ POSADAS.ESFG.forEach(o=>{ if(!fogOpen(o.x,o.y)) return; const ex=mx+o.x/Z.w*88, ey=my+o.y/Z.h*56; POSADAS.miniHalo(c,ex,ey); dot(c,ex,ey,'#8fd0ff'); }); }catch(e){} /* v27: Lumbres del mapa en el minimapa */ dot(c,mx+S.P.x/Z.w*88,my+S.P.y/Z.h*56,'#fff6c0'); if(S.goal){ const gz=zid(S.goal.zone), gn=Z.nodes.find(n=>n.zone===gz&&!n.sub); if(gn) star(c,mx+gn.x/Z.w*88,my+gn.y/Z.h*56); } } // pulido A02/A05: en el mapa, la ★ marca el lugar de la meta
-  else { c.drawImage(miniOf(Z),mx,my); const sx=88/Z.w, sy=56/Z.h;
+  else { let real=Z._miniReal; if(real===undefined){ real=null; try{ real=Z.world?miniReal(Z.world(),(x,y)=>Z.solid(x,y),Z.w,Z.h):null; }catch(e){} Z._miniReal=real; } miniDraw(c,real,miniOf(Z),mx,my); const sx=88/Z.w, sy=56/Z.h; /* v43: minimapa real */
     Z.exits.forEach(ex=>{ if(exitHid(ex)) return; c.fillStyle=exitOk(ex)?'#3a8a3a':'#b02a30'; c.fillRect(mx+ex.x*sx-1,my+ex.y*sy-1,Math.max(3,ex.w*sx+2),Math.max(3,ex.h*sy+2)); });
     const w=ensure(); Z.props.forEach(p=>{ if(p.kind==='cofre'&&!w.chests[p.id]&&can(p.need)) dot(c,mx+p.x*sx,my+p.y*sy,'#e0b860'); else if((p.kind==='esfera'||p.kind==='descanso')&&can(p.need)){ let col=null; try{ col=POSADAS.miniDot(p); if(p.kind==='esfera') POSADAS.miniHalo(c,mx+p.x*sx,my+p.y*sy); }catch(e){} if(col) dot(c,mx+p.x*sx,my+p.y*sy,col); } });
     const cr=Z.caravan&&w.caravan===Z.id?Z.caravan:(S.cart||null); if(cr){ c.fillStyle='#7a5230'; c.fillRect(mx+cr.x*sx-2,my+cr.y*sy-2,5,3); }
@@ -32706,6 +32727,7 @@ async function start(data){
   SAVES.fresh(); await fadeTo(1,400); runSafe('prologo');
 }
 window.__LDC={get G(){return G}, arteTest:()=>({SPR,troop:WAR._troop,ICONOS,artImage}), // v42: control del arte del lote (tools/verify/lote_arte.js)
+  miniTest:()=>({miniReal,miniDraw,town:ENV.town,zones:ZONES}), // v43: capturas del minimapa (tools/verify/minimapa.js)
   // stageTest: reproduce una escena suelta (para capturas y pruebas de puesta)
   chatTest:async(ni,id)=>escenaTest(id||'af_hermanos'), escenaTest:(id,zone)=>escenaTest(id,zone), get town(){ return CUR.town; }, esc:{avail:escenaAvail,pend:escenasPendientes,meta:escenaMeta,lost:escenaLost,seen:escenaSeen,play:playEscena,affKey}, migrar:()=>{ migrarEscenas(); return {chats:Object.keys(G.flags.chats||{}),parcial:G.flags.escParcial||{},choice:G.flags.escChoice||{}}; },
   stageTest:async(zone,name,flags)=>{ Object.assign(ENV.flags,flags||{}); const pz=name==='campamento'?presoPuesta():null; const st=await stageIn(zone,name,200); if(name==='emboscada_post'){ PTIRO.dress(st); await PTIRO.tiro(st); } else if(zone==='puente'&&name==='puente') PTIRO.dress(st,'puente'); await playScene(name,stageCtx(st,Object.assign({valdrisVisible:async()=>{ ENV.flags.valdris=true; },silencio:async()=>{},partyChange:async()=>{},battle:async()=>{},derrumbe:async()=>{ await PTIRO.derrumbe(st); }},pz?pz.hooks(st):{}))); hideDialog(); return 'ok'; }, get scene(){return scene}, get B(){return CUR.B}, get bossTurns(){return CUR.bossTurns}, get ended(){return (CUR.endCount||0)>0}, get bossLog(){return CUR.bossLog||[]},
