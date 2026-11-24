@@ -772,6 +772,8 @@ const AMB={live:new Map(),want:new Map(),
   _revive(){ this.want.forEach((b,k)=>{ if(!this.live.has(k)) this.loop(k,b); }); } };
 window.AUDIO={bus:n=>AU.bus(n),setVol:(b,v)=>AU.setVol(b,v),getVol:b=>AU.getVol(b),playAmb:(...a)=>AMB.play(...a),ambLoop:(k,b)=>AMB.loop(k,b),ambStop:(k,f)=>k==null?AMB.stopAll(f):AMB.stop(k,f),get ctx(){ return AU.ctx; }};
 const mtof=m=>440*Math.pow(2,(m-69)/12);
+// v45: instrumentos extra (src/nucleo/musica_biblia.js los suma): INSTX[tipo](c,t,m,f,dur,vel,g,osc,noiseSrc) → fin
+const INSTX={};
 
 function playInst(type,t,m,dur,vel,dest,pan,orn){
   const c=AU.ctx; if(!c) return; dest=dest||AU.sfx;
@@ -840,6 +842,7 @@ function playInst(type,t,m,dur,vel,dest,pan,orn){
     case 'celesta':{ osc('sine',f,0,1,g); osc('sine',f*2,0,0.18,g); osc('sine',f*4.02,0,0.05,g);
       g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(vel*0.07,t+0.004); g.gain.exponentialRampToValueAtTime(vel*0.02,t+0.4); g.gain.exponentialRampToValueAtTime(0.0005,t+2.2); end=t+2.25; break;}
     case 'sweep':{ const o=osc('sawtooth',f,0,1,g); o.frequency.exponentialRampToValueAtTime(f*4,t+dur); g.gain.setValueAtTime(vel*0.07,t); g.gain.linearRampToValueAtTime(0,t+dur); end=t+dur+0.02; break;}
+    default:{ const fx=INSTX[type]; if(fx) end=fx(c,t,m,f,dur,vel,g,osc,noiseSrc); }
   }
   oscs.forEach(o=>{ try{o.start(t); o.stop(end);}catch(e){} });
 }
@@ -1013,6 +1016,294 @@ function updateMuteBtn(){ const b=$('#btnMute'); b.textContent='Sonido: '+(AU.mu
 $('#btnMute').addEventListener('click',()=>{ AU.init(); AU.resume(); AU.setMuted(!AU.muted); });
 updateMuteBtn();
 
+/* ============================================================
+   v45 · BIBLIA SONORA (24/11/2026): 17 temas originales, uno por referencia de Brian
+   (más la variante de pelea de los Jueces). Cada referencia aporta solo estilo: compás, tempo, modo,
+   instrumentación y textura. Melodías, armonías y figuras son propias. Ver «Las Doce Coronas — Biblia sonora».
+   ============================================================ */
+// ---------- instrumentos nuevos (se llaman desde playInst por INSTX) ----------
+Object.assign(INSTX,{
+  piano(c,t,m,f,dur,vel,g,osc){ const lp=c.createBiquadFilter(); lp.type='lowpass'; lp.frequency.setValueAtTime(Math.min(6000,f*9),t); lp.frequency.exponentialRampToValueAtTime(Math.max(450,f*2),t+1.6); lp.connect(g);
+    osc('triangle',f,0,1,lp); osc('sine',f*2,2,0.38,lp); osc('sine',f*3,-3,0.12,lp); osc('sine',f*4.01,0,0.05,lp);
+    const L=clamp(dur*1.6,0.9,4.5); g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(vel*0.19,t+0.004); g.gain.exponentialRampToValueAtTime(vel*0.075,t+0.4); g.gain.exponentialRampToValueAtTime(0.0005,t+L); return t+L+0.05; },
+  guitar(c,t,m,f,dur,vel,g,osc){ const lp=c.createBiquadFilter(); lp.type='lowpass'; lp.frequency.setValueAtTime(3000,t); lp.frequency.exponentialRampToValueAtTime(700,t+0.5); lp.connect(g);
+    osc('triangle',f,0,1,lp); osc('sawtooth',f,4,0.25,lp); osc('sine',f*2,0,0.2,lp);
+    const L=clamp(dur*2,0.5,1.9); g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(vel*0.15,t+0.003); g.gain.exponentialRampToValueAtTime(vel*0.04,t+0.25); g.gain.exponentialRampToValueAtTime(0.0005,t+L); return t+L+0.05; },
+  oud(c,t,m,f,dur,vel,g,osc){ const bp=c.createBiquadFilter(); bp.type='bandpass'; bp.frequency.value=1500; bp.Q.value=0.7; bp.connect(g);
+    const o=osc('triangle',f,0,1,bp), o2=osc('sawtooth',f,0,0.4,bp); [o,o2].forEach(x=>{ x.frequency.setValueAtTime(f*1.018,t); x.frequency.exponentialRampToValueAtTime(f,t+0.035); });
+    const L=clamp(dur*1.5,0.35,1.3); g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(vel*0.32,t+0.003); g.gain.exponentialRampToValueAtTime(0.0006,t+L); return t+L+0.05; },
+  oboe(c,t,m,f,dur,vel,g,osc){ const bp=c.createBiquadFilter(); bp.type='bandpass'; bp.frequency.value=1350; bp.Q.value=1.1; const lp=c.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=3800; bp.connect(lp); lp.connect(g);
+    const o=osc('sawtooth',f,0,0.7,bp), o2=osc('square',f,0,0.3,bp); const vg=c.createGain(); vg.gain.setValueAtTime(0,t); vg.gain.linearRampToValueAtTime(f*0.006,t+0.35); osc('sine',5.4,0,1,vg); vg.connect(o.frequency); vg.connect(o2.frequency);
+    g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(vel*0.22,t+0.05); g.gain.setValueAtTime(vel*0.2,t+Math.max(0.06,dur-0.05)); g.gain.linearRampToValueAtTime(0,t+dur+0.12); return t+dur+0.15; },
+  accordion(c,t,m,f,dur,vel,g,osc){ const lp=c.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=2500; lp.connect(g);
+    osc('sawtooth',f,-11,0.45,lp); osc('sawtooth',f,11,0.45,lp); osc('square',f/2,0,0.18,lp);
+    g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(vel*0.075,t+0.035); g.gain.setValueAtTime(vel*0.07,t+Math.max(0.04,dur-0.04)); g.gain.linearRampToValueAtTime(0,t+dur+0.08); return t+dur+0.1; },
+  choir(c,t,m,f,dur,vel,g,osc){ const f1=c.createBiquadFilter(); f1.type='bandpass'; f1.frequency.value=680; f1.Q.value=3; const f2=c.createBiquadFilter(); f2.type='bandpass'; f2.frequency.value=1120; f2.Q.value=4;
+    const mx=c.createGain(); mx.gain.value=1; mx.connect(f1); mx.connect(f2); const lpc=c.createBiquadFilter(); lpc.type='lowpass'; lpc.frequency.value=2400; f1.connect(lpc); f2.connect(lpc); lpc.connect(g);
+    [-9,0,9].forEach(d=>{ const o=osc('sawtooth',f,d,0.5,mx); osc('sine',4.6+d*0.03,0,f*0.004,o.frequency); });
+    const A=vel*0.5; g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(A,t+0.28); g.gain.setValueAtTime(A*0.95,t+Math.max(0.3,dur)); g.gain.linearRampToValueAtTime(0,t+dur+0.55); return t+dur+0.6; },
+  organ(c,t,m,f,dur,vel,g,osc){ [[1,1],[2,0.5],[3,0.22],[4,0.2],[6,0.06]].forEach(([k,a])=>osc('sine',f*k,0,a,g));
+    g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(vel*0.06,t+0.03); g.gain.setValueAtTime(vel*0.06,t+Math.max(0.04,dur)); g.gain.linearRampToValueAtTime(0,t+dur+0.25); return t+dur+0.3; },
+  horn(c,t,m,f,dur,vel,g,osc){ const lp=c.createBiquadFilter(); lp.type='lowpass'; lp.frequency.setValueAtTime(400,t); lp.frequency.linearRampToValueAtTime(950,t+0.15); lp.Q.value=0.6; lp.connect(g);
+    osc('sawtooth',f,-3,0.6,lp); osc('sawtooth',f,3,0.6,lp); osc('sine',f,0,0.5,g);
+    g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(vel*0.11,t+0.12); g.gain.setValueAtTime(vel*0.1,t+Math.max(0.13,dur-0.06)); g.gain.linearRampToValueAtTime(0,t+dur+0.25); return t+dur+0.3; },
+  cello(c,t,m,f,dur,vel,g,osc){ const lp=c.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=1500; lp.connect(g);
+    const o=osc('sawtooth',f,0,1,lp); osc('sine',5,0,f*0.006,o.frequency);
+    g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(vel*0.11,t+0.09); g.gain.setValueAtTime(vel*0.095,t+Math.max(0.1,dur-0.05)); g.gain.linearRampToValueAtTime(0,t+dur+0.2); return t+dur+0.25; },
+  trem(c,t,m,f,dur,vel,g,osc){ const lp=c.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=1500; const am=c.createGain(); am.gain.value=0.6; lp.connect(am); am.connect(g);
+    osc('sawtooth',f,-6,0.5,lp); osc('sawtooth',f,6,0.5,lp); osc('sine',11,0,0.4,am.gain);
+    g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(vel*0.08,t+0.25); g.gain.setValueAtTime(vel*0.075,t+Math.max(0.26,dur)); g.gain.linearRampToValueAtTime(0,t+dur+0.4); return t+dur+0.45; },
+  tagel(c,t,m,f,dur,vel,g,osc){ const bp=c.createBiquadFilter(); bp.type='bandpass'; bp.frequency.value=Math.min(f*3,2600); bp.Q.value=2.2; const lp=c.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=1800; bp.connect(lp); lp.connect(g);
+    const o=osc('sawtooth',f,0,0.7,bp); osc('sawtooth',f*1.004,0,0.5,bp); osc('sine',3.8,0,f*0.005,o.frequency); osc('sawtooth',f,0,0.25,lp);
+    g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(vel*0.1,t+0.18); g.gain.setValueAtTime(vel*0.09,t+Math.max(0.2,dur)); g.gain.linearRampToValueAtTime(0,t+dur+0.35); return t+dur+0.4; },
+  harpsi(c,t,m,f,dur,vel,g,osc){ const hp=c.createBiquadFilter(); hp.type='highpass'; hp.frequency.value=220; const lp=c.createBiquadFilter(); lp.type='lowpass'; lp.frequency.setValueAtTime(5500,t); lp.frequency.exponentialRampToValueAtTime(1600,t+0.6); hp.connect(lp); lp.connect(g);
+    osc('sawtooth',f,0,0.6,hp); osc('square',f*2,0,0.2,hp);
+    const L=clamp(dur*1.4,0.35,1.1); g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(vel*0.085,t+0.002); g.gain.exponentialRampToValueAtTime(0.0005,t+L); return t+L+0.05; },
+  musicbox(c,t,m,f,dur,vel,g,osc){ osc('sine',f,0,1,g); osc('sine',f*3,0,0.16,g); osc('sine',f*5.4,0,0.05,g);
+    g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(vel*0.1,t+0.003); g.gain.exponentialRampToValueAtTime(0.0005,t+1.5); return t+1.55; },
+  timpani(c,t,m,f,dur,vel,g,osc,noiseSrc){ const o=osc('sine',f,0,1,g); o.frequency.setValueAtTime(f*1.03,t); o.frequency.exponentialRampToValueAtTime(f,t+0.08); osc('sine',f*1.5,0,0.25,g);
+    const lp=c.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=380; const ng=c.createGain(); ng.gain.setValueAtTime(0.5,t); ng.gain.exponentialRampToValueAtTime(0.01,t+0.12); lp.connect(ng); ng.connect(g); noiseSrc(lp);
+    g.gain.setValueAtTime(vel*0.55,t); g.gain.exponentialRampToValueAtTime(0.001,t+1.3); return t+1.32; },
+  taiko(c,t,m,f,dur,vel,g,osc,noiseSrc){ const lo=m<45; const lp=c.createBiquadFilter(); lp.type=lo?'lowpass':'highpass'; lp.frequency.value=lo?300:2200; lp.connect(g); noiseSrc(lp);
+    if(lo){ const o=osc('sine',78,0,2.4,g); o.frequency.setValueAtTime(78,t); o.frequency.exponentialRampToValueAtTime(44,t+0.3); }
+    const L=lo?0.75:0.07; g.gain.setValueAtTime(vel*(lo?0.32:0.22),t); g.gain.exponentialRampToValueAtTime(0.001,t+L); return t+L+0.02; },
+  framedrum(c,t,m,f,dur,vel,g,osc,noiseSrc){ const lo=m<45; const lp=c.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=lo?260:900; lp.connect(g); noiseSrc(lp);
+    const o=osc('sine',lo?86:170,0,lo?2.3:1,g); o.frequency.setValueAtTime(lo?86:170,t); o.frequency.exponentialRampToValueAtTime(lo?52:120,t+(lo?0.28:0.08));
+    const L=lo?0.55:0.12; g.gain.setValueAtTime(vel*(lo?0.24:0.14),t); g.gain.exponentialRampToValueAtTime(0.001,t+L); return t+L+0.02; },
+  darbuka(c,t,m,f,dur,vel,g,osc,noiseSrc){ if(m<45){ const o=osc('sine',115,0,1,g); o.frequency.setValueAtTime(115,t); o.frequency.exponentialRampToValueAtTime(72,t+0.2); g.gain.setValueAtTime(vel*0.55,t); g.gain.exponentialRampToValueAtTime(0.001,t+0.36); return t+0.38; }
+    const bp=c.createBiquadFilter(); bp.type='bandpass'; bp.frequency.value=3400; bp.Q.value=1.6; bp.connect(g); noiseSrc(bp); osc('sine',640,0,0.35,g);
+    g.gain.setValueAtTime(vel*0.3,t); g.gain.exponentialRampToValueAtTime(0.001,t+0.07); return t+0.08; },
+  clap(c,t,m,f,dur,vel,g,osc,noiseSrc){ const bp=c.createBiquadFilter(); bp.type='bandpass'; bp.frequency.value=1500; bp.Q.value=0.9; bp.connect(g); noiseSrc(bp);
+    g.gain.setValueAtTime(0,t); [0,0.012,0.024].forEach(d=>{ g.gain.setValueAtTime(vel*0.35,t+d); g.gain.exponentialRampToValueAtTime(vel*0.05,t+d+0.01); }); g.gain.exponentialRampToValueAtTime(0.001,t+0.14); return t+0.15; },
+  lluvia(c,t,m,f,dur,vel,g,osc,noiseSrc){ const hp=c.createBiquadFilter(); hp.type='highpass'; hp.frequency.value=2300; const lp=c.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=7600; hp.connect(lp); lp.connect(g); noiseSrc(hp);
+    const A=vel*0.1; g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(A,t+1.2); g.gain.setValueAtTime(A,t+Math.max(1.3,dur-1.2)); g.gain.linearRampToValueAtTime(0,t+dur); return t+dur+0.05; },
+  ola(c,t,m,f,dur,vel,g,osc,noiseSrc){ const lp=c.createBiquadFilter(); lp.type='lowpass'; lp.frequency.setValueAtTime(380,t); lp.frequency.linearRampToValueAtTime(950,t+dur*0.45); lp.frequency.linearRampToValueAtTime(350,t+dur); lp.connect(g); noiseSrc(lp);
+    g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(vel*0.28,t+dur*0.45); g.gain.linearRampToValueAtTime(0,t+dur); return t+dur+0.05; },
+  viento(c,t,m,f,dur,vel,g,osc,noiseSrc){ const bp=c.createBiquadFilter(); bp.type='bandpass'; bp.frequency.value=650; bp.Q.value=1.6; bp.connect(g); noiseSrc(bp); osc('sine',0.17,0,260,bp.frequency);
+    g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(vel*0.2,t+dur*0.4); g.gain.linearRampToValueAtTime(0,t+dur); return t+dur+0.05; }
+});
+// ---------- utilidades: partitura por compases (controla que cada compás sume lo que corresponde) ----------
+const MUSBIB_ERR=[];
+function seqb(id,str,bar,start=0,vel=0.8){ str.split('|').forEach((seg,i)=>{ const toks=seg.trim().split(/\s+/).filter(Boolean); if(!toks.length) return; const s=toks.reduce((a,x)=>a+(parseFloat(x.split(':')[1])||1),0); if(Math.abs(s-bar)>1e-6) MUSBIB_ERR.push(id+' c.'+(i+1)+' suma '+s+' (debe '+bar+')'); }); return seq(str,start,vel); }
+const shift=(notes,d,dv=0)=>notes.map(n=>[n[0]+d,n[1]+dv,n[2],n[3]]);
+const roots=(prog,bar,oct=-12,vel=0.5,len)=>prog.map((ch,i)=>[i*bar,ch[0]+oct,len||bar,vel]);
+const pads=(prog,bar,from=1,to=4,vel=0.4)=>prog.flatMap((ch,i)=>ch.slice(from,to).map(m=>[i*bar,m,bar,vel]));
+const pulse=(pattern,bars,barLen,map,start=0)=>hits(pattern,bars,barLen,map).map(n=>[n[0]+start,n[1],n[2],n[3]]);
+
+Object.assign(MUS,{
+  /* 1 · «Promesa de camino» (Brian y Rocío). 6/8, negra con punto = 68 (paso = corchea). Re menor que se abre a Fa mayor.
+     A: piano solo, arpegio largo con pedal · B: la flauta toma la melodía en Fa mayor · A': cuerdas y flauta una octava arriba. 24 c. */
+  promesa:{step:0.294,len:144,parts:(()=>{
+    const Dm=[38,45,50,53,57],Bb=[34,41,46,50,53],Gm=[31,38,43,46,50],A=[33,40,45,49,52],C=[36,43,48,52,55],F=[41,48,53,57,60];
+    const pA=[Dm,Bb,Gm,A,Dm,Bb,C,A], pB=[F,C,Dm,Bb,F,C,Bb,C], pC=[Dm,Bb,Gm,C,F,Bb,A,Dm], prog=pA.concat(pB,pC);
+    const lh=arps(prog,[0,1,2,3,4,3],6,0,0.42,4);
+    const rA=seqb('promesa','69:3 70:1 72:2 | 74:4 72:2 | 70:2 69:1 67:3 | 69:5 r:1 | 74:3 76:1 77:2 | 79:3 77:1 74:2 | 76:2 74:1 72:2 76:1 | 73:4 r:2',6,0,0.62);
+    const fB=seqb('promesa','72:1 77:2 79:1 81:2 | 79:4 76:2 | 77:3 74:1 76:1 77:1 | 74:6 | 72:1 77:2 79:1 81:2 | 84:4 81:1 79:1 | 81:2 79:1 77:2 74:1 | 79:6',6,48,0.55);
+    const fC=seqb('promesa','81:3 82:1 84:2 | 86:4 84:2 | 82:2 81:1 79:3 | 76:5 r:1 | 77:3 79:1 81:2 | 82:3 81:1 77:2 | 76:2 73:1 76:2 79:1 | 74:6',6,96,0.55);
+    const echo=shift(seqb('promesa','r:6 | r:3 70:3 | r:6 | r:3 69:3 | r:6 | r:3 72:3 | r:6 | r:3 74:3',6,0,0.35),96);
+    const pad=pads(pC,6,2,5,0.28).map(n=>[n[0]+96,n[1]+12,n[2],n[3]]);
+    const bass=roots(pB.concat(pC),6,12,0.4).map(n=>[n[0]+48,n[1],n[2],n[3]]);
+    return [{inst:'piano',notes:lh.concat(rA,shift(rA,96,-12).map(n=>[n[0],n[1],n[2],0.32]))},{inst:'flute',notes:fB.concat(fC),pan:0.15},{inst:'strings',notes:pad},{inst:'cello',notes:bass,pan:-0.15},{inst:'harp',notes:echo,pan:-0.3}];
+  })()},
+  /* 2 · «Vals de las Coronas» (evento de danza). 3/4, blanca con punto = 65 (paso = corchea). Sol menor, un acorde por compás.
+     A: violín sobre vals de bajo y acordes · B: Si bemol mayor, el arpa arpegia · A': A con la flauta en octavas. 24 c. */
+  vals_coronas:{step:0.1538,len:144,parts:(()=>{
+    const Gm=[43,58,62,67],Cm=[36,55,60,63],D7=[38,54,57,60],Eb=[39,55,58,63],D=[38,54,57,62],Bb=[34,53,58,62],F=[41,53,57,60],Am5=[45,55,60,63];
+    const pA=[Gm,Cm,D7,Gm,Eb,Cm,D,D7], pB=[Bb,F,Gm,Eb,Cm,Gm,Am5,D], prog=pA.concat(pB,pA);
+    const vals=prog.flatMap((ch,i)=>[[i*6,ch[0],2,0.55],[i*6+2,ch[1],2,0.4],[i*6+2,ch[2],2,0.4],[i*6+2,ch[3],2,0.35],[i*6+4,ch[1],2,0.33],[i*6+4,ch[2],2,0.33],[i*6+4,ch[3],2,0.3]]);
+    const mA='74:4 75:1 74:1 | 72:4 70:2 | 69:2 72:2 78:2 | 79:6 | 79:2 82:2 79:2 | 77:4 75:2 | 74:2 72:2 70:2 | 69:6';
+    const mB='77:3 79:1 81:2 | 81:4 77:2 | 79:3 81:1 82:2 | 82:4 79:2 | 75:2 79:2 84:2 | 82:4 79:2 | 75:2 74:2 72:2 | 78:6';
+    const vln=seqb('vals',mA+' | '+mB+' | '+mA.replace(/69:6$/,'67:6'),6,0,0.7);
+    const fl=shift(seqb('vals',mA.replace(/69:6$/,'67:6'),6,0,0.45),96,12);
+    const harp=arps(pB.map(ch=>ch.map(m=>m+12)),[0,1,2,3,2,1],6,48,0.4,2);
+    const pad=pads(prog,6,1,4,0.22);
+    return [{inst:'pizz',notes:vals,pan:-0.2},{inst:'violin',notes:vln,pan:0.15},{inst:'flute',notes:fl,pan:0.25},{inst:'harp',notes:harp,pan:-0.3},{inst:'strings',notes:pad}];
+  })()},
+  /* 3 · «Redes al alba» (ciudad costera de pescadores). 4/4, negra = 76 (paso = corchea). Mi bemol mayor.
+     A: piano legato, mano izquierda en corcheas parejas · B: la flauta canta, guitarra suave. Olas muy bajas. 16 c. */
+  redes_alba:{step:0.3947,len:128,parts:(()=>{
+    const Eb=[39,46,51,55],Bb=[34,46,50,53],Cm=[36,48,51,55],Ab=[32,44,48,51],Fm7=[41,48,51,56],Bb7=[34,44,50,53],Gm=[31,43,46,50],Fm=[29,44,48,53];
+    const pA=[Eb,Bb,Cm,Ab,Eb,Fm7,Bb7,Eb], pB=[Ab,Bb,Gm,Cm,Fm,Bb,Eb,Bb7], prog=pA.concat(pB);
+    const lh=arps(prog,[0,1,2,1,3,1,2,1],8,0,0.36,2);
+    const rh=seqb('redes','70:2 75:2 79:3 77:1 | 74:4 70:2 72:2 | 75:2 79:2 82:3 79:1 | 77:6 75:2 | 79:2 82:2 84:3 82:1 | 80:4 77:2 75:2 | 74:2 77:2 80:2 79:2 | 75:8',8,0,0.6);
+    const fl=seqb('redes','84:3 82:1 80:4 | 82:3 80:1 79:4 | 79:2 82:2 86:4 | 84:8 | 80:3 79:1 77:4 | 79:3 77:1 74:4 | 75:2 79:2 82:2 84:2 | 82:6 r:2',8,64,0.55);
+    const gtr=arps(pB.map(ch=>ch.map(m=>m+12)),[1,null,2,null,3,null,2,null],8,64,0.28,2);
+    const olas=[0,16,32,48,64,80,96,112].map((s,i)=>[s+(i%2)*3,40,12,0.5]);
+    return [{inst:'piano',notes:lh.concat(rh,shift(rh,64,-12).map(n=>[n[0],n[1],n[2],0.25]))},{inst:'flute',notes:fl,pan:0.15},{inst:'guitar',notes:gtr,pan:-0.25},{inst:'ola',notes:olas,pan:-0.3}];
+  })()},
+  /* 4 · «Lluvia sobre las murallas» (ciudad con lluvia, drama de posguerra). 6/8, negra con punto = 73 (paso = corchea). Re menor.
+     Clave en ostinato que no se detiene (la lluvia), bajo que alterna dos notas largas y una flauta que dice poco y sostiene mucho. 24 c. */
+  lluvia_murallas:{step:0.274,len:144,parts:(()=>{
+    const Dm=[50,57,62,65],Bb=[46,58,62,65],Gm=[43,58,62,67],C=[48,60,64,67],A=[45,57,61,64],F=[41,60,65,69],Em5=[40,58,62,67];
+    const pA=[Dm,Dm,Bb,Gm,Dm,C,A,A], pB=[F,C,Dm,Bb,Gm,Dm,Em5,A], prog=pA.concat(pB,pA);
+    const clave=arps(prog,[1,3,2,3,1,3],6,0,0.42,1);
+    const bajo=prog.flatMap((ch,i)=>[[i*6,ch[0]-12,3,0.45],[i*6+3,ch[0]-5,3,0.38]]);
+    const fA='r:3 69:3 | 74:6 | 74:2 72:1 70:3 | 67:6 | r:3 69:1 70:1 72:1 | 76:6 | 76:2 74:1 73:3 | 69:6';
+    const fB='77:3 76:1 77:2 | 79:6 | 81:3 79:1 77:2 | 74:6 | 74:2 77:1 79:3 | 77:3 76:3 | 74:2 72:1 70:3 | 69:6';
+    const fl=seqb('lluvia',fA+' | '+fB+' | r:6 | r:6 | 74:2 72:1 70:3 | 67:6 | r:3 69:1 70:1 72:1 | 74:6 | 73:3 76:3 | 74:6',6,0,0.6);
+    const pad=pads(pB,6,1,4,0.22).map(n=>[n[0]+48,n[1],n[2],n[3]]);
+    const lluvia=[0,24,48,72,96,120].map(s=>[s,60,30,0.6]);
+    return [{inst:'harpsi',notes:clave,pan:-0.2},{inst:'cello',notes:bajo,pan:-0.1},{inst:'flute',notes:fl,pan:0.15},{inst:'strings',notes:pad},{inst:'lluvia',notes:lluvia,pan:0.2}];
+  })()},
+  /* 5 · «Pan y humo» (pueblos tranquilos). 4/4, negra = 104 (paso = corchea). Sol mayor.
+     Cuarteto de cuerdas: chelo en negras sueltas, viola en corcheas que mecen y violín legato y cálido; en B el silbato dobla la melodía. 16 c. */
+  pan_humo:{step:0.2885,len:128,parts:(()=>{
+    const G=[43,55,59,62],C=[36,52,55,60],D=[38,54,57,62],Em=[40,52,55,59],Am=[45,52,57,60];
+    const pA=[G,C,G,D,Em,C,D,G], pB=[C,G,Am,D,G,Em,C,G], prog=pA.concat(pB);
+    const chelo=prog.flatMap((ch,i)=>[0,2,4,6].map((o,k)=>[i*8+o,k%2?ch[0]+7:ch[0],1.5,k?0.42:0.55]));
+    const viola=arps(prog,[1,2,3,2,1,2,3,2],8,0,0.3,1);
+    const mA='71:3 72:1 74:2 71:2 | 72:4 76:2 74:2 | 71:2 74:2 79:3 78:1 | 76:6 74:2 | 71:3 72:1 74:2 79:2 | 76:3 74:1 72:2 71:2 | 69:2 74:2 72:2 69:2 | 67:6 r:2';
+    const mB='79:4 76:2 79:2 | 83:4 81:2 79:2 | 81:3 79:1 76:2 72:2 | 74:6 78:2 | 79:3 81:1 83:2 86:2 | 83:4 79:2 76:2 | 76:2 79:2 78:2 74:2 | 79:6 r:2';
+    const vln=seqb('pan',mA+' | '+mB,8,0,0.62);
+    const silb=seqb('pan',mB,8,64,0.55).map(n=>[n[0],n[1]+12,n[2],n[3]]);
+    const bod=pulse('x..t.x.t',8,8,{x:[41,0.45],t:[48,0.3]},64);
+    return [{inst:'pizz',notes:chelo,pan:-0.2},{inst:'strings',notes:viola},{inst:'violin',notes:vln,pan:0.15},{inst:'whistle',notes:silb,pan:0.25},{inst:'bodhran',notes:bod,pan:-0.1}];
+  })()},
+  /* 6 · «La perla del sur» (tema de Rocío). 4/4 lento, negra = 72 (paso = corchea). Mi con giros frigios (Fa natural, cadencia La m–Sol–Fa–Mi).
+     Guitarra española en rasgueo suave, palmas lejanas y el oboe como voz, sincopado y con aire. 16 c. */
+  perla_sur:{step:0.4167,len:128,parts:(()=>{
+    const E=[40,52,56,59,64],Am=[45,52,57,60,64],G=[43,50,55,59,62],F=[41,53,57,60,65],Am7=[45,55,57,60,64],B7=[47,51,54,57,63],C=[48,52,55,60,64];
+    const pA=[E,E,Am,G,F,E,Am7,B7], pB=[C,G,Am,E,F,G,F,E], prog=pA.concat(pB);
+    const ras=prog.flatMap((ch,i)=>[0,3,6].flatMap(o=>ch.slice(o?1:0).map(m=>[i*8+o,m,o===6?2:3,o?0.32:0.4])));
+    const voz=seqb('perla','r:2 76:1 77:1 79:3 77:1 | 76:6 r:2 | r:2 72:1 74:1 76:3 74:1 | 74:3 72:1 71:4 | r:1 77:2 76:1 77:2 81:2 | 80:6 r:2 | 79:1 81:2 79:1 77:2 76:2 | 75:4 71:4 |'
+      +' 76:3 79:1 84:4 | 83:2 81:1 79:3 r:2 | 81:3 77:1 76:4 | 80:6 r:2 | 77:2 76:1 74:1 72:2 74:2 | 76:3 74:1 71:4 | 72:2 71:1 69:1 72:2 71:2 | 68:8',8,0,0.62);
+    const palmas=pulse('..x...x.',16,8,{x:[60,0.35]});
+    const bajo=roots(prog,8,0,0.38).map(n=>[n[0],n[1]-12,n[2],n[3]]);
+    return [{inst:'guitar',notes:ras,pan:-0.2},{inst:'oboe',notes:voz,pan:0.12},{inst:'clap',notes:palmas,pan:0.35},{inst:'bass',notes:bajo}];
+  })()},
+  /* 7 · «Hijos del fiordo» (pueblos nórdicos). 4/4, negra ≈ 90 (paso = corchea). Mi eólico sobre bordón.
+     Tambor de marco grave a medio tiempo, cuerda frotada en bordón, voces de hombre al unísono y un cuerno que llama al cerrar cada frase. 16 c. */
+  fiordo:{step:0.333,len:128,parts:(()=>{
+    const R=[40,40,38,40,40,40,36,38,40,40,38,40,36,38,40,40];
+    const bordon=R.flatMap((r,i)=>[[i*8,r,8,0.55],[i*8,r+7,8,0.4]]);
+    const voces=seqb('fiordo','52:4 55:2 57:2 | 55:6 52:2 | 50:4 52:2 55:2 | 52:8 | 59:4 57:2 55:2 | 57:6 55:2 | 55:4 57:4 | 54:8 | 52:4 55:2 57:2 | 55:6 52:2 | 50:4 52:2 55:2 | 52:8 | 60:4 59:2 57:2 | 57:4 55:4 | 52:8 | r:8',8,0,0.7);
+    const cuerno=[3,7,11,15].flatMap(b=>seqb('fiordo','r:2 59:2 r:1 59:1 64:2',8,b*8,0.7));
+    const tambor=pulse('X..xX...',16,8,{X:[40,0.9],x:[48,0.5]});
+    return [{inst:'tagel',notes:bordon,pan:-0.15},{inst:'choir',notes:voces},{inst:'horn',notes:cuerno,pan:0.25},{inst:'framedrum',notes:tambor,pan:-0.05}];
+  })()},
+  /* 8 · «Choque en el puente» (batallas). 4/4, negra ≈ 130 (paso = semicorchea). La menor.
+     Cuerdas en ostinato de corcheas, caja insistente y metales con frases cortas que se responden; en B entra el violín. 16 c. */
+  puente_choque:{step:0.1154,len:256,parts:(()=>{
+    const Am=[57,60,64],F=[57,60,65],G=[55,59,62],Dm=[57,62,65],E=[56,59,64],Em=[55,59,64];
+    const prog=[Am,Am,F,G,Am,Am,Dm,E, F,G,Em,Am,Dm,E,F,E], R=[45,45,41,43,45,45,38,40, 41,43,40,45,38,40,41,40];
+    const ost=prog.flatMap((ch,b)=>[0,2,4,6,8,10,12,14].map((o,i)=>[b*16+o,ch[[0,1,2,1][i%4]],2,i%4?0.55:0.8]));
+    const bajo=R.flatMap((r,b)=>[0,2,4,6,8,10,12,14].map((o,i)=>[b*16+o,i===6?r+12:r-12,2,i%4?0.6:0.85]));
+    const met=seqb('puente','69:4 69:2 72:2 76:6 74:2 | 72:4 71:4 69:8 | 72:4 72:2 77:2 81:6 79:2 | 77:4 76:4 74:8 | 69:4 69:2 72:2 76:6 79:2 | 81:8 76:8 | 77:4 76:4 74:4 72:4 | 71:12 r:4 |'
+      +' 77:6 76:2 72:4 69:4 | 79:6 77:2 74:4 71:4 | 76:6 74:2 71:4 67:4 | 69:8 72:4 76:4 | 74:6 77:2 81:4 77:4 | 80:8 76:8 | 77:4 81:4 84:4 81:4 | 80:8 r:4 76:2 80:2',16,0,0.72);
+    const vln=shift(seqb('puente','77:6 76:2 72:4 69:4 | 79:6 77:2 74:4 71:4 | 76:6 74:2 71:4 67:4 | 69:8 72:4 76:4 | 74:6 77:2 81:4 77:4 | 80:8 76:8 | 77:4 81:4 84:4 81:4 | 80:12 r:4',16,0,0.4),128,-12);
+    const dr=[]; const P='k..ks.k.k..ks.s.';
+    for(let b=0;b<16;b++){ const o=b*16;
+      if(b===7||b===15){ 'k...k...ssssssss'.split('').forEach((ch,i)=>{ if(ch==='k') dr.push([o+i,36,1,.9]); if(ch==='s') dr.push([o+i,i%2?45:38,1,.45+(i-8)*.06]); }); }
+      else P.split('').forEach((ch,i)=>{ if(ch==='k') dr.push([o+i,36,1,.85]); if(ch==='s') dr.push([o+i,38,1,.7]); });
+      for(let i=0;i<16;i+=2) dr.push([o+i,42,1,i%4?.3:.45]); }
+    const plat=[[0,49,4,.85],[128,49,4,.85]];
+    return [{inst:'stacc',notes:ost,pan:-0.2},{inst:'bass',notes:bajo},{inst:'brass',notes:met,pan:0.1},{inst:'violin',notes:vln,pan:0.25},{inst:'drum',notes:dr},{inst:'cymbal',notes:plat,pan:0.3}];
+  })()},
+  /* 9 · «Mercado de las arenas» (ciudades tranquilas con mercado). 4/4, negra ≈ 100 (paso = corchea). Mi frigio dominante.
+     Oboe con segundas aumentadas, laúd punteado y darbuka liviana; la segunda vuelta la canta el laúd y el oboe sostiene. 16 c. */
+  mercado_arenas:{step:0.3,len:128,parts:(()=>{
+    const E=[52,56,59,64],F=[53,57,60,65],Dm=[50,53,57,62],G=[55,59,62,67];
+    const prog=[E,F,E,Dm,E,F,G,E], prog2=prog.concat(prog);
+    const mel='76:2 77:1 80:1 81:2 80:2 | 81:3 80:1 77:4 | 80:2 77:1 76:1 77:2 76:2 | 74:4 72:2 74:2 | 76:2 80:2 83:3 81:1 | 84:3 83:1 81:2 80:2 | 83:2 81:1 79:1 77:2 79:2 | 77:2 76:6';
+    const oboe=seqb('mercado',mel,8,0,0.6).concat(seqb('mercado','76:8 | 77:8 | 76:8 | 74:8 | 76:8 | 77:8 | 79:8 | 76:8',8,64,0.32));
+    const laud=arps(prog2,[0,2,1,2,0,2,3,2],8,0,0.4,1).filter(n=>n[0]<64).concat(seqb('mercado',mel,8,64,0.55).map(n=>[n[0],n[1]-12,n[2],n[3]]));
+    const darb=pulse('D.TTD.T.',16,8,{D:[40,0.8],T:[60,0.6]});
+    const bordon=prog2.map((ch,i)=>[i*8,40,8,0.35]);
+    return [{inst:'oboe',notes:oboe,pan:0.15},{inst:'oud',notes:laud,pan:-0.2},{inst:'darbuka',notes:darb,pan:0.05},{inst:'strings',notes:bordon}];
+  })()},
+  /* 10 · «Ruinas al raso» (mazmorras al aire libre). Libre, negra ≈ 60 (paso = corchea). La menor.
+     Notas sueltas de piano con mucho espacio sobre un colchón de cuerdas y viento. 16 c. */
+  ruinas_raso:{step:0.5,len:128,parts:(()=>{
+    const Am=[45,57,60,64],Fm7=[41,57,60,64],Em=[40,55,59,64],Dm=[38,57,62,65],E=[40,56,59,64],F=[41,57,60,65],C=[36,55,60,64],G=[43,55,59,62];
+    const prog=[Am,Fm7,Am,Em,Dm,Fm7,Am,E, F,C,Dm,Am,F,G,Am,Am];
+    const pad=pads(prog,8,1,4,0.3).concat(roots(prog,8,-12,0.3));
+    const pno=seqb('ruinas','76:4 r:4 | r:2 72:2 76:2 r:2 | 81:6 r:2 | 79:2 r:2 71:4 | 77:4 r:2 74:2 | 76:8 | 72:2 r:2 69:4 | 68:8 | 77:2 r:2 81:4 | 79:8 | 77:2 76:2 74:4 | 72:6 r:2 | 69:2 72:2 77:4 | 74:2 r:2 71:4 | 72:4 r:2 76:2 | 69:8',8,0,0.5);
+    const viento=[0,32,64,96].map((s,i)=>[s+i*2,50,26,0.6]);
+    return [{inst:'piano',notes:pno,pan:0.1},{inst:'strings',notes:pad},{inst:'viento',notes:viento,pan:-0.3}];
+  })()},
+  /* 11 · «Los Jueces» (escenas con los jueces). 4/4 lento, negra ≈ 70 (paso = corchea). Re menor con Mi bemol frigio.
+     Motivo propio de los Jueces (Re–La–Sol–Mi♭–Re) en metales graves; órgano, coro de hombres sostenido y timbal. 16 c. */
+  jueces:{step:0.4286,len:128,parts:(()=>{
+    const Dm=[50,57,62,65],Eb=[51,58,63,67],Gm=[43,58,62,67],A=[45,57,61,64],Bb=[46,58,62,65];
+    const prog=[Dm,Dm,Eb,Dm,Gm,Gm,A,A, Dm,Bb,Eb,Dm,Gm,Eb,A,Dm];
+    const organo=pads(prog,8,0,4,0.5);
+    const met=seqb('jueces','50:4 57:4 | 55:2 51:2 50:4 | 51:4 55:4 | 50:8 | 55:4 62:4 | 60:2 58:2 55:4 | 57:8 | 61:4 57:4 | 62:4 69:4 | 67:2 63:2 62:4 | 63:4 67:4 | 62:8 | 67:4 70:4 | 70:2 67:2 63:4 | 61:4 64:4 | 62:8',8,0,0.75);
+    const coro=prog.flatMap((ch,i)=>i<4?[]:[[i*8,ch[1],8,0.5],[i*8,ch[2]-12,8,0.45]]);
+    const timp=prog.flatMap((ch,i)=>{ const r=(i%4===3)?45:38; const o=[[i*8,r,1,0.9]]; if(i===7||i===15) for(let k=4;k<8;k++) o.push([i*8+k,45,1,0.3+k*0.08]); return o; });
+    return [{inst:'organ',notes:organo},{inst:'horn',notes:met,pan:0.1},{inst:'choir',notes:coro},{inst:'timpani',notes:timp,pan:-0.1}];
+  })()},
+  /* 11b · «Los Jueces — Sentencia» (variante de pelea). 4/4, negra ≈ 140 (paso = semicorchea). Mismo motivo al doble de velocidad. 16 c. */
+  jueces_pelea:{step:0.107,len:256,parts:(()=>{
+    const R=[38,38,39,38,43,43,45,45, 38,34,39,38,43,39,45,38];
+    const ost=R.flatMap((r,b)=>[0,2,4,6,8,10,12,14].map((o,i)=>[b*16+o,r+12+(i===3||i===7?1:0),2,i%4?0.55:0.85]));
+    const met=seqb('jueces_pelea','62:4 69:4 67:2 63:2 62:4 | 62:4 69:4 70:4 69:4 | 63:4 70:4 69:2 67:2 63:4 | 62:12 r:4 | 67:4 74:4 72:2 70:2 67:4 | 67:4 74:4 75:4 74:4 | 69:8 73:8 | 76:12 r:4 |'
+      +' 74:4 81:4 79:2 75:2 74:4 | 74:4 81:4 82:4 81:4 | 75:4 82:4 81:2 79:2 75:4 | 74:12 r:4 | 79:4 82:4 81:4 79:4 | 75:4 79:4 77:4 75:4 | 73:8 76:8 | 74:12 r:4',16,0,0.8);
+    const coro=R.map((r,b)=>[b*16,r+24,4,0.6]);
+    const dr=[]; for(let b=0;b<16;b++){ const o=b*16; 'k.k.s..kk.k.s.ss'.split('').forEach((ch,i)=>{ if(ch==='k') dr.push([o+i,36,1,.85]); if(ch==='s') dr.push([o+i,38,1,.7]); }); for(let i=0;i<16;i+=2) dr.push([o+i,42,1,.3]); }
+    const timp=R.flatMap((r,b)=>[[b*16,r,1,0.8],[b*16+8,r+7,1,0.6]]);
+    return [{inst:'stacc',notes:ost,pan:-0.2},{inst:'brass',notes:met,pan:0.1},{inst:'choir',notes:coro},{inst:'drum',notes:dr},{inst:'timpani',notes:timp,pan:-0.1},{inst:'cymbal',notes:[[0,49,4,.8],[128,49,4,.8]],pan:0.3}];
+  })()},
+  /* 12 · «Tinta y vino» (personajes pintorescos, aire francés). 3/4 tipo musette, negra ≈ 180 (paso = corchea). Do mayor con sombras menores.
+     Acordeón con la melodía, guitarra «bajo, acorde, acorde» y un violín que contesta en B. 16 c. */
+  tinta_vino:{step:0.1667,len:96,parts:(()=>{
+    const C=[36,52,55,60],Am=[33,52,57,60],Dm=[38,53,57,62],G7=[31,53,59,62],E7=[40,56,59,62],Fm=[41,56,60,65],F=[41,57,60,65],D7=[38,54,57,60],G=[43,55,59,62],A7=[33,55,57,61],DG=[38,53,59,62];
+    const prog=[C,Am,Dm,G7,C,E7,Am,Fm, F,C,D7,G,C,A7,DG,C];
+    const gtr=prog.flatMap((ch,i)=>[[i*6,ch[0],2,0.5]].concat([2,4].flatMap(o=>ch.slice(1).map(m=>[i*6+o,m,1,0.3]))));
+    const acc=seqb('tinta','76:3 77:1 79:2 | 81:4 79:2 | 77:2 76:2 74:2 | 71:4 74:2 | 72:2 76:2 79:2 | 80:4 83:2 | 81:3 79:1 77:2 | 80:6 | 81:2 84:2 81:2 | 79:4 76:2 | 78:2 81:2 84:2 | 83:6 | 84:3 83:1 81:2 | 79:2 76:2 73:2 | 74:3 77:1 71:2 | 72:6',6,0,0.65);
+    const vln=seqb('tinta','r:6 | r:2 72:4 | r:6 | r:2 74:4 | r:6 | r:2 76:4 | r:4 74:2 | 72:6',6,48,0.4);
+    return [{inst:'guitar',notes:gtr,pan:-0.2},{inst:'accordion',notes:acc,pan:0.1},{inst:'violin',notes:vln,pan:0.3}];
+  })()},
+  /* 13 · «Víspera» (ciudad tranquila o campamento). 4/4, negra ≈ 72 (paso = corchea). Re con color mixolidio (Do natural).
+     Guitarra arpegiada y flauta; las cuerdas entran en la segunda mitad. 16 c. */
+  vispera:{step:0.4167,len:128,parts:(()=>{
+    const D=[38,50,57,62,66],C=[36,48,55,60,64],G=[43,50,55,59,62],Bm=[35,50,54,59,62],A=[33,49,57,61,64],Em=[40,52,55,59,64];
+    const pA=[D,C,G,D,Bm,G,A,D], pB=[G,D,C,G,Em,C,A,D], prog=pA.concat(pB);
+    const gtr=arps(prog,[0,2,3,4,3,2,1,2],8,0,0.36,2);
+    const fl=seqb('vispera','r:2 69:2 74:3 76:1 | 76:4 72:4 | 71:2 74:2 79:4 | 78:6 r:2 | 74:3 76:1 78:2 81:2 | 79:4 76:4 | 76:2 73:2 69:4 | 74:8 | 83:4 81:2 79:2 | 78:6 r:2 | 76:3 79:1 84:4 | 83:8 | 79:2 78:2 76:2 71:2 | 72:4 76:4 | 73:3 76:1 81:4 | 78:8',8,0,0.55);
+    const cuerdas=pads(pB,8,2,5,0.3).map(n=>[n[0]+64,n[1],n[2],n[3]]);
+    return [{inst:'guitar',notes:gtr,pan:-0.2},{inst:'flute',notes:fl,pan:0.15},{inst:'strings',notes:cuerdas}];
+  })()},
+  /* 14 · «Estandartes enemigos» (ejércitos rivales). Marcha 4/4, negra ≈ 110 (paso = corchea). Fa menor.
+     Metales al unísono en dos octavas, caja militar y cuerdas graves. 16 c. */
+  estandartes:{step:0.2727,len:128,parts:(()=>{
+    const R=[41,41,37,36,41,46,36,36, 44,39,41,36,37,46,36,41];
+    const mel='65:3 65:1 68:2 72:2 | 77:4 75:2 72:2 | 73:3 72:1 70:2 68:2 | 67:6 r:2 | 65:3 65:1 68:2 72:2 | 73:4 70:2 77:2 | 76:3 74:1 72:2 70:2 | 72:6 r:2 | 72:3 75:1 80:4 | 79:3 75:1 70:4 | 72:3 68:1 65:4 | 67:6 r:2 | 68:3 72:1 77:4 | 77:3 73:1 70:4 | 72:2 76:2 79:2 76:2 | 77:6 r:2';
+    const met=seqb('estandartes',mel,8,0,0.7), met2=met.map(n=>[n[0],n[1]-12,n[2],0.55]);
+    const cuerdas=R.flatMap((r,b)=>[0,2,4,6].map(o=>[b*8+o,r-12+(o===4?7:0),2,0.55]));
+    const caja=pulse('S.ssS.s.',16,8,{S:[38,0.75],s:[38,0.4]}).concat(pulse('k...k...',16,8,{k:[36,0.8]}));
+    return [{inst:'brass',notes:met.concat(met2),pan:0.1},{inst:'stacc',notes:cuerdas,pan:-0.2},{inst:'drum',notes:caja},{inst:'timpani',notes:R.map((r,b)=>[b*8,r,1,0.55])}];
+  })()},
+  /* 15 · «Arena» (peleas épicas estilo gladiador). 4/4 pesado, negra ≈ 95 (paso = semicorchea). Re menor.
+     Tambores grandes, chelos golpeados en corcheas y coro en los clímax; en B los metales levantan la melodía. 16 c. */
+  arena:{step:0.158,len:256,parts:(()=>{
+    const R=[38,38,34,36,38,38,43,45, 34,41,36,38,34,36,45,45];
+    const chelos=R.flatMap((r,b)=>[0,2,4,6,8,10,12,14].map((o,i)=>[b*16+o,r+([0,0,12,0,0,0,10,12][i]),2,i%4?0.6:0.9]));
+    const taiko=[]; for(let b=0;b<16;b++) 'T..t..T.T.t.T...'.split('').forEach((ch,i)=>{ if(ch==='T') taiko.push([b*16+i,36,1,.95]); if(ch==='t') taiko.push([b*16+i,48,1,.6]); });
+    const coroA=R.map((r,b)=>[b*16,r+24,b>=8?12:4,b>=8?0.6:0.5]).concat(R.map((r,b)=>[b*16,r+31,b>=8?12:4,0.45]));
+    const metA=seqb('arena','r:16 | r:16 | 65:8 62:8 | 64:16 | r:16 | r:16 | 67:8 70:8 | 69:16',16,0,0.55).map(n=>[n[0],n[1]-12,n[2],n[3]]);
+    const metB=seqb('arena','70:6 69:2 65:8 | 69:6 72:2 77:8 | 76:4 74:4 72:4 67:4 | 69:16 | 70:6 74:2 77:8 | 76:4 79:4 76:4 72:4 | 73:8 76:8 | 76:12 r:4',16,128,0.75);
+    return [{inst:'cello',notes:chelos.map(n=>[n[0],n[1],1.6,n[3]]),pan:-0.15},{inst:'taiko',notes:taiko},{inst:'choir',notes:coroA},{inst:'horn',notes:metA,pan:0.1},{inst:'brass',notes:metB,pan:0.1}];
+  })()},
+  /* 16 · «Sombras de la casa» (asesinos y momentos oscuros). 3/4 lento, negra = 60 (paso = corchea). La menor cromático.
+     Caja de música con una figura que gira sobre un bajo que baja de a semitono, cuerdas en trémolo y golpes secos aislados. 16 c. */
+  sombras_casa:{step:0.5,len:96,parts:(()=>{
+    const ch=[[69,72,76,81],[68,72,76,80],[67,72,76,79],[66,72,76,78],[65,68,72,77],[64,68,71,76],[62,65,69,74],[64,68,71,77]];
+    const prog=ch.concat(ch);
+    const caja=arps(prog,[0,1,2,3,2,1],6,0,0.5,1);
+    const bajo=[45,44,43,42,41,40,38,40, 45,44,43,42,41,40,38,40].map((m,i)=>[i*6,m-12,6,0.5]);
+    const vln=seqb('sombras','r:6 | r:6 | r:6 | r:6 | 84:6 | 83:6 | 81:6 | 80:6',6,48,0.35);
+    const golpes=[[21,40,1,0.5],[42,40,1,0.6],[45,40,1,0.4],[69,40,1,0.5],[90,40,1,0.6]];
+    const clave=arps(ch,[3,2,1,0,1,2],6,48,0.25,1).map(n=>[n[0],n[1]-12,n[2],n[3]]);
+    return [{inst:'musicbox',notes:caja,pan:0.2},{inst:'trem',notes:bajo},{inst:'violin',notes:vln,pan:-0.2},{inst:'hit',notes:golpes,pan:0.3},{inst:'harpsi',notes:clave,pan:-0.25}];
+  })()}
+});
+// Catálogo para la sala de música y las pruebas: [clave, título, uso]
+const MUS_BIBLIA=[['promesa','Promesa de camino','Brian y Rocío'],['vals_coronas','Vals de las Coronas','Danza'],['redes_alba','Redes al alba','Ciudad costera'],['lluvia_murallas','Lluvia sobre las murallas','Ciudad con lluvia'],
+  ['pan_humo','Pan y humo','Pueblos'],['perla_sur','La perla del sur','Tema de Rocío'],['fiordo','Hijos del fiordo','Pueblos nórdicos'],['puente_choque','Choque en el puente','Batallas'],
+  ['mercado_arenas','Mercado de las arenas','Ciudad con mercado'],['ruinas_raso','Ruinas al raso','Mazmorras al aire libre'],['jueces','Los Jueces','Escenas con jueces'],['jueces_pelea','Los Jueces — Sentencia','Pelea contra jueces'],
+  ['tinta_vino','Tinta y vino','Personajes pintorescos'],['vispera','Víspera','Campamento'],['estandartes','Estandartes enemigos','Ejércitos rivales'],['arena','Arena','Peleas épicas'],['sombras_casa','Sombras de la casa','Asesinos']];
+// Nivelado (v45): los temas tranquilos sonaban por debajo de los del juego (rms ≈ 0,027 en Hollin y Calma); se suben sus velocidades.
+[['ruinas_raso',2.4],['sombras_casa',2.6],['tinta_vino',2.1],['pan_humo',1.7],['vals_coronas',1.25],['mercado_arenas',1.2]].forEach(([k,f])=>MUS[k].parts.forEach(p=>p.notes.forEach(n=>{ n[3]=(n[3]==null?0.8:n[3])*f; })));
 /* ============================================================
    BAKE — atlas de imágenes pregeneradas ("horneado")
    build.js (con BAKE=1) arma el juego, lo abre en Chromium sin ventana, genera con los
@@ -23829,10 +24120,21 @@ function syncOptMute(){ document.querySelectorAll('.op-mute').forEach(b=>{ b.tex
 function renderOptions(B){
   const wrap=el('div','op-wrap'); B.appendChild(wrap);
   const nav=el('div','op-nav'); nav.setAttribute('role','tablist'); const body=el('div','op-body');
-  [['general','General'],['controles','Controles']].forEach(([k,lb])=>{ const b=btn('op-sub'+(OPTV.sub===k?' on':''),lb,()=>{ OPTV.sub=k; draw(true); }); b.setAttribute('role','tab'); b.setAttribute('aria-selected',String(OPTV.sub===k)); b.dataset.sub=k; if(OPTV.sub===k) b.dataset.focus='1'; nav.appendChild(b); });
+  [['general','General'],['controles','Controles'],['musica','Música']].forEach(([k,lb])=>{ const b=btn('op-sub'+(OPTV.sub===k?' on':''),lb,()=>{ OPTV.sub=k; draw(true); }); b.setAttribute('role','tab'); b.setAttribute('aria-selected',String(OPTV.sub===k)); b.dataset.sub=k; if(OPTV.sub===k) b.dataset.focus='1'; nav.appendChild(b); });
   wrap.append(nav,body);
-  const draw=(foc)=>{ nav.querySelectorAll('.op-sub').forEach(b=>{ const on=b.dataset.sub===OPTV.sub; b.classList.toggle('on',on); b.setAttribute('aria-selected',String(on)); }); body.innerHTML=''; (OPTV.sub==='general'?optGeneral:optControls)(body); if(foc){ const f=nav.querySelector('.op-sub.on'); if(f&&!AUTO) f.focus({preventScroll:true}); } };
+  const draw=(foc)=>{ nav.querySelectorAll('.op-sub').forEach(b=>{ const on=b.dataset.sub===OPTV.sub; b.classList.toggle('on',on); b.setAttribute('aria-selected',String(on)); }); body.innerHTML=''; (OPTV.sub==='general'?optGeneral:OPTV.sub==='musica'?optMusica:optControls)(body); if(foc){ const f=nav.querySelector('.op-sub.on'); if(f&&!AUTO) f.focus({preventScroll:true}); } };
   draw(); return wrap; }
+// v45: Sala de música · escuchar los temas de la biblia sonora; al salir de la pestaña o tocar «Volver a la partida» vuelve el tema que sonaba
+const SALA={prev:undefined,cur:null};
+function salaVolver(){ if(SALA.prev===undefined) return; const p=SALA.prev; SALA.prev=undefined; SALA.cur=null; try{ stopMusic(); if(p) playMusic(p); }catch(e){} }
+function optMusica(B){
+  const s=optSection(B,'Sala de música'); s.appendChild(el('div','op-note','Temas nuevos del juego (todavía no asignados a lugares). Tocá uno para escucharlo; «Volver a la partida» devuelve la música que sonaba.'));
+  const grid=el('div','op-grid'); s.appendChild(grid); const cols=[el('div','pz-col'),el('div','pz-col')]; grid.append(...cols);
+  const marks=[]; const pinta=()=>marks.forEach(([b,k])=>{ const on=SALA.cur===k; b.classList.toggle('on',on); b.setAttribute('aria-pressed',String(on)); });
+  MUS_BIBLIA.forEach(([k,tit,uso],i)=>{ const r=el('div','op-row'); const tx=el('span','op-vl'); tx.appendChild(el('b',null,tit)); tx.appendChild(el('small',null,uso)); r.appendChild(tx);
+    const b=btn('op-tog',null,()=>{ AU.init(); AU.resume(); if(SALA.prev===undefined) SALA.prev=AU.cur?AU.cur.name:null; SALA.cur=k; stopMusic(); playMusic(k); pinta(); },{label:'Escuchar '+tit}); b.textContent='Escuchar'; marks.push([b,k]); r.appendChild(b); cols[i%2].appendChild(r); });
+  const vr=el('div','op-row'); const vb=btn('op-tog',null,()=>{ salaVolver(); pinta(); }); vb.textContent='Volver a la partida'; vr.appendChild(vb); s.appendChild(vr); pinta();
+  const mo=new MutationObserver(()=>{ if(!B.isConnected){ mo.disconnect(); salaVolver(); } }); try{ mo.observe(document.body,{childList:true,subtree:true}); }catch(e){} }
 function optSection(host,title){ const s=el('section','op-sec'); s.appendChild(el('div','pz-cap',title)); host.appendChild(s); return s; }
 function optGeneral(B){
   const grid=el('div','op-grid'); B.appendChild(grid); const left=el('div','pz-col'), right=el('div','pz-col'); grid.append(left,right);
@@ -32757,7 +33059,8 @@ async function start(data){
   if(pick&&await loadSlot(pick)) return;
   SAVES.fresh(); await fadeTo(1,400); runSafe('prologo');
 }
-window.__LDC={get G(){return G}, arteTest:()=>({SPR,troop:WAR._troop,ICONOS,artImage}), // v42: control del arte del lote (tools/verify/lote_arte.js)
+window.__LDC={get G(){return G}, musicaTest:()=>({AU,playInst,MUS,MUS_BIBLIA,MUSBIB_ERR,renderOptions,OPTV}), // v45: render de los temas (tools/verify/musica.js)
+  arteTest:()=>({SPR,troop:WAR._troop,ICONOS,artImage}), // v42: control del arte del lote (tools/verify/lote_arte.js)
   miniTest:()=>({miniReal,miniDraw,town:ENV.town,zones:ZONES}), get skip(){ return {on:SKIP.on,ok:SKIP.ok,fast:FASTTXT,auto:AUTO,txt:TXTMODE}; }, cerrarDialogo:()=>hideDialog(), sceneProbe:(cmds)=>{ LINES.scenes.__probe=cmds; return playScene('__probe',{get:()=>null,hooks:{},noAff:true}).then(()=>{ hideDialog(); return 'ok'; }); }, // v44.3: control del salteo (tools/verify/salteo.js) // v43: capturas del minimapa (tools/verify/minimapa.js)
   // stageTest: reproduce una escena suelta (para capturas y pruebas de puesta)
   chatTest:async(ni,id)=>escenaTest(id||'af_hermanos'), escenaTest:(id,zone)=>escenaTest(id,zone), get town(){ return CUR.town; }, esc:{avail:escenaAvail,pend:escenasPendientes,meta:escenaMeta,lost:escenaLost,seen:escenaSeen,play:playEscena,affKey}, migrar:()=>{ migrarEscenas(); return {chats:Object.keys(G.flags.chats||{}),parcial:G.flags.escParcial||{},choice:G.flags.escChoice||{}}; },
