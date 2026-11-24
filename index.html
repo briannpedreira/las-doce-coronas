@@ -711,7 +711,10 @@ body.wide .pz-head.many .pz-x{padding:0 10px}
 /* pantalla amplia (sin Fullscreen API) */
 .fsx{display:none}
 body.fsfake header.topbar{display:none}
-body.fsfake .fsx{display:block;position:fixed;right:6px;bottom:6px;z-index:50;min-height:32px;padding:4px 10px;opacity:.75;font-size:12px}
+/* v44: arriba (no abajo a la derecha, donde va la cinta de la acción del botón A). En vertical, arriba a la derecha (el minimapa y el farol están en el hueco de abajo);
+   en horizontal, arriba al centro (arriba a la derecha va el minimapa del juego) */
+body.fsfake .fsx{display:block;position:fixed;top:calc(env(safe-area-inset-top,0px) + 6px);right:6px;bottom:auto;z-index:50;min-height:28px;padding:3px 10px;opacity:.72;font-size:12px}
+@media (orientation:landscape){ body.fsfake .fsx{right:auto;left:50%;transform:translateX(-50%)} }
 body:not(.wide) .op-grid{grid-template-columns:1fr}
 body:not(.wide) .sv-grid{grid-template-columns:1fr}
 body:not(.wide) .op-kr{grid-template-columns:minmax(0,1fr) 84px 84px 36px;gap:4px}
