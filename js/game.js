@@ -1305,6 +1305,80 @@ const MUS_BIBLIA=[['promesa','Promesa de camino','Brian y Rocío'],['vals_corona
 // Nivelado (v45): los temas tranquilos sonaban por debajo de los del juego (rms ≈ 0,027 en Hollin y Calma); se suben sus velocidades.
 [['ruinas_raso',2.4],['sombras_casa',2.6],['tinta_vino',2.1],['pan_humo',1.7],['vals_coronas',1.25],['mercado_arenas',1.2]].forEach(([k,f])=>MUS[k].parts.forEach(p=>p.notes.forEach(n=>{ n[3]=(n[3]==null?0.8:n[3])*f; })));
 /* ============================================================
+   v45.1 · MÚSICA DE DOMINIO PÚBLICO (25/11/2026): 5 piezas antiguas o tradicionales con arreglo propio.
+   Melodías transcriptas de memoria desde la tradición (pueden diferir en algún giro de otras versiones);
+   nunca desde grabaciones ni arreglos modernos. Usa los instrumentos de musica_biblia.js.
+   ============================================================ */
+Object.assign(MUS,{
+  /* Greensleeves · Inglaterra, siglo XVI. Taberna melancólica. 3/4, negra ≈ 100 (paso = corchea). La menor dórico.
+     Estrofa y estribillo: flauta dulce con la melodía, laúd en arpegios y viola da gamba (chelo) en el bajo. 32 c. */
+  greensleeves:{step:0.3,len:192,parts:(()=>{
+    const Am=[45,57,60,64],C=[48,55,60,64],G=[43,55,59,62],Em=[40,55,59,64],E=[40,56,59,64];
+    const prog=[Am,Em,G,G,Am,Am,E,E, Am,Em,G,G,Am,E,Am,Am, C,Em,G,G,Am,Am,E,E, C,Em,G,G,Am,E,Am,Am];
+    const est='72:4 74:2 | 76:3 78:1 76:2 | 74:4 71:2 | 67:3 69:1 71:2 | 72:4 69:2 | 69:3 68:1 69:2 | 71:4 68:2 | 64:4 69:2 | 72:4 74:2 | 76:3 78:1 76:2 | 74:4 71:2 | 67:3 69:1 71:2 | 72:3 71:1 69:2 | 68:3 66:1 68:2 | 69:6 | 69:6';
+    const cor='79:6 | 79:3 78:1 76:2 | 74:4 71:2 | 67:3 69:1 71:2 | 72:4 69:2 | 69:3 68:1 69:2 | 71:4 68:2 | 64:6 | 79:6 | 79:3 78:1 76:2 | 74:4 71:2 | 67:3 69:1 71:2 | 72:3 71:1 69:2 | 68:3 66:1 68:2 | 69:6 | r:4 69:2';
+    const mel=seqb('greensleeves',est+' | '+cor,6,0,0.6);
+    const laud=arps(prog,[0,1,2,3,2,1],6,0,0.34,1).map(n=>[n[0],n[1]+12,n[2],n[3]]);
+    const gamba=roots(prog,6,0,0.4).map(n=>[n[0],n[1],4,n[3]]);
+    return [{inst:'flute',notes:mel,pan:0.15},{inst:'oud',notes:laud,pan:-0.2},{inst:'cello',notes:gamba,pan:-0.05}];
+  })()},
+  /* Dies irae · secuencia gregoriana, siglo XIII. Muerte, juicio, cementerios: semilla posible del tema de los Jueces.
+     Canto llano a una voz (coro de hombres) sobre bordón de órgano; en la segunda vuelta se dobla a la octava y entran cuernos y timbal. */
+  dies_irae:{step:0.36,len:144,parts:(()=>{
+    const f1='53:2 52:2 53:2 50:2 52:2 48:2 50:2 50:6', f2='53:2 53:2 55:2 53:2 52:2 50:2 48:2 52:2 53:2 52:2 50:6';
+    const uno=seq(f1+' '+f2+' '+f2,0,0.7), dos=seq(f1+' '+f2+' '+f2,72,0.75);
+    const octava=dos.map(n=>[n[0],n[1]+12,n[2],0.45]);
+    const cuernos=dos.filter((n,i)=>n[2]>=6).map(n=>[n[0],n[1]-12,n[2],0.6]);
+    const organo=[[0,38,72,0.6],[0,45,72,0.45],[72,38,72,0.65],[72,45,72,0.5],[72,50,72,0.35]];
+    const timp=[0,20,46,72,92,118].map((s,i)=>[s,i%3===0?38:45,1,i<3?0.5:0.8]);
+    return [{inst:'choir',notes:uno.concat(dos,octava)},{inst:'organ',notes:organo},{inst:'horn',notes:cuernos,pan:0.15},{inst:'timpani',notes:timp,pan:-0.1}];
+  })()},
+  /* La Folía · danza ibérica, siglos XV–XVII (bajo y armonía tradicionales). Región del sur, mundo de Rocío.
+     3/4 de zarabanda (acento en el segundo tiempo), negra ≈ 72 (paso = corchea). Re menor. Primera diferencia con guitarra,
+     segunda con violín en corcheas; castañuelas (palmas secas) en el segundo tiempo. Las diferencias son propias. 16 c. */
+  folia:{step:0.28,len:96,parts:(()=>{
+    const Dm=[38,50,57,62,65],A=[33,49,57,61,64],C=[36,48,55,60,64],F=[41,48,53,57,60];
+    const ground=[Dm,A,Dm,C,F,C,Dm,A], prog=ground.concat(ground);
+    const ras=prog.flatMap((ch,i)=>[[i*6,ch[0],2,0.5]].concat(ch.slice(1).map(m=>[i*6,m,2,0.28]),ch.slice(1).map(m=>[i*6+2,m,3,0.4]),ch.slice(2).map(m=>[i*6+5,m,1,0.22])));
+    const v1=seqb('folia','74:2 74:3 76:1 | 73:2 73:3 74:1 | 76:4 77:2 | 76:4 72:2 | 77:2 77:3 79:1 | 76:2 76:3 77:1 | 74:4 76:2 | 73:6',6,0,0.6);
+    const v2=seqb('folia','74:1 76:1 77:1 74:1 69:1 74:1 | 73:1 76:1 79:1 76:1 73:1 69:1 | 77:1 76:1 74:1 77:1 81:1 77:1 | 79:1 77:1 76:1 72:1 76:1 79:1 | 81:1 79:1 77:1 72:1 77:1 81:1 | 79:1 77:1 76:1 79:1 84:1 79:1 | 77:1 76:1 74:1 73:1 71:1 73:1 | 74:6',6,48,0.55);
+    const casta=pulse('..x...',16,6,{x:[60,0.4]});
+    const bajo=roots(prog,6,-12,0.45);
+    return [{inst:'guitar',notes:ras.concat(v1),pan:-0.15},{inst:'violin',notes:v2,pan:0.2},{inst:'clap',notes:casta,pan:0.35},{inst:'cello',notes:bajo,pan:-0.05}];
+  })()},
+  /* Scarborough Fair · balada tradicional inglesa. Caminos y pueblos del norte. 3/4, negra ≈ 100 (paso = corchea). Re dórico.
+     Primera vuelta: arpa sola con la melodía; segunda: flauta con la melodía, arpa en arpegios y bordón suave. 32 c. */
+  scarborough:{step:0.3,len:192,parts:(()=>{
+    const Dm=[38,50,57,62],C=[36,48,55,60],F=[41,48,53,57],G=[43,50,55,59],Am=[45,52,57,60];
+    const ch=[Dm,Dm,C,Dm,F,G,C,Dm,Dm,F,C,Am,Dm,C,Am,Dm], prog=ch.concat(ch);
+    const mel='62:4 62:2 | 69:4 69:2 | 64:3 65:1 64:2 | 62:6 | r:2 69:2 72:2 | 74:4 72:2 | 69:2 71:2 67:2 | 69:6 | r:2 74:2 74:2 | 74:4 72:2 | 69:2 69:2 67:2 | 65:2 64:2 60:2 | 62:4 69:2 | 67:4 65:2 | 64:2 62:2 60:2 | 62:6';
+    const arpa1=seqb('scarborough',mel,6,0,0.6).map(n=>[n[0],n[1]+12,n[2],n[3]]);
+    const fl=seqb('scarborough',mel,6,96,0.6).map(n=>[n[0],n[1]+12,n[2],n[3]]);
+    const arpa2=arps(ch,[0,1,2,3,2,1],6,96,0.32,2);
+    const bordon=ch.map((c,i)=>[96+i*6,c[0],6,0.3]).concat(ch.map((c,i)=>[i*6,c[0]+12,6,0.18]));
+    return [{inst:'harp',notes:arpa1.concat(arpa2),pan:-0.15},{inst:'flute',notes:fl,pan:0.15},{inst:'strings',notes:bordon}];
+  })()},
+  /* Drunken Sailor · canción de trabajo marinera tradicional (siglo XIX). Taberna de puerto, pescadores.
+     2/4, negra ≈ 120 (paso = semicorchea). Re dórico. Violín con la melodía, acordeón a contratiempo, bodhrán y bajo;
+     la segunda vuelta suma el silbato a la octava y más tambor. 32 c. */
+  marinero:{step:0.125,len:256,parts:(()=>{
+    const Dm=[38,57,62,65],C=[36,55,60,64];
+    const ch=[Dm,Dm,C,C,Dm,Dm,C,Dm, Dm,Dm,C,C,Dm,Dm,C,Dm], prog=ch.concat(ch);
+    const mel='69:2 69:1 69:1 69:2 69:1 69:1 | 69:2 62:2 65:2 69:2 | 67:2 67:1 67:1 67:2 67:1 67:1 | 67:2 60:2 64:2 67:2 | 69:2 69:1 69:1 69:2 69:1 69:1 | 69:2 62:2 65:2 69:2 | 72:2 69:2 67:2 64:2 | 62:4 62:4 |'
+      +' 69:4 69:4 | 69:2 62:2 65:2 69:2 | 67:4 67:4 | 67:2 60:2 64:2 67:2 | 69:4 69:4 | 69:2 62:2 65:2 69:2 | 72:2 69:2 67:2 64:2 | 62:4 62:4';
+    const vln=seqb('marinero',mel,8,0,0.65).concat(seqb('marinero',mel,8,128,0.7));
+    const silb=seqb('marinero',mel,8,128,0.5).map(n=>[n[0],n[1]+12,n[2],n[3]]);
+    const acc=prog.flatMap((c,i)=>[2,6].flatMap(o=>c.slice(1).map(m=>[i*8+o,m,1.5,0.4])));
+    const bajo=prog.flatMap((c,i)=>[[i*8,c[0],2,0.55],[i*8+4,c[0]+7,2,0.45]]);
+    const bod=pulse('x.t.x.tt',16,8,{x:[41,0.55],t:[48,0.3]}).concat(pulse('x.t.x.tt',16,8,{x:[41,0.75],t:[48,0.45]},128));
+    return [{inst:'violin',notes:vln,pan:0.15},{inst:'whistle',notes:silb,pan:0.3},{inst:'accordion',notes:acc,pan:-0.2},{inst:'bass',notes:bajo},{inst:'bodhran',notes:bod,pan:-0.05}];
+  })()}
+});
+const MUS_LIBRE=[['greensleeves','Greensleeves','Inglaterra, s. XVI · taberna melancólica'],['dies_irae','Dies irae','Canto gregoriano, s. XIII · juicio y muerte'],['folia','La Folía','Danza ibérica, s. XV–XVII · región del sur'],
+  ['scarborough','Scarborough Fair','Balada inglesa tradicional · caminos del norte'],['marinero','Drunken Sailor','Canción marinera tradicional · taberna de puerto']];
+// Nivelado: La Folía y Scarborough Fair quedaban por debajo del resto (rms ≈ 0,02–0,025 en los temas tranquilos).
+[['folia',1.5],['scarborough',1.3]].forEach(([k,f])=>MUS[k].parts.forEach(p=>p.notes.forEach(n=>{ n[3]=(n[3]==null?0.8:n[3])*f; })));
+/* ============================================================
    BAKE — atlas de imágenes pregeneradas ("horneado")
    build.js (con BAKE=1) arma el juego, lo abre en Chromium sin ventana, genera con los
    mismos módulos los cuadros de sprites, fondos, interiores, cabecitas y sprites de efectos,
@@ -24129,11 +24203,12 @@ const SALA={prev:undefined,cur:null};
 function salaVolver(){ if(SALA.prev===undefined) return; const p=SALA.prev; SALA.prev=undefined; SALA.cur=null; try{ stopMusic(); if(p) playMusic(p); }catch(e){} }
 function optMusica(B){
   const s=optSection(B,'Sala de música'); s.appendChild(el('div','op-note','Temas nuevos del juego (todavía no asignados a lugares). Tocá uno para escucharlo; «Volver a la partida» devuelve la música que sonaba.'));
-  const grid=el('div','op-grid'); s.appendChild(grid); const cols=[el('div','pz-col'),el('div','pz-col')]; grid.append(...cols);
   const marks=[]; const pinta=()=>marks.forEach(([b,k])=>{ const on=SALA.cur===k; b.classList.toggle('on',on); b.setAttribute('aria-pressed',String(on)); });
-  MUS_BIBLIA.forEach(([k,tit,uso],i)=>{ const r=el('div','op-row'); const tx=el('span','op-vl'); tx.appendChild(el('b',null,tit)); tx.appendChild(el('small',null,uso)); r.appendChild(tx);
-    const b=btn('op-tog',null,()=>{ AU.init(); AU.resume(); if(SALA.prev===undefined) SALA.prev=AU.cur?AU.cur.name:null; SALA.cur=k; stopMusic(); playMusic(k); pinta(); },{label:'Escuchar '+tit}); b.textContent='Escuchar'; marks.push([b,k]); r.appendChild(b); cols[i%2].appendChild(r); });
-  const vr=el('div','op-row'); const vb=btn('op-tog',null,()=>{ salaVolver(); pinta(); }); vb.textContent='Volver a la partida'; vr.appendChild(vb); s.appendChild(vr); pinta();
+  const lista=(sec,L)=>{ const grid=el('div','op-grid'); sec.appendChild(grid); const cols=[el('div','pz-col'),el('div','pz-col')]; grid.append(...cols);
+  L.forEach(([k,tit,uso],i)=>{ const r=el('div','op-row'); const tx=el('span','op-vl'); tx.appendChild(el('b',null,tit)); tx.appendChild(el('small',null,uso)); r.appendChild(tx);
+    const b=btn('op-tog',null,()=>{ AU.init(); AU.resume(); if(SALA.prev===undefined) SALA.prev=AU.cur?AU.cur.name:null; SALA.cur=k; stopMusic(); playMusic(k); pinta(); },{label:'Escuchar '+tit}); b.textContent='Escuchar'; marks.push([b,k]); r.appendChild(b); cols[i%2].appendChild(r); }); };
+  lista(s,MUS_BIBLIA); const s2=optSection(B,'Dominio público'); s2.appendChild(el('div','op-note','Música antigua y tradicional, libre de derechos, con arreglo propio.')); lista(s2,MUS_LIBRE);
+  const vr=el('div','op-row'); const vb=btn('op-tog',null,()=>{ salaVolver(); pinta(); }); vb.textContent='Volver a la partida'; vr.appendChild(vb); B.appendChild(vr); pinta();
   const mo=new MutationObserver(()=>{ if(!B.isConnected){ mo.disconnect(); salaVolver(); } }); try{ mo.observe(document.body,{childList:true,subtree:true}); }catch(e){} }
 function optSection(host,title){ const s=el('section','op-sec'); s.appendChild(el('div','pz-cap',title)); host.appendChild(s); return s; }
 function optGeneral(B){
@@ -33059,7 +33134,7 @@ async function start(data){
   if(pick&&await loadSlot(pick)) return;
   SAVES.fresh(); await fadeTo(1,400); runSafe('prologo');
 }
-window.__LDC={get G(){return G}, musicaTest:()=>({AU,playInst,MUS,MUS_BIBLIA,MUSBIB_ERR,renderOptions,OPTV}), // v45: render de los temas (tools/verify/musica.js)
+window.__LDC={get G(){return G}, musicaTest:()=>({AU,playInst,MUS,MUS_BIBLIA,MUS_LIBRE,MUSBIB_ERR,renderOptions,OPTV}), // v45: render de los temas (tools/verify/musica.js)
   arteTest:()=>({SPR,troop:WAR._troop,ICONOS,artImage}), // v42: control del arte del lote (tools/verify/lote_arte.js)
   miniTest:()=>({miniReal,miniDraw,town:ENV.town,zones:ZONES}), get skip(){ return {on:SKIP.on,ok:SKIP.ok,fast:FASTTXT,auto:AUTO,txt:TXTMODE}; }, cerrarDialogo:()=>hideDialog(), sceneProbe:(cmds)=>{ LINES.scenes.__probe=cmds; return playScene('__probe',{get:()=>null,hooks:{},noAff:true}).then(()=>{ hideDialog(); return 'ok'; }); }, // v44.3: control del salteo (tools/verify/salteo.js) // v43: capturas del minimapa (tools/verify/minimapa.js)
   // stageTest: reproduce una escena suelta (para capturas y pruebas de puesta)
