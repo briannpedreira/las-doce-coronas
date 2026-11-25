@@ -8495,8 +8495,131 @@ Z.calle={ build(m,R){ const hz=HZ+14;
   vignette(m,'#1a1208',0.42); grain(m,0.05);
 }, anim(c,dt,st){ birds(c,st,dt,5,20,90,'rgba(40,30,40,.7)',1); pollen(c,st,dt,14,'#fff2c8',160,290); }};
 
+/* ============================================================
+   v48 (25/11/2026) · FONDOS NUEVOS para que el combate se vea donde ocurre: orilla del Varne (rio), granja, aldea del bosque
+   antiguo y pueblo quemado (molle). Mismo pintor que los demás (solo ayudas locales: también se arman en el Worker).
+   ============================================================ */
+// casa de entramado reutilizable (de la calle de Hollin), con variante quemada
+function v48house(m,R,x,base,w,h,k,o){ o=o||{}; const y0=base-h; const wallP=o.burnt?['#3a3026','#2e261e','#44382c','#2a221a']:['#d8ccb0','#e6dcc4','#cfc2a4','#b8b0a0'], beam=o.burnt?'#140c08':'#4a3220';
+  const roofP=o.thatch?[['#9a7a42','#b89650','#6e5630']]:[['#8a3a2a','#a8483a','#6a2a20'],['#5a4a3c','#6e5c4a','#44382c'],['#7a6a4a','#94805a','#5c4e36']]; const rp=roofP[k%roofP.length];
+  m.fillStyle='rgba(30,20,10,.35)'; m.fillRect(x+3,base-3,w,5);
+  const g=m.createLinearGradient(x,0,x+w,0); g.addColorStop(0,wallP[k%4]); g.addColorStop(1,o.burnt?'#1e1812':'#c0b496'); m.fillStyle=g; m.fillRect(x,y0,w,h);
+  m.fillStyle=beam; m.fillRect(x,y0,w,2.2); m.fillRect(x,y0+h*0.48,w,2); m.fillRect(x,base-3,w,3); for(let bx=x;bx<=x+w-2;bx+=w/3) m.fillRect(bx,y0,2.2,h);
+  const win=(wx,wy)=>{ m.fillStyle=o.burnt?'#0a0604':'#2a3a4a'; m.fillRect(wx,wy,8,10); if(!o.burnt){ m.fillStyle=o.lit?'#ffd890':'#6a8aa6'; m.fillRect(wx+1,wy+1,6,8); m.fillStyle=beam; m.fillRect(wx+3.5,wy,1,10); } else { m.fillStyle='rgba(255,120,40,.35)'; m.fillRect(wx+1,wy+6,6,4); } };
+  for(let i=0;i<Math.floor(w/24);i++) win(x+7+i*24,y0+h*0.18);
+  if(w>50){ const dx=x+w/2-6; m.fillStyle=o.burnt?'#0a0604':'#3a2414'; m.fillRect(dx,base-20,12,20); if(!o.burnt){ m.fillStyle='#5a3a22'; m.fillRect(dx+1,base-19,10,18); } }
+  if(o.burnt){ // techo caído: solo vigas negras y un pedazo de tejado
+    m.strokeStyle='#0e0806'; m.lineWidth=2.2; m.beginPath(); m.moveTo(x-3,y0); m.lineTo(x+w*0.4,y0-w*0.26); m.moveTo(x+w*0.55,y0-w*0.3); m.lineTo(x+w+3,y0); m.moveTo(x+w*0.2,y0); m.lineTo(x+w*0.3,y0-w*0.16); m.stroke();
+    m.fillStyle='#241a14'; m.beginPath(); m.moveTo(x+w*0.6,y0-w*0.18); m.lineTo(x+w+4,y0+1); m.lineTo(x+w*0.7,y0+1); m.closePath(); m.fill();
+    for(let i=0;i<8;i++){ m.fillStyle=rgba('#0a0604',0.3+R()*0.4); m.fillRect(x+R()*w,y0+R()*h*0.6,1+R()*3,2+R()*8); } return; }
+  m.fillStyle=rp[2]; m.beginPath(); m.moveTo(x-6,y0+1); m.lineTo(x+w/2,y0-w*(o.thatch?0.42:0.36)); m.lineTo(x+w+6,y0+1); m.closePath(); m.fill();
+  m.fillStyle=rp[0]; m.beginPath(); m.moveTo(x-4,y0); m.lineTo(x+w/2,y0-w*(o.thatch?0.4:0.34)); m.lineTo(x+w+4,y0); m.closePath(); m.fill();
+  for(let r=1;r<7;r++){ const yy=y0-w*(o.thatch?0.4:0.34)*r/7; const hw=(w/2+4)*(1-r/7); m.fillStyle=r%2?rp[1]:rp[2]; m.globalAlpha=0.5; m.fillRect(x+w/2-hw,yy,hw*2,1); } m.globalAlpha=1;
+  if(o.thatch) for(let i=0;i<30;i++){ const t=R(), yy=y0-w*0.4*t*R(); m.strokeStyle=rgba(R()<0.5?'#5a4422':'#d0b070',0.4); m.lineWidth=0.5; m.beginPath(); m.moveTo(x+w/2+(R()-0.5)*w*(1-t),yy); m.lineTo(x+w/2+(R()-0.5)*w*(1-t),yy+3); m.stroke(); }
+  m.fillStyle='#5a4a3e'; m.fillRect(x+w*0.72,y0-w*0.28,5,11); }
+/* --- Orilla del Varne: el río ancho de día, vado de piedras, sauces y juncos --- */
+Z.rio={ build(m,R){ const P=HDP.sauces, hz=HZ+12, sx=360, sy=70;
+  vg(m,0,hz,[[0,'#5a86b0'],[0.5,'#9cc0d6'],[0.85,'#d8e4d8'],[1,'#eae8d0']]); glow(m,sx,sy,180,'#fff2c8',0.45);
+  const c1=L(); [[90,30,150,20],[300,22,170,24],[440,52,110,14],[190,64,100,12]].forEach(([x,y,w,h])=>cloud(c1,R,x,y,w,h,{dk:'#7a90a8',md:'#a8bccc',lt:'#e8eef0',rim:'#fffaf0'},sx,sy)); comp(m,c1.canvas,2.4);
+  const l1=L(); mtn(l1,R,ridge(R,104,18,70,4),{fill:'#7a9aa4',lit:'#c8d8cc',dark:'#5a7a88',haze:'#c8d8dc',hazeA:0.55,sun:1,n:400}); comp(m,l1.canvas,1.6);
+  const l2=L(); for(let i=0;i<30;i++){ const x=R()*W; hdCrown(l2,R,x,112+R()*6,10+R()*10,P.leaf,{sun:1,nb:6}); } l2.save(); l2.globalCompositeOperation='source-atop'; vg(l2,90,130,[[0,'rgba(190,210,210,.55)'],[1,'rgba(160,190,180,.35)']]); l2.restore(); comp(m,l2.canvas,0.8);
+  // el río: banda ancha que cruza toda la pantalla, con reflejo del cielo, corriente y piedras del vado
+  const rv=L(), y0=hz-22, y1=hz+12; rv.beginPath(); rv.moveTo(0,y0+2); for(let x=0;x<=W;x+=6) rv.lineTo(x,y0+Math.sin(x*0.03)*1.5+hdN(x,0,8,5)*2); rv.lineTo(W,y1); for(let x=W;x>=0;x-=6) rv.lineTo(x,y1+Math.sin(x*0.025+1)*3+hdN(x,0,8,6)*3); rv.closePath();
+  rv.save(); rv.clip(); vg(rv,y0,y1+6,[[0,'#cfe0e0'],[0.35,'#7aa0aa'],[0.8,'#3e6670'],[1,'#2a4a52']]);
+  for(let i=0;i<260;i++){ const x=R()*W, y=y0+R()*(y1-y0+4), ln=3+R()*14*(0.4+(y-y0)/(y1-y0)); rv.fillStyle=R()<0.5?rgba('#f4fbf6',0.25+R()*0.35):rgba('#1e3a40',0.3); rv.fillRect(x,y,ln,0.5+R()*0.5); }
+  const piedras=[[150,hz-8],[176,hz-5],[204,hz-3],[232,hz-1],[262,hz],[292,hz-2],[322,hz-5]]; piedras.forEach(([x,y],i)=>{ hdPut(rv,hdRock(3+i*0.2,300+i,P.rock,{P,moss:true}),x,y+2,1); rv.strokeStyle='rgba(240,250,245,.6)'; rv.lineWidth=0.6; rv.beginPath(); rv.ellipse(x,y+2,6,1.4,0,0,TAU); rv.stroke(); });
+  rv.restore(); comp(m,rv.canvas,0);
+  // orilla lejana: franja de pasto bajo los árboles y juncos
+  m.fillStyle=rh(P.grass,0.45); m.beginPath(); m.moveTo(0,y0+3); for(let x=0;x<=W;x+=6) m.lineTo(x,y0-5+hdN(x,0,10,9)*3); m.lineTo(W,y0+3); m.closePath(); m.fill(); m.fillStyle=rgba('#f0f4e0',0.25); m.fillRect(0,y0+1,W,1);
+  const wr=[]; for(let i=0;i<70;i++) wr.push([R()*W,y0+R()*3,stReed(P,(R()*6)|0,R()<0.4),0.9]); hdScatter(m,hz-20,wr,{veil:false});
+  // orilla cercana: pasto, arena húmeda en el borde, piedras y juncos
+  const shore=(x)=>y1+Math.sin(x*0.025+1)*3+hdN(x,0,8,6)*3;
+  hdGround(m,R,hz,{P,seed:61,mat:(x,y)=>y<shore(x)+1?-1:(y<shore(x)+9?1+clamp((y-shore(x))/9,0,1)*0.9:0),hl:(x,y)=>0.18*hdG(x,y,330,210,180,40)-0.12*((y-hz)/(H-hz))});
+  const Lr=hdSow(R,P,hz,1800,{tuft:5,tall:1,reed:0.9,flower:0.5,pebble:0.8,clover:0.4,twig:0.2},(x,y)=>y>shore(x)+8);
+  for(let i=0;i<40;i++){ const x=R()*W; Lr.push([x,shore(x)+3+R()*4,stReed(P,(R()*6)|0,R()<0.5),1.1]); }
+  [[40,230,5,1],[430,250,6,2],[120,200,3,3],[380,206,3.4,4]].forEach(([x,y,r,s2])=>Lr.push([x,y,hdRock(r,320+s2,P.rock,{P,moss:true}),1/(0.36+0.84*clamp((y-hz)/(H-hz),0,1))]));
+  hdScatter(m,hz,Lr,{P,veilH:22});
+  // primer plano: sauce que entra por la derecha con ramas colgando
+  const f=L(); for(let i=0;i<16;i++) hdPut(f,stReed(P,i%6,true),R()*60,H+4,2+R()*0.7); for(let i=0;i<12;i++) hdPut(f,stReed(P,i%6,true),W-R()*50,H+4,2+R()*0.6);
+  f.save(); f.globalCompositeOperation='source-atop'; f.fillStyle='rgba(10,20,16,.25)'; f.fillRect(0,0,W,H); f.restore(); comp(m,f.canvas,0);
+  finishHD(m,R,hz,[[0,'rgba(140,180,200,.4)'],[0.5,'rgba(240,230,190,.25)'],[1,'rgba(40,60,50,.42)']],'#0a1410',0.45);
+}, anim(c,dt,st){ const y0=HZ-10, y1=HZ+24; st.t=(st.t||0)+dt;
+  c.save(); for(let i=0;i<34;i++){ const ph=(st.t*0.12+i*0.137)%1, y=y0+((i*37)%100)/100*(y1-y0), x=((i*97)%W+ph*W*0.5)%W, ln=6+(y-y0)*0.4; c.fillStyle='rgba(250,255,250,'+(0.28*Math.sin(ph*Math.PI))+')'; c.fillRect(x,y,ln,0.7); } c.restore();
+  mist(c,st,dt,3,110,170,'#e8f0ec',0.3,2); birds(c,st,dt,4,20,80,'rgba(40,50,60,.7)',0.9); pollen(c,st,dt,16,'#fffbe0',150,290); }};
+/* --- Granja: tarde dorada, granero, casa, cercos, parvas y surcos --- */
+Z.granja={ build(m,R){ const P=HDP.prados, hz=HZ+10, sx=120, sy=80;
+  vg(m,0,hz,[[0,'#6a8ab8'],[0.5,'#c8b8a0'],[0.85,'#f0c890'],[1,'#ffe0a8']]); glow(m,sx,sy,200,'#ffe0a0',0.5);
+  const c1=L(); [[260,30,170,22],[420,60,110,14],[90,40,120,16]].forEach(([x,y,w,h])=>cloud(c1,R,x,y,w,h,{dk:'#8a7a90',md:'#c8a898',lt:'#ffe0c0',rim:'#fff4d8'},sx,sy)); comp(m,c1.canvas,2.4);
+  const l1=L(); mtn(l1,R,ridge(R,116,14,80,4),{fill:'#8a8a6a',lit:'#e0c898',dark:'#6a6a58',haze:'#e8d0a8',hazeA:0.55,sun:-1,n:400}); comp(m,l1.canvas,1.4);
+  // granero y casa
+  const gx=300, gb=hz+6; m.fillStyle='rgba(30,20,10,.35)'; m.fillRect(gx+4,gb-3,96,6);
+  vg(m,gb-58,gb,[[0,'#8a3a26'],[1,'#5a2418']],gx,gx+90); m.fillStyle='#7a3222'; m.fillRect(gx,gb-58,90,58); for(let xx=gx;xx<gx+90;xx+=5){ m.fillStyle=rgba('#2a0e08',0.35); m.fillRect(xx,gb-58,0.8,58); }
+  m.fillStyle='#e8dcc0'; m.fillRect(gx+28,gb-40,34,40); m.fillStyle='#5a2418'; m.fillRect(gx+30,gb-38,30,38); m.strokeStyle='#e8dcc0'; m.lineWidth=1.6; m.beginPath(); m.moveTo(gx+30,gb-38); m.lineTo(gx+60,gb); m.moveTo(gx+60,gb-38); m.lineTo(gx+30,gb); m.stroke();
+  m.fillStyle='#4a3a2e'; m.beginPath(); m.moveTo(gx-6,gb-56); m.lineTo(gx+45,gb-86); m.lineTo(gx+96,gb-56); m.closePath(); m.fill(); m.fillStyle='#e8dcc0'; m.fillRect(gx+40,gb-72,10,10); m.fillStyle='#2a1e14'; m.fillRect(gx+42,gb-70,6,8);
+  v48house(m,R,170,hz+2,64,40,1,{}); v48house(m,R,236,hz-2,40,28,0,{thatch:1});
+  // cercos de madera
+  const fence=(x0,x1,y,sc)=>{ for(let x=x0;x<=x1;x+=10*sc){ m.fillStyle='#5a3e26'; m.fillRect(x,y-9*sc,1.8*sc,9*sc); } m.fillStyle='#7a5636'; m.fillRect(x0,y-7*sc,x1-x0,1.2*sc); m.fillRect(x0,y-3.6*sc,x1-x0,1.2*sc); };
+  fence(0,150,hz+12,0.8); fence(410,W,hz+16,0.9);
+  // suelo: patio de tierra al centro, pasto a los costados y surcos a la izquierda
+  const yard=(x,y)=>{ const s=clamp((y-hz)/(H-hz),0,1); return Math.abs(x-250)<40+s*150; };
+  hdGround(m,R,hz,{P,seed:71,mat:(x,y)=>yard(x,y)?1+clamp(Math.abs(x-250)/(40+clamp((y-hz)/(H-hz),0,1)*150),0,1)*0.8:0,hl:(x,y)=>0.22*hdG(x,y,200,190,200,40)-0.14*((y-hz)/(H-hz)),grass:P.grass});
+  for(let y=hz+16;y<H;y+=3+((y-hz)/(H-hz))*6){ const s=(y-hz)/(H-hz); m.strokeStyle=rgba('#3a2a1a',0.35); m.lineWidth=0.6+s; m.beginPath(); m.moveTo(0,y); m.lineTo(80+s*60,y+s*8); m.stroke(); }
+  const Lg=hdSow(R,P,hz,1400,{tuft:5,tall:1.2,flower:0.6,pebble:0.6,clover:0.6,twig:0.3},(x,y)=>!yard(x,y)&&x>90);
+  // parvas de heno
+  [[410,hz+30,14],[450,hz+42,18],[120,hz+40,16]].forEach(([x,y,r])=>{ const s=clamp((y-hz)/(H-hz),0,1)*0.84+0.36; m.fillStyle='#b8943e'; m.beginPath(); m.ellipse(x,y-r*s*0.6,r*s,r*s*0.9,0,Math.PI,0); m.lineTo(x+r*s,y); m.lineTo(x-r*s,y); m.fill(); for(let i=0;i<24;i++){ m.strokeStyle=rgba(R()<0.5?'#7a5a22':'#f0d080',0.5); m.lineWidth=0.5; const a=Math.PI+R()*Math.PI, rr=r*s*R(); m.beginPath(); m.moveTo(x+Math.cos(a)*rr,y-r*s*0.6+Math.sin(a)*rr*0.9); m.lineTo(x+Math.cos(a)*rr+1,y-r*s*0.6+Math.sin(a)*rr*0.9+3); m.stroke(); } });
+  hdScatter(m,hz,Lg,{P,veilH:26});
+  // primer plano: carro con heno a la izquierda y pasto alto a la derecha
+  const f=L(); f.fillStyle='#4a3020'; f.fillRect(-10,H-46,70,22); f.fillStyle='#c8a048'; f.beginPath(); f.ellipse(24,H-48,38,16,0,Math.PI,0); f.fill(); f.strokeStyle='#2a1a10'; f.lineWidth=4; f.beginPath(); f.arc(46,H-20,14,0,TAU); f.stroke(); f.lineWidth=1.4; for(let a=0;a<6;a++){ f.beginPath(); f.moveTo(46,H-20); f.lineTo(46+Math.cos(a)*14,H-20+Math.sin(a)*14); f.stroke(); }
+  for(let i=0;i<18;i++) hdPut(f,stTall(P,i%6),W-R()*50,H+2-R()*8,2+R()*0.8);
+  f.save(); f.globalCompositeOperation='source-atop'; f.fillStyle='rgba(30,16,10,.3)'; f.fillRect(0,0,W,H); f.restore(); comp(m,f.canvas,0);
+  finishHD(m,R,hz,[[0,'rgba(120,140,190,.35)'],[0.5,'rgba(255,210,140,.3)'],[1,'rgba(70,40,30,.4)']],'#140c06',0.45);
+}, anim(c,dt,st){ smoke(c,st,'chim',dt,10,213,HZ-42,'rgba(220,210,200,',14,6,6,0.35); birds(c,st,dt,5,20,90,'rgba(40,30,30,.7)',1); pollen(c,st,dt,22,'#fff0c0',150,290); }};
+/* --- Aldea del Bosque Antiguo: casas de techo de paja bajo árboles enormes, faroles al anochecer --- */
+Z.aldea={ build(m,R){ const P=HDP.sauces, hz=HZ+8;
+  vg(m,0,hz,[[0,'#1a2030'],[0.5,'#3a4048'],[0.85,'#8a7060'],[1,'#c89a6a']]); glow(m,240,hz-10,220,'#ffb870',0.35);
+  // troncos gigantes del fondo y copas que cierran el cielo
+  const l1=L(); for(let i=0;i<9;i++){ const x=20+i*56+R()*20, w=14+R()*14; l1.fillStyle=rh(P.bark,0.15+R()*0.2); l1.fillRect(x,0,w,hz+4); for(let k=0;k<6;k++){ l1.fillStyle=rgba('#0a0806',0.25); l1.fillRect(x+R()*w,R()*hz,0.8,10+R()*30); } }
+  for(let i=0;i<14;i++) hdCrown(l1,R,R()*W,8+R()*40,30+R()*24,P.leaf,{sun:-1,nb:9,wide:1.4,flat:0.7});
+  l1.save(); l1.globalCompositeOperation='source-atop'; vg(l1,0,hz,[[0,'rgba(10,14,20,.55)'],[1,'rgba(120,90,70,.35)']]); l1.restore(); comp(m,l1.canvas,0.6);
+  // casas de la aldea con ventanas encendidas
+  [[40,hz+2,60,34,0],[118,hz-6,50,28,1],[300,hz-4,56,30,2],[378,hz+4,70,38,3]].forEach(([x,b,w,h,k])=>v48house(m,R,x,b,w,h,k,{thatch:1,lit:1}));
+  // claro de tierra con hojarasca
+  const cd=(x,y)=>{ const s=clamp((y-hz)/(H-hz),0,1); return Math.hypot((x-240+Math.sin(y*0.05)*14)/(90+s*170),(y-hz-60)/90)+hdN(x,y,14,83)*0.25; }, clear=(x,y)=>cd(x,y)<1;
+  hdGround(m,R,hz,{P,seed:81,mat:(x,y)=>{ const e=cd(x,y); return e<1?1+e*0.95:0; },hl:(x,y)=>0.24*hdG(x,y,240,190,200,50)-0.18*hdG(x,y,20,250,120,60)-0.12*((y-hz)/(H-hz))});
+  const La=hdSow(R,P,hz,1500,{tuft:4,fern:1.6,litter:1.4,mush:0.5,twig:0.5,pebble:0.4,flower:0.3},(x,y)=>!clear(x,y));
+  for(let i=0;i<220;i++){ const y=hz+2+Math.pow(R(),0.8)*(H-hz), x=R()*W; if(clear(x,y)) La.push([x,y,stLitter(P,(R()*6)|0),0.9]); }
+  hdScatter(m,hz,La,{P,veilH:30});
+  // faroles de pie
+  [[96,hz+20],[392,hz+24]].forEach(([x,y])=>{ m.fillStyle='#1a1410'; m.fillRect(x-1,y-30,2,30); m.fillStyle='#2a2018'; m.fillRect(x-4,y-38,8,8); m.fillStyle='#ffd080'; m.fillRect(x-2.5,y-36.5,5,5); m.save(); m.globalCompositeOperation='lighter'; glow(m,x,y-34,40,'#ffb050',0.35); m.restore(); });
+  // primer plano: raíces enormes a la izquierda, helechos a la derecha
+  const f=L(); f.fillStyle=P.bark[1]; f.beginPath(); f.moveTo(-10,H); f.quadraticCurveTo(30,H-60,10,-10); f.lineTo(-10,-10); f.closePath(); f.fill(); hdBark(f,R,-6,H,14,0,22,P.bark,1);
+  f.strokeStyle=P.bark[2]; f.lineWidth=6; f.beginPath(); f.moveTo(10,H-30); f.quadraticCurveTo(50,H-20,80,H+4); f.stroke();
+  for(let i=0;i<14;i++) hdPut(f,stFern(P,i%6),W-R()*60,H+4-R()*10,2.2+R()*0.8);
+  f.save(); f.globalCompositeOperation='source-atop'; f.fillStyle='rgba(6,10,8,.4)'; f.fillRect(0,0,W,H); f.restore(); comp(m,f.canvas,0);
+  finishHD(m,R,hz,[[0,'rgba(30,40,70,.5)'],[0.5,'rgba(255,170,100,.26)'],[1,'rgba(20,30,20,.5)']],'#060806',0.55);
+}, anim(c,dt,st){ st.t=(st.t||0)+dt; [[96,HZ+28],[392,HZ+32]].forEach(([x,y],i)=>{ const a=0.22+0.08*Math.sin(st.t*7+i*2)+0.05*Math.sin(st.t*13+i); c.save(); c.globalCompositeOperation='lighter'; c.globalAlpha=a; c.drawImage(sprGlow('#ffb050'),x-30,y-60,60,60); c.restore(); });
+  smoke(c,st,'chim1',dt,8,80,HZ-38,'rgba(200,190,180,',12,5,5,0.25); smoke(c,st,'chim2',dt,8,420,HZ-36,'rgba(200,190,180,',12,5,5,0.25);
+  fireflies(c,st,dt,18,'#ffe890',120,260); }};
+/* --- Molle ocupado: pueblo quemado, cielo de humo rojizo, casas sin techo, ceniza y brasas --- */
+Z.molle={ build(m,R){ const P=HDP.prados, hz=HZ+12;
+  vg(m,0,hz,[[0,'#1a1214'],[0.45,'#4a2a26'],[0.8,'#9a4a30'],[1,'#d07a44']]); glow(m,260,hz-20,240,'#ff7a3a',0.35);
+  const c1=L(); for(let i=0;i<9;i++) blob(c1,R,R()*W,10+R()*80,50+R()*60,14+R()*12,'#2a1a18',0.55,0.4,9); comp(m,c1.canvas,3);
+  const l1=L(); mtn(l1,R,ridge(R,112,16,70,4),{fill:'#3a2422',lit:'#8a4a34',dark:'#241614',haze:'#6a3a2a',hazeA:0.5,sun:1,n:300}); comp(m,l1.canvas,1.4);
+  [[-6,hz+2,70,46,0],[70,hz-4,56,36,1],[150,hz-2,80,50,2],[260,hz-6,60,40,3],[330,hz,84,48,0],[420,hz+4,70,42,1]].forEach(([x,b,w,h,k])=>v48house(m,R,x,b,w,h,k,{burnt:1}));
+  m.save(); m.globalCompositeOperation='lighter'; [[180,hz-30],[360,hz-26]].forEach(([x,y])=>glow(m,x,y,60,'#ff6a20',0.35)); m.restore();
+  // suelo: tierra apisonada con ceniza, escombros y vigas caídas
+  hdGround(m,R,hz,{P,seed:91,grass:['#141010','#1e1816','#2a221e','#362c26','#44382e','#524436','#62523e','#726248','#847252','#96825c'],hl:(x,y)=>0.2*hdG(x,y,260,180,220,40)-0.16*((y-hz)/(H-hz))});
+  const Lm=hdSow(R,P,hz,700,{pebble:2,twig:1.4,litter:0.6,tuft:0.6},null);
+  for(let i=0;i<26;i++){ const y=hz+6+Math.pow(R(),0.9)*(H-hz-10), x=R()*W, s=0.36+0.84*clamp((y-hz)/(H-hz),0,1); const len=(10+R()*22)*s, a=(R()-0.5)*0.6; m.save(); m.translate(x,y); m.rotate(a); m.fillStyle='#120a06'; m.fillRect(-len/2,-1.6*s,len,3.2*s); m.fillStyle='rgba(255,110,40,.35)'; m.fillRect(-len/2,-0.4*s,len*0.3,0.8*s); m.restore(); }
+  hdScatter(m,hz,Lm,{P,veilH:30});
+  m.save(); m.globalCompositeOperation='soft-light'; vg(m,hz,H,[[0,'rgba(255,120,60,.45)'],[1,'rgba(30,10,10,.5)']]); m.restore();
+  const f=L(); f.fillStyle='#0e0806'; f.beginPath(); f.moveTo(-6,H); f.lineTo(-6,H-60); f.lineTo(30,H-70); f.lineTo(50,H-40); f.lineTo(70,H); f.closePath(); f.fill(); f.strokeStyle='#1a100a'; f.lineWidth=5; f.beginPath(); f.moveTo(W+4,H-90); f.lineTo(W-70,H+4); f.stroke();
+  comp(m,f.canvas,0);
+  finishHD(m,R,hz,[[0,'rgba(60,20,20,.5)'],[0.5,'rgba(255,120,60,.3)'],[1,'rgba(20,8,8,.55)']],'#0a0404',0.6);
+}, anim(c,dt,st){ smoke(c,st,'s1',dt,12,180,HZ-30,'rgba(60,40,36,',20,7,10,0.45); smoke(c,st,'s2',dt,12,360,HZ-26,'rgba(60,40,36,',20,-5,10,0.45);
+  embers(c,st,dt,40,240,HZ+20,240,'#ffb060'); }};
 /* ---------- API de fondos ---------- */
-const CACHE={}, STATE={}, SEEDS={calle:1111,prados:101,sauces:202,pantano:303,campamento:404,puente:505,noche:606,taberna:707,ruinas:808,ruinasLuz:808,titulo:909};
+const CACHE={}, STATE={}, SEEDS={rio:1212,granja:1313,aldea:1414,molle:1515,calle:1111,prados:101,sauces:202,pantano:303,campamento:404,puente:505,noche:606,taberna:707,ruinas:808,ruinasLuz:808,titulo:909};
 function build(zone){ const z=Z[zone]; if(!z) return null; const m=L(); z.build(m,mkR(SEEDS[zone]||1)); return CACHE[zone]=m.canvas; }
 function bg(c,zone,dt){ if(!Z[zone]) zone='prados'; dt=clamp(dt||0,0,0.1); let k=CACHE[zone]; if(!k&&HOOK.miss) k=HOOK.miss(zone); if(!k) k=build(zone); c.save(); c.imageSmoothingEnabled=true; c.drawImage(k,0,0,W,H); const st=STATE[zone]||(STATE[zone]={}); Z[zone].anim(c,dt,st); c.restore(); }
 function prewarm(list){ (list||Object.keys(Z)).forEach(z=>{ if(!CACHE[z]) build(z); }); }
@@ -11069,7 +11192,7 @@ const ENC_GE={rate:1/155,road:0.25,need:'c2',bgZone:'pantano',table:[{w:40,enemi
 
 /* ---------- HOLLIN (el pueblo existente: solo salidas y nodo) ---------- */
 Z.hollin={id:'hollin',name:'Burgo de Hollin',sub:'Brenmoor del Sur',kind:'pueblo',w:1344,h:944, // fase 2: medidas del pueblo nuevo (TOWN: TW×TH)
-  bgZone:'prados',danger:0,lvl:0,hour:'manana',ambient:'hollin',external:'ENV.town',
+  bgZone:'calle',danger:0,lvl:0,hour:'manana',ambient:'hollin',external:'ENV.town',
   exits:[
     {id:'hol_n',x:660,y:0,w:40,h:8,edge:'N',kind:'slide',to:'prados',spawn:{x:16,y:156,face:1,dir:'E',span:[140,172]},need:'contrato',deny:'deny_hollin_contrato'},
     {id:'hol_o',x:0,y:440,w:8,h:32,edge:'W',kind:'zoom',to:'global',spawn:{x:150,y:590},need:'cap2',deny:'deny_hollin_guardia'},
@@ -11168,7 +11291,7 @@ Z.prados=makeZone({id:'prados',name:'Prados del Brezo',sub:'Camino del Brezo',bi
   fixed:[],enc:ENC_PRADOS});
 
 /* ---------- GRANJA DE LOS OBEREN (lugar, 1 pantalla) — fijo de lugar: 2 lobos en el corral ---------- */
-Z.granja=makeZone({id:'granja',name:'Granja de los Oberen',sub:'Prados del Brezo',kind:'lugar',biome:'granja',seed:151,w:720,h:456,bgZone:'prados_m',danger:0,lvl:2,hour:'manana',ambient:'prados',music:'calma',
+Z.granja=makeZone({id:'granja',name:'Granja de los Oberen',sub:'Prados del Brezo',kind:'lugar',biome:'granja',seed:151,w:720,h:456,bgZone:'granja',danger:0,lvl:2,hour:'manana',ambient:'prados',music:'calma',
   // A2 (fix 2): casas, molino, pozo y fardos a escala de personaje (puerta 32×56 = 0,6×1,05 Hp, como Hollin); la granja creció ×1,5 (antes 480×304)
   ss:2, hdBio:'granja', expo:0.14, gvK:0.09, fineK:0.7, tuftK:0.7, longSh:{sk:0.85,sq:0.42,a:0.5,minH:30}, lightHD:{warm:0.38,cool:0.12}, // fase 2: fondo HD con MATS
   layout(B){ const HD=B.hd;
@@ -11399,7 +11522,7 @@ Z.hondo=makeZone({id:'hondo',name:'Bosque Hondo',sub:'Noche',biome:'hondo',seed:
   rivals:[],fixed:[],enc:null});
 
 /* ---------- ALDEA BOSQUE ANTIGUO (lugar, 1 pantalla) — amanecer frío; cierre con el cartel ---------- */
-Z.aldea=makeZone({id:'aldea',name:'Aldea Bosque Antiguo',sub:'Aldea de leñadores',kind:'lugar',biome:'aldea',seed:707,w:720,h:456,bgZone:'noche',danger:0,lvl:0,hour:'amanecer',ambient:'noche',music:'calma',
+Z.aldea=makeZone({id:'aldea',name:'Aldea Bosque Antiguo',sub:'Aldea de leñadores',kind:'lugar',biome:'aldea',seed:707,w:720,h:456,bgZone:'aldea',danger:0,lvl:0,hour:'amanecer',ambient:'noche',music:'calma',
   // A2 (fix 2): cabañas a escala de personaje (puerta 32×56), aserradero y cartel más grandes; la aldea creció ×1,5 (antes 480×304). La entrada oeste queda en y≈206 (disparador ald_llegada de p6_steps).
   ss:2, hdBio:'aldea', gvK:0.02, lightHD:{warm:0.22,cool:0.26}, // fase 2
   layout(B){ const HD=B.hd; B.area(T_YARD,'ell',360,262,230,96,0.25); B.road([[-12,206],[100,210],[220,234],[360,262],[500,252],[620,228],[732,216]],22); B.water([[732,384],[690,424],[640,470]],16);
@@ -22027,7 +22150,8 @@ function battleView(B){
       const rk=cRate(); if(rk!==1) T+=dt*(rk-1); const dts=dt*rk;
       const k=FX.camera(); c.save(); c.translate(W/2+k.sx,H/2+k.sy); c.scale(k.zoom,k.zoom); c.translate(-k.x,-k.y);
       const pk=punchK(); if(pk){ c.translate(pk.x,pk.y); c.scale(pk.z,pk.z); c.translate(-pk.x,-pk.y); }
-      drawBG(c,B.zone,dt); try{ AMBZ.battle(c,B.zone,dt); }catch(e){} try{ AMBI.battle(c,B.zone,dt); }catch(e){} /* escenarios (js/ambiente.js): velo, viñeta y partículas del fondo, debajo de las unidades */ { const bp=B.bgPost||BGPOST.f; if(bp) try{ bp(c,dt); }catch(e){} } /* v39: capa propia del combate sobre el fondo (la quema de Hollin; BGPOST.f vale para todos los combates del tramo) */ if(SHIFT.y) c.translate(0,SHIFT.y); /* ficha abierta: las unidades bajan para no quedar tapadas */ FX.drawUnder(c); try{ PFX.draw(c,'back','battle'); }catch(e){} /* pixelfx: lo que va detrás de las unidades */
+      { const tb=performance.now()/1000; c.save(); c.translate(W/2+Math.sin(tb*0.11)*2.4,H/2+Math.sin(tb*0.17)*1.1); c.scale(1.014,1.014); c.translate(-W/2,-H/2); /* v48: el fondo respira apenas, separado de las unidades (paralaje de cámara viva) */
+      drawBG(c,B.zone,dt); try{ AMBZ.battle(c,B.zone,dt); }catch(e){} try{ AMBI.battle(c,B.zone,dt); }catch(e){} c.restore(); } /* escenarios (js/ambiente.js): velo, viñeta y partículas del fondo, debajo de las unidades */ { const bp=B.bgPost||BGPOST.f; if(bp) try{ bp(c,dt); }catch(e){} } /* v39: capa propia del combate sobre el fondo (la quema de Hollin; BGPOST.f vale para todos los combates del tramo) */ if(SHIFT.y) c.translate(0,SHIFT.y); /* ficha abierta: las unidades bajan para no quedar tapadas */ FX.drawUnder(c); try{ PFX.draw(c,'back','battle'); }catch(e){} /* pixelfx: lo que va detrás de las unidades */
       // los cuadros de las bestias pueden llegar unos cuadros tarde (atlas / Worker): al tenerlos, se rearma la formación con las cajas reales
       if(B._bbEst && !AUTO && (B._bbTry=(B._bbTry||0)+1)%8===1){ if(B.units.every(u=>bodyBox(u))) stageLayout(B); else if(B._bbTry>480) B._bbEst=false; }
       B.units.forEach(u=>moveUnit(u,dts));
@@ -26533,13 +26657,13 @@ const TESTZ={
     scatter:[{t:'pine|oak',n:150,area:[0,0,960,608],r:[11,17],pad:22},{t:'log|stump|rock',n:24,area:[0,0,960,608],r:[5,8],pad:16}],
     exits:[{id:'w',x:0,y:380,w:6,h:80,to:'puente',need:'never',deny:['nach','No hay vuelta. Allá atrás hay más de esos.','a']},{id:'e',x:954,y:380,w:6,h:84,to:'aldea',spawn:{x:16,y:200,face:1},need:'bosque',deny:['ilian','Primero encontremos a Olaf.','s']}],
     triggers:[{id:'bosque',x:0,y:330,w:110,h:180}], marks:{bosque:{x:120,y:420},salida:{x:880,y:420}}},
-  aldea:{id:'aldea',name:'Aldea Bosque Antiguo',sub:'Camino a Vesper',lvl:0,w:480,h:304,biome:'aldea',hour:'amanecer',bgZone:'prados',ambient:'puente',music:'calma',danger:0,
+  aldea:{id:'aldea',name:'Aldea Bosque Antiguo',sub:'Camino a Vesper',lvl:0,w:480,h:304,biome:'aldea',hour:'amanecer',bgZone:'aldea',ambient:'puente',music:'calma',danger:0,
     roads:[[[[0,200],[160,192],[300,174],[480,164]],22]],
     objs:[{t:'hut',x:100,y:116},{t:'hut',x:210,y:92,v:1},{t:'hut',x:372,y:118,v:2},{t:'hut',x:420,y:272,v:3},{t:'logpile',x:280,y:262},{t:'wall',x:240,y:150},{t:'stump',x:320,y:250}],
     scatter:[{t:'pine|oak',n:30,area:[0,0,480,40],r:[11,15]},{t:'pine|oak',n:18,area:[0,272,300,32],r:[10,14]}],
     exits:[{id:'w',x:0,y:160,w:6,h:80,to:'hondo',need:'never',deny:['nach','Ni loco vuelvo a ese bosque.','m']}],
     triggers:[{id:'cierre',x:0,y:150,w:70,h:100}], marks:{cierre:{x:220,y:200}}},
-  granja:{id:'granja',name:'Granja de los Oberen',sub:'Camino del Brezo',lvl:2,w:480,h:304,biome:'granja',hour:'manana',bgZone:'prados',ambient:'prados',music:'calma',danger:0,fields:[[30,196,170,84]],
+  granja:{id:'granja',name:'Granja de los Oberen',sub:'Camino del Brezo',lvl:2,w:480,h:304,biome:'granja',hour:'manana',bgZone:'granja',ambient:'prados',music:'calma',danger:0,fields:[[30,196,170,84]],
     roads:[[[[240,304],[240,220],[200,150],[130,130]],16]],
     objs:[{t:'house',x:110,y:118},{t:'mill',x:404,y:120},{t:'fence',x:250,y:176,r:9},{t:'fence',x:250,y:256,r:9},{t:'hay',x:200,y:160},{t:'sheep',x:290,y:214,v:0},{t:'sheep',x:322,y:236,v:1},{t:'sheep',x:350,y:206,v:2}],
     blocks:[[250,172,4,84],[356,172,4,84]],
@@ -29081,7 +29205,7 @@ ZONES.add('carboneros',K.makeZone({id:'carboneros',name:'Senda de los carboneros
   triggers:[{id:'car_carbonera',x:420,y:120,w:120,h:100}],
   // pulido A12: un rival visible (no persigue, no reaparece; fuera de #prueba)
   rivals:[{id:'riv_carb',x:610,y:250,face:-1,spr:'jabali',enemies:[lv('jabali',7),lv('jabali',7)],lvl:7,oro:12,visible:true,guard:true,once:true,need:G0=>!AUTO,loot:[{id:'pocion',kind:'item',n:1}]}],fixed:[],enc:ENC_CARB}));
-ZONES.add('sirga',K.makeZone({id:'sirga',name:'Orilla del Varne',sub:'Camino de sirga',biome:'sauces',seed:2301,w:960,h:304,bgZone:'sauces',danger:7,lvl:7,hour:'tarde',ambient:'sauces',music:'intriga',need:'c2_rezagados',
+ZONES.add('sirga',K.makeZone({id:'sirga',name:'Orilla del Varne',sub:'Camino de sirga',biome:'sauces',seed:2301,w:960,h:304,bgZone:'rio',danger:7,lvl:7,hour:'tarde',ambient:'sauces',music:'intriga',need:'c2_rezagados',
   ss:2, hdBio:'sauces', expo:0.14, gvK:0.08, fineK:0.7, tuftK:0.7, lightHD:{warm:0.42,cool:0.1},
   layout(B){ B.water([[-20,272],[200,266],[420,276],[640,268],[860,276],[990,270]],70); // el Varne, ancho y marrón
     B.road([[-12,150],[150,170],[320,196],[520,200],[720,196],[880,190],[972,186]],22); // camino de sirga, pegado al agua
@@ -29302,7 +29426,7 @@ const lab=id=>(L4().labels||{})[id]||'Mirar';
 const lv=(k,n)=>arcLvlKey(k,n);
 const GASPAR_CP=['c4_gaspar','c4_robo','c4_huellas','c4_isla','c4_carrera']; // el burro Ganancia acompaña a la carreta de Gaspar en el Albardón
 const ENC_ALB={rate:1/130,road:0.25,need:'c4_sur',bgZone:'pantano',table:[{w:35,enemies:[lv('jabali',8),lv('jabali',8)]},{w:35,enemies:[lv('bandido',8),lv('bandido',8),lv('arquero',8)]},{w:30,enemies:[lv('alfa',8),lv('lobo',8)]}]};
-ZONES.add('albardon',K.makeZone({id:'albardon',name:'Albardón del sur',sub:'Camino a los pantanos',biome:'linde',seed:2401,w:1440,h:304,bgZone:'pantano',danger:8,lvl:8,hour:'tarde',ambient:'pantano',music:'calma',need:'c4_sur',
+ZONES.add('albardon',K.makeZone({id:'albardon',name:'Albardón del sur',sub:'Camino a los pantanos',biome:'linde',seed:2401,w:1440,h:304,bgZone:'rio',danger:8,lvl:8,hour:'tarde',ambient:'pantano',music:'calma',need:'c4_sur',
   ss:2, hdBio:'linde', expo:0.18, gvK:0.08, fineK:0.7, tuftK:0.7, lightHD:{warm:0.4,cool:0.12},
   layout(B){ B.road([[-12,150],[180,160],[360,146],[560,158],[760,150],[900,164]],22); // el camino del sur, sobre el albardón
     B.pond(1000,150,90,120,0.12); B.pond(1250,60,180,70,0.12); B.pond(1250,260,190,60,0.12); // el juncal: agua negra alrededor de la isla
@@ -29446,7 +29570,7 @@ ARC.cap(4,{
 (function(){
 const K=ZONES._k, C=K.C, TT=K.T, L5=()=>LINES.cap5||{}, Z5=()=>L5().zones||{};
 const lab=id=>(L5().labels||{})[id]||'Mirar';
-ZONES.add('granja_vieja',K.makeZone({id:'granja_vieja',name:'Granja abandonada',sub:'Borde del pantano',kind:'lugar',biome:'linde',seed:2501,w:720,h:456,bgZone:'campamento',danger:0,lvl:10,hour:'tarde',ambient:'pantano',music:'calma',need:'c5_granja',
+ZONES.add('granja_vieja',K.makeZone({id:'granja_vieja',name:'Granja abandonada',sub:'Borde del pantano',kind:'lugar',biome:'linde',seed:2501,w:720,h:456,bgZone:'granja',danger:0,lvl:10,hour:'tarde',ambient:'pantano',music:'calma',need:'c5_granja',
   ss:2, hdBio:'linde', expo:0.1, gvK:0.04, fineK:0.7, tuftK:0.7, lightHD:{warm:0.22,cool:0.24},
   layout(B){ B.area(TT.YARD,'ell',360,262,220,110,0.25); B.road([[-12,240],[120,246],[260,256],[360,262]],20);
     B.house({w:118,wallH:56,roofH:48,roof:'thatch',wall:'logs',type:'gable',door:[44,30,52],wins:[[10,14,14,14],[94,14,14,14]]},70,190); // la casa, con el techo de paja medio caído
@@ -31701,15 +31825,15 @@ ARC.cap(7,{
         merithNo:async()=>{ ARC.set('merith_arco3'); tst('merithNo'); }},{music:'intriga'}); },
     async c7_barcaza(){ const n=lvlCore(); if(inParty('zarpa')) ARC.set('zarpa_on'); if(inParty('kett')) ARC.set('kett_on');
       const tomo=()=>{ ARC.set('tomo_ok'); G.flags.tomo_corteza=1; tst('tomo'); };
-      await painted('pantano','c7_barcaza',st=>({
-        pelea:async()=>{ await ARC.fightIn(st,{zone:'pantano',party:null,boss:true,music:'jefe',enemies:[['sasquatch',n+1],['remero',n],['remero',n],['remero',n],['remero',n]]}); tomo(); ARC.log('barcaza:pelea'); },
+      await painted('rio','c7_barcaza',st=>({
+        pelea:async()=>{ await ARC.fightIn(st,{zone:'rio',party:null,boss:true,music:'jefe',enemies:[['sasquatch',n+1],['remero',n],['remero',n],['remero',n],['remero',n]]}); tomo(); ARC.log('barcaza:pelea'); },
         compra:async()=>{ if((G.oro|0)>=400){ G.oro-=400; tomo(); ARC.log('barcaza:compra'); } },
         robo:async()=>{ tomo(); ARC.log('barcaza:robo'); },
         tasacion:async()=>{ tomo(); ARC.log('barcaza:tasacion'); },
         joinFaelan:async()=>{ ARC.join('faelan',n); tst('faelan'); ARC.log('rec:faelan'); } }),{music:'intriga'}); heal(); },
     async c7_sal(){ const n=lvlCore();
-      await painted('prados','c7_sal',st=>({
-        aguante:async()=>{ const B=await ARC.fightIn(st,{zone:'prados',party:null,music:'batalla',enemies:[['soldado',n],['soldado',n],['jinete',n],['ballestero',n],['soldado',n]],endAt:{key:'soldado',turns:4}}); ARC.log('sal:aguante:'+(B&&B.scripted?'4t':'gana')); },
+      await painted('rio','c7_sal',st=>({
+        aguante:async()=>{ const B=await ARC.fightIn(st,{zone:'rio',party:null,music:'batalla',enemies:[['soldado',n],['soldado',n],['jinete',n],['ballestero',n],['soldado',n]],endAt:{key:'soldado',turns:4}}); ARC.log('sal:aguante:'+(B&&B.scripted?'4t':'gana')); },
         joinHolgar:async()=>{ ARC.join('holgar',n); tst('holgar'); ARC.log('rec:holgar'); } }),{music:'batalla'}); heal(); },
     // ---- Tramo 3 · «Hollin» (v39) ----
     async c7_plazas(){ solo('c7_plazas',['nach','maela','severo']); try{ ENTER.c7_plazas=['lina','ambros']; }catch(e){}
@@ -32253,7 +32377,7 @@ function dosFrentes(n){ const ilv=((G.party||{}).ilian||{}).lvl||n; const hay=id
   const ours=[{id:'p_gen',leader:'ilian',type:'gen',x:0,y:2}]; const inf=uno(['ewald','nilo','kett','bram','severo']), cab=uno(['casimir','elowen','bertram']), tir=uno(['mirena','hedda','severo']);
   if(inf) ours.push({id:'p_inf',leader:inf,x:1,y:2}); if(cab&&cab!==inf) ours.push({id:'p_cab',leader:cab,x:1,y:1}); if(tir&&tir!==inf&&tir!==cab) ours.push({id:'p_tir',leader:tir,x:0,y:3});
   const cmds=ours.map(u=>u.leader); const pool=Object.keys(G.party||{}).filter(id=>!cmds.includes(id)&&id!=='olaf'&&id!=='simona');
-  return {title:'El vado de Holgar',turns:7,seed:2408,bg:'pantano',hold:{x:0,y:2,name:'vado sur'},genLvl:{p:ilv,e:n+1},foeMul:ARC.has('paso_teo')?1.2:1.35,pool,
+  return {title:'El vado de Holgar',turns:7,seed:2408,bg:'rio',hold:{x:0,y:2,name:'vado sur'},genLvl:{p:ilv,e:n+1},foeMul:ARC.has('paso_teo')?1.2:1.35,pool,
     armyP:'Cuervo Gris', armyE:'Columna de Corvaine',
     lines:{start:['ilian','Que crucen hacia nosotros, no hacia el Bastión. Y aguanten hasta que se escuche a Nach.'],win:['ilian','¡Se parten! ¡Entre las dos orillas no les queda adónde ir!'],ojo:'Miran al norte. Algo los asusta de ese lado.',lluvia:'Que no crucen el agua tranquilos.',atravesar:'¡Por el medio del vado!',muro:'¡Escudos! ¡Que el agua los frene!',sanar:'Arriba. Falta poco.'},
     ours,
@@ -32323,8 +32447,8 @@ ARC.cap(8,{
     async c8_d8_garmo(){ ORI.a('nach'); await dia(8,'nach');
       await painted('prados','c8_d8_garmo',{garmoSeVa:async()=>{ if(!ARC.has('garmo_impago')){ ARC.set('garmo_cumplido'); } ARC.set('garmo_se_fue'); if((G.party||{}).garmo) ARC.away('garmo'); tst('garmoCumple'); ARC.log('garmo:fin_contrato'); }},{music:'fogon'}); },
     async c8_d9_molle(){ ORI.a('nach'); await dia(9,'nach'); const n=lvlCore();
-      await painted('ruinas','c8_d9_molle',st=>({
-        liberar:async()=>{ ARC.set('molle_liberada'); await ARC.fightIn(st,{zone:'ruinas',party:null,must:['nach'],music:'batalla',enemies:[['soldado',n],['ballestero',n],[typeof lanceroKey==='function'?lanceroKey():'soldado',n],['jinete',n],['sargento',n+1]]}); ARC.log('molle:liberada'); },
+      await painted('molle','c8_d9_molle',st=>({
+        liberar:async()=>{ ARC.set('molle_liberada'); await ARC.fightIn(st,{zone:'molle',party:null,must:['nach'],music:'batalla',enemies:[['soldado',n],['ballestero',n],[typeof lanceroKey==='function'?lanceroKey():'soldado',n],['jinete',n],['sargento',n+1]]}); ARC.log('molle:liberada'); },
         joinLina:async()=>{ ARC.join('lina',n); ARC.set('lina_temporal'); tst('lina'); ARC.log('rec:lina'); },
         rodear:async()=>{ ARC.set('molle_rodeada'); tst('mollePaso'); ARC.log('molle:rodeada'); } }),{music:'intriga',over:noche(0.2)}); heal(); },
     async c8_d9_garmo(){ if(!ARC.has('molle_liberada')) return; ORI.a('nach');
@@ -32361,19 +32485,19 @@ ARC.cap(8,{
       await painted('sauces','c8_d20_ilian',{},{music:'calma',over:noche(0.45)});
       ORI.a('nach'); await painted('prados','c8_d20_nach',{},{music:'calma',over:noche(0.45)}); },
     async c8_d23_vado(){ ORI.a('ilian'); await dia(23,'ilian'); if(inParty('holgar')) ARC.set('c8_con_holgar');
-      await painted('pantano','c8_d23_vado',{prep:async()=>{ ARC.set('vado_prep'); try{ SAVES.auto('capitulo'); }catch(e){} }},{music:'intriga'}); heal(); },
+      await painted('rio','c8_d23_vado',{prep:async()=>{ ARC.set('vado_prep'); try{ SAVES.auto('capitulo'); }catch(e){} }},{music:'intriga'}); heal(); },
     async c8_dos_frentes(){ const n=lvlCore(); ORI.a('ilian'); await dia(24,'ilian');
       playMusic('estandartes'); const r=await WAR.run(dosFrentes(n)); ARC.log('guerra:vado:'+(r.win?'gana':'pierde')+':'+r.tries); ARC.set('vado_ok'); heal();
       if(ARC.has('garmo_cumplido')||ARC.has('garmo_perdonado')) ARC.set('garmo_vuelve');
       ORI.a('nach');
-      await painted('pantano','c8_frente_norte',st=>({
+      await painted('rio','c8_frente_norte',st=>({
         joinGarmo:async()=>{ ['garmo_se_fue','garmo_impago'].forEach(f=>{ delete G.flags[f]; }); if((G.away||{}).garmo) ARC.back('garmo'); else if(!inParty('garmo')) ARC.join('garmo',n); ARC.set('garmo_ok'); tst('garmoVuelve'); ARC.log('rec:garmo'); },
-        frenteNorte:async()=>{ await ARC.fightIn(st,{zone:'pantano',party:null,must:['nach'],music:'batalla',enemies:[['soldado',n],[typeof lanceroKey==='function'?lanceroKey():'soldado',n],['ballestero',n],['jinete',n],['sargento',n+1]]}); } }),{music:'batalla'}); heal();
+        frenteNorte:async()=>{ await ARC.fightIn(st,{zone:'rio',party:null,must:['nach'],music:'batalla',enemies:[['soldado',n],[typeof lanceroKey==='function'?lanceroKey():'soldado',n],['ballestero',n],['jinete',n],['sargento',n+1]]}); } }),{music:'batalla'}); heal();
       ORI.a('ilian');
-      await painted('pantano','c8_frente_sur',st=>({
-        frenteSur:async()=>{ await ARC.fightIn(st,{zone:'pantano',party:null,must:['ilian'],music:'batalla',enemies:[['soldado',n],['ballestero',n],['jinete',n],['capitan_rosa',n+2]]}); } }),{music:'batalla'}); heal(); },
+      await painted('rio','c8_frente_sur',st=>({
+        frenteSur:async()=>{ await ARC.fightIn(st,{zone:'rio',party:null,must:['ilian'],music:'batalla',enemies:[['soldado',n],['ballestero',n],['jinete',n],['capitan_rosa',n+2]]}); } }),{music:'batalla'}); heal(); },
     async c8_reencuentro(){ ORI.a('nach');
-      await painted('pantano','c8_reencuentro',{unir:async()=>{ ORI.unir(); tst('unidos'); }},{music:'hermanos'}); heal(); },
+      await painted('rio','c8_reencuentro',{unir:async()=>{ ORI.unir(); tst('unidos'); }},{music:'hermanos'}); heal(); },
     async c8_fin(){ ORI.unir(); if((G.away||{}).maela) ARC.back('maela');
       await painted('ruinas','c8_fin',{fortaleza:async()=>{ ARC.set('base_fortaleza'); G.flags.base_etapa='fortaleza'; tst('fortaleza'); },
         finArco:async()=>{ ARC.set('arco2_fin'); ARC.log('fin_arco2'); try{ SAVES.auto('capitulo'); }catch(e){} }},{music:'hermanos',over:noche(0.25)}); },
@@ -33515,7 +33639,9 @@ async function start(data){
   if(pick&&await loadSlot(pick)) return;
   SAVES.fresh(); await fadeTo(1,400); runSafe('prologo');
 }
-window.__LDC={get G(){return G}, musicaTest:()=>({AU,playInst,MUS,MUS_BIBLIA,MUS_LIBRE,MUSBIB_ERR,renderOptions,OPTV}), // v45: render de los temas (tools/verify/musica.js)
+window.__LDC={get G(){return G}, combateTest:(cfg)=>{ try{ if(!G||!G.party||!Object.keys(G.party).length) newGame(); }catch(e){ newGame(); } return battle(cfg); }, // v48: captura de combates por zona
+  fondoTest:()=>({drawBG,ENV,AMBZ:(typeof AMBZ!=='undefined'?AMBZ:null),AMBI:(typeof AMBI!=='undefined'?AMBI:null),W,H}), // v48: fondos de combate (tools/verify/fondos.js)
+  musicaTest:()=>({AU,playInst,MUS,MUS_BIBLIA,MUS_LIBRE,MUSBIB_ERR,renderOptions,OPTV}), // v45: render de los temas (tools/verify/musica.js)
   arteTest:()=>({SPR,troop:WAR._troop,ICONOS,artImage}), // v42: control del arte del lote (tools/verify/lote_arte.js)
   miniTest:()=>({miniReal,miniDraw,town:ENV.town,zones:ZONES}), get skip(){ return {on:SKIP.on,ok:SKIP.ok,fast:FASTTXT,auto:AUTO,txt:TXTMODE}; }, cerrarDialogo:()=>hideDialog(), sceneProbe:(cmds)=>{ LINES.scenes.__probe=cmds; return playScene('__probe',{get:()=>null,hooks:{},noAff:true}).then(()=>{ hideDialog(); return 'ok'; }); }, // v44.3: control del salteo (tools/verify/salteo.js) // v43: capturas del minimapa (tools/verify/minimapa.js)
   // stageTest: reproduce una escena suelta (para capturas y pruebas de puesta)
