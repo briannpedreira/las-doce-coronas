@@ -27547,6 +27547,112 @@ const ENC=(()=>{
 })();
 if(typeof window!=='undefined') window.__LDC_ENC=ENC; // pruebas y consola (como __LDC_CODEX)
 
+/* ============================================================
+   v47 · DUELOS UNO CONTRA UNO (25/11/2026, pedido de Brian: puntos 1, 2 y 4 de la propuesta)
+   · Intercambios de tres golpes: cada duelista arma en secreto tres golpes (Atacar, Defender, Desesperado) y se resuelven de a uno.
+     Atacar vence a Desesperado · Defender vence a Atacar · Desesperado vence a Defender.
+   · Aliento (0 a 10): Atacar gasta 2, Desesperado gasta 4, Defender recupera 3. Sin aliento no hay Desesperado (ni Atacar).
+   · Seña de cada personaje (una o dos veces por duelo): Ilian «El Ojo» ve uno de los golpes del rival; Nach «Don Pico» devuelve los
+     Desesperados; Maela «Finta» cambia su segundo golpe después de ver el primero; el resto, «Segundo aire» (+5 de aliento).
+   · Antes de cada intercambio, el rival dice una frase que insinúa su primer golpe (frases honestas).
+   DUELO.run(cfg) → {win, hp:{p,e}, rondas}. cfg: {p, e, eName?, pName?, eSpr?, bg?, title?, endE? (% de vida en que el rival se rinde),
+   endP?, lines? (clave de DUELO_FRASES o un objeto {A,D,X}), mulE?, seed?, eSena?}
+   En AUTO se resuelve sin pantalla y con semilla, para que las pruebas den siempre lo mismo.
+   ============================================================ */
+const DUELO_FRASES={
+  rocio:{ A:['Derecho a la cara. ¿Para qué complicarla?','Te voy a contar los dientes.','Uno-dos, como en el corro.'],
+    D:['A ver qué traés.','Vení vos, que yo espero.','Guardia arriba. Dale.'],
+    X:['¡Ahora sí, a todo o nada!','Si no caés con esta, me retiro.','¡Que hablen las Mellizas!'] },
+  capitan_rosa:{ A:['Por la Rosa, de frente.','Un golpe limpio y se termina.'], D:['Que venga. La Rosa no retrocede.','Mostrame lo que te enseñaron.'], X:['¡Ceniza o gloria!','¡Todo por la columna!'] },
+  _:{ A:['Ahí voy.','Derecho.'], D:['Te espero.','Vení.'], X:['¡Todo o nada!','¡Ahora!'] }
+};
+const DUELO_SENA={ ilian:{name:'El Ojo',sub:'Ves uno de los tres golpes del rival antes de elegir',usos:2},
+  nach:{name:'Don Pico',sub:'Este intercambio, tus Defender devuelven los Desesperados del rival',usos:1},
+  maela:{name:'Finta',sub:'Después del primer golpe podés cambiar el segundo',usos:1},
+  _:{name:'Segundo aire',sub:'Recuperás 5 de aliento',usos:1} };
+const DUELO=(function(){
+  const MV={A:{n:'Atacar',c:2,col:'#e0a050'},D:{n:'Defender',c:-3,col:'#6aa8e0'},X:{n:'Desesperado',c:4,col:'#e05a4a'}};
+  const BEATS={A:'X',D:'A',X:'D'};
+  // daño que recibe cada lado por golpe: [al jugador, al rival]
+  function golpe(p,e,o){ const k=p+e; const T={AA:[8,8],AD:[6,0],AX:[0,14],DA:[0,6],DD:[0,0],DX:[20,0],XA:[14,0],XD:[0,20],XX:[16,16]};
+    let r=(T[k]||[0,0]).slice(); if(o.donPico&&k==='DX') r=[0,30]; if(o.mellE&&e==='A') r[0]*=2; return r; }
+  const NOMBRE=id=>{ try{ return (G.party[id]&&G.party[id].name)||(typeof NPCNAME!=='undefined'&&NPCNAME[id])||id[0].toUpperCase()+id.slice(1); }catch(e){ return id[0].toUpperCase()+id.slice(1); } };
+  async function run(cfg){
+    const R=mkR(cfg.seed||[...(cfg.p+'|'+cfg.e)].reduce((h,ch)=>(h*31+ch.charCodeAt(0))>>>0,7)||4071);
+    const L=typeof cfg.lines==='object'?cfg.lines:(DUELO_FRASES[cfg.lines||cfg.e]||DUELO_FRASES._);
+    const S={p:{id:cfg.p,spr:cfg.pSpr||cfg.p,name:cfg.pName||NOMBRE(cfg.p),hp:100,al:8,last:[]},e:{id:cfg.e,spr:cfg.eSpr||cfg.e,name:cfg.eName||NOMBRE(cfg.e),hp:100,al:8,last:[]},
+      ronda:0,show:null,line:'',slots:{p:[],e:[]},vis:[false,false,false],t:0,flash:null,sena:Object.assign({},DUELO_SENA[cfg.p]||DUELO_SENA._),mellE:cfg.eSena===false?0:(cfg.e==='rocio'?1:0)};
+    S.sena.left=S.sena.usos; const endE=cfg.endE==null?0:cfg.endE, endP=cfg.endP==null?0:cfg.endP, mulE=cfg.mulE||1;
+    const prev=(typeof scene!=='undefined')?scene:null;
+    if(!AUTO){ try{ hideDialog(); clearMenu&&clearMenu(); }catch(e){} setScene({draw:(c,dt)=>draw(c,S,dt,cfg),battle:false}); try{ await fadeTo(0,350); }catch(e){} }
+    while(S.ronda<8&&S.p.hp>endP&&S.e.hp>endE){ S.ronda++;
+      const eSeq=rival(S,R); const hint=eSeq[0]; const pool=L[hint]||DUELO_FRASES._[hint]; S.line=pool[Math.floor(R()*pool.length)];
+      S.slots={p:[],e:eSeq}; S.vis=[false,false,false]; let donPico=false, finta=false, mellE=false;
+      if(S.mellE&&S.e.hp<65&&eSeq.includes('A')){ mellE=true; S.mellE=0; }
+      // seña
+      if(S.sena.left>0){ const v=AUTO?(S.ronda===2?1:0):await choose([{label:'Armar los tres golpes',value:0,cls:'primary',icon:'go'},{label:'Seña: '+S.sena.name,sub:S.sena.sub+' · quedan '+S.sena.left,value:1,icon:'swap'}],'Intercambio '+S.ronda,'cmd');
+        if(v){ S.sena.left--; const sn=cfg.p in DUELO_SENA?cfg.p:'_';
+          if(sn==='ilian'){ const i=Math.floor(R()*3); S.vis[i]=true; } else if(sn==='nach') donPico=true; else if(sn==='maela') finta=true; else S.p.al=Math.min(10,S.p.al+5); } }
+      // los tres golpes
+      const pSeq=[]; let al=S.p.al;
+      for(let i=0;i<3;i++){ const m=AUTO?autoPick(S,eSeq,i,al,hint):await pick(S,i,al); pSeq.push(m); al=clampA(al-MV[m].c); }
+      // resolución
+      for(let i=0;i<3;i++){
+        if(finta&&i===1&&!AUTO){ const v=await choose([{label:'Mantener: '+MV[pSeq[1]].n,value:pSeq[1],cls:'primary'}].concat(['A','D','X'].filter(m=>m!==pSeq[1]&&canUse(m,S.p.al)).map(m=>({label:'Finta: '+MV[m].n,value:m}))),'Finta','cmd'); pSeq[1]=v; }
+        let p=pSeq[i], e=eSeq[i]; if(!canUse(p,S.p.al)) p='D'; if(!canUse(e,S.e.al)) e='D';
+        S.slots.p[i]=p; S.vis[i]=true; const d=golpe(p,e,{donPico,mellE:mellE&&e==='A'}); if(mellE&&e==='A') mellE=false;
+        S.p.hp=Math.max(0,S.p.hp-Math.round(d[0]*mulE)); S.e.hp=Math.max(0,S.e.hp-d[1]);
+        S.p.al=clampA(S.p.al-MV[p].c); S.e.al=clampA(S.e.al-MV[e].c); S.show={i,p,e,d,t:0}; S.p.last.push(p);
+        if(!AUTO) await sleep(900); if(S.p.hp<=endP||S.e.hp<=endE) break; }
+      S.show=null; if(!AUTO) await sleep(250); }
+    const win=S.e.hp<=endE||(S.p.hp>endP&&S.e.hp<S.p.hp);
+    try{ (window.__LDC_DUELOS=window.__LDC_DUELOS||[]).push({p:cfg.p,e:cfg.e,win,hp:[S.p.hp,S.e.hp],rondas:S.ronda}); }catch(e){}
+    if(!AUTO){ S.fin=win?'¡Ganaste el duelo!':'Perdiste el duelo'; await sleep(1400); try{ await fadeTo(1,300); }catch(e){} if(prev) setScene(prev); try{ await fadeTo(0,300); }catch(e){} }
+    return {win,hp:{p:S.p.hp,e:S.e.hp},rondas:S.ronda}; }
+  function mkR(seed){ let s=(seed>>>0)||1; return ()=>{ s^=s<<13; s>>>=0; s^=s>>>17; s^=s<<5; s>>>=0; return (s%10000)/10000; }; }
+  const clampA=a=>Math.max(0,Math.min(10,a));
+  const canUse=(m,al)=>m==='D'||al>=MV[m].c;
+  // el rival: según su aliento y lo que el jugador viene haciendo (lee patrones: si repetís, te castiga)
+  function rival(S,R){ const out=[]; let al=S.e.al; const last=S.p.last.slice(-3); const freq={A:0,D:0,X:0}; last.forEach(m=>freq[m]++);
+    const top=Object.keys(freq).sort((a,b)=>freq[b]-freq[a])[0];
+    for(let i=0;i<3;i++){ let w={A:0.4,D:0.3,X:0.3}; if(last.length&&R()<0.4){ const ctr=Object.keys(BEATS).find(k=>BEATS[k]===top); w={A:0.15,D:0.15,X:0.15}; w[ctr]+=0.55; }
+      if(al<4) w.X=0; if(al<2) w.A=0; if(al<=3) w.D+=0.4; const tot=w.A+w.D+w.X; let r=R()*tot, m='D'; for(const k of ['A','D','X']){ if((r-=w[k])<0){ m=k; break; } }
+      out.push(m); al=clampA(al-MV[m].c); }
+    return out; }
+  function autoPick(S,eSeq,i,al,hint){ // la prueba automática: contesta bien la frase y el golpe visto; si no, alterna
+    const want=S.vis[i]||i===0?Object.keys(BEATS).find(k=>BEATS[k]===eSeq[i]):(i===1?'D':'A'); return canUse(want,al)?want:'D'; }
+  async function pick(S,i,al){ const opts=['A','D','X'].map(m=>({label:MV[m].n,sub:(m==='D'?'Recupera 3 de aliento · vence a Atacar':m==='A'?'Gasta 2 de aliento · vence a Desesperado':'Gasta 4 de aliento · vence a Defender'),value:m,disabled:!canUse(m,al),cost:m==='D'?'+3':'−'+MV[m].c}));
+    S.picking=i; const v=await choose(opts,'Golpe '+(i+1)+' de 3 · aliento '+al,'cmd'); S.slots.p[i]=v; S.picking=null; return v; }
+  // ---------- pantalla ----------
+  function draw(c,S,dt,cfg){ S.t+=dt; if(S.show) S.show.t+=dt;
+    try{ drawBG(c,cfg.bg||'ruinas',dt); }catch(e){ c.fillStyle='#14110d'; c.fillRect(0,0,W,H); }
+    c.fillStyle='rgba(8,6,12,.5)'; c.fillRect(0,0,W,H);
+    const y=212, xp=118, xe=W-118; const sh=S.show; const lung=sh&&sh.t<0.35?Math.sin(sh.t/0.35*Math.PI)*18:0;
+    c.fillStyle='rgba(0,0,0,.35)'; [xp,xe].forEach(x=>{ c.beginPath(); c.ellipse(x,y+2,28,7,0,0,Math.PI*2); c.fill(); });
+    const an=m=>m==='D'?'guard':'attack';
+    try{ SPR.draw(c,S.p.spr,xp+(sh&&sh.p!=='D'?lung:0),y,{anim:sh?an(sh.p):'idle',face:1,t:S.t,scale:1.6}); }catch(e){}
+    try{ SPR.draw(c,S.e.spr,xe-(sh&&sh.e!=='D'?lung:0),y,{anim:sh?an(sh.e):'idle',face:-1,t:S.t+0.3,scale:1.6}); }catch(e){}
+    bar(c,8,6,S.p,'left'); bar(c,W-8,6,S.e,'right');
+    c.textAlign='center'; c.fillStyle='#e0b860'; c.font='700 10px "Alegreya Sans SC", system-ui, sans-serif'; c.fillText((cfg.title||'Duelo').toUpperCase()+' · INTERCAMBIO '+S.ronda,W/2,14);
+    if(S.line){ c.fillStyle='rgba(0,0,0,.6)'; c.fillRect(W/2-150,40,300,17); c.fillStyle='#f4e8c8'; c.font='italic 11px Alegreya, Georgia, serif'; c.fillText('«'+S.line+'»',W/2,52); }
+    // los tres golpes: arriba los tuyos, abajo los del rival
+    const x0=W/2-72; c.textAlign='right'; c.fillStyle='#cdbf9a'; c.font='700 9px "Alegreya Sans SC", system-ui, sans-serif';
+    c.fillText(S.p.name.toUpperCase(),x0-6,72); c.fillText(S.e.name.toUpperCase(),x0-6,91);
+    for(let i=0;i<3;i++){ const bx=x0+i*50; slot(c,bx,61,S.slots.p[i],true,S.picking===i); slot(c,bx,80,S.vis[i]?S.slots.e[i]:null,false,false); }
+    if(sh&&sh.t<0.85){ c.textAlign='center'; c.font='700 14px "Marcellus SC", Georgia, serif';
+      if(sh.d[0]){ c.fillStyle='#ff8a70'; c.fillText('−'+sh.d[0],xp,y-92-sh.t*24); } if(sh.d[1]){ c.fillStyle='#ffd27a'; c.fillText('−'+sh.d[1],xe,y-92-sh.t*24); }
+      const g=sh.p===sh.e?'Empate':(BEATS[sh.p]===sh.e?MV[sh.p].n+' gana':MV[sh.e].n+' gana'); c.fillStyle='#f4e8c8'; c.font='13px "Marcellus SC", Georgia, serif'; c.fillText(g,W/2,144); }
+    if(S.fin){ c.textAlign='center'; c.fillStyle='rgba(0,0,0,.6)'; c.fillRect(0,H/2-22,W,36); c.fillStyle='#f4e8c8'; c.font='20px "Marcellus SC", Georgia, serif'; c.fillText(S.fin,W/2,H/2+3); } }
+  function bar(c,x,y,u,al){ const w=150, x0=al==='left'?x:x-w; c.fillStyle='rgba(0,0,0,.6)'; c.fillRect(x0-3,y-3,w+6,35);
+    c.textAlign=al==='left'?'left':'right'; c.fillStyle='#f4e8c8'; c.font='700 11px "Alegreya Sans SC", system-ui, sans-serif'; c.fillText(u.name+' · '+u.hp,al==='left'?x0:x0+w,y+9);
+    c.fillStyle='#3a2a20'; c.fillRect(x0,y+13,w,7); c.fillStyle=u.hp>35?'#c9a24a':'#d05040'; const f=w*u.hp/100; c.fillRect(al==='left'?x0:x0+w-f,y+13,f,7);
+    for(let i=0;i<10;i++){ c.fillStyle=i<u.al?'#7cc0e8':'#22303a'; const px=al==='left'?x0+i*(w/10):x0+w-(i+1)*(w/10); c.fillRect(px+1,y+24,w/10-3,5); }
+    c.textAlign=al==='left'?'left':'right'; c.fillStyle='#7cc0e8'; c.font='8px "Alegreya Sans SC", system-ui, sans-serif'; c.fillText('ALIENTO '+u.al,al==='left'?x0+w+6:x0-6,y+30); }
+  function slot(c,x,y,m,mine,on){ c.fillStyle='rgba(0,0,0,.6)'; c.fillRect(x,y,46,16); c.strokeStyle=on?'#f4e8c8':(m?MV[m].col:'#5a5040'); c.lineWidth=1; c.strokeRect(x+0.5,y+0.5,45,15);
+    c.textAlign='center'; c.font='700 9px "Alegreya Sans SC", system-ui, sans-serif'; c.fillStyle=m?MV[m].col:'#7a6e58'; c.fillText(m?({A:'ATACA',D:'GUARDIA',X:'TODO'})[m]:(mine?'···':'?'),x+23,y+11); }
+  return {run,golpe,_rival:rival};
+})();
+try{ window.LDC_DUELO=DUELO; }catch(e){}
 /* ==================== MÓDULO arco1/motor.js ==================== */
 /* ============================================================
    ARCO I · MOTOR (Tanda 0 · Hefesto · 20/10/2026) — datos de combate y registro común de los Caps. 2 a 5
@@ -30832,7 +30938,7 @@ function apply(S,u,v){ const Hd=S.cfg.hold; if(u.hold&&!u.muroT) u.hold=0; if(u.
   else if(v.k==='mv'){ if(free(S,v.x,v.y)){ u.x=v.x; u.y=v.y; } S.log.push(u.name+' se mueve.'); }
   else if(v.k==='back'){ stepToward(S,u,Hd); S.log.push(u.name+' vuelve a cubrir.'); }
   else if(v.k==='skill'){ useSkill(S,u); }
-  else if(v.k==='duel'){ S.duel=true; const t=S.units.find(x=>x.id===v.t); const G2=S.cfg.genLvl||{p:14,e:13}; const win=(G2.p-G2.e)*0.08+0.5+(S.R()-0.5)*0.4>0.5;
+  else if(v.k==='duel'){ S.duel=true; const t=S.units.find(x=>x.id===v.t); const G2=S.cfg.genLvl||{p:14,e:13}; const win=v.res!=null?v.res:(G2.p-G2.e)*0.08+0.5+(S.R()-0.5)*0.4>0.5;
     side(S,win?'e':'p').forEach(w=>{ w.moral=Math.max(0,w.moral-25); }); if(win&&t){ t.str=Math.max(0,t.str-40); syncTroops(t); }
     S.log.push(win?'Duelo de generales: gana '+u.name+'. La Moral enemiga se hunde.':'Duelo de generales: gana '+(t?t.name:'el enemigo')+'. Nuestra Moral cae.'); } }
 // el enemigo: usa su habilidad cuando le conviene (desde el turno 2), si no ataca o avanza
@@ -31113,6 +31219,8 @@ async function once(cfg){ try{ const EJ=new Set([TK.p,TK.e].concat((cfg.ours||[]
     (cfg.joins&&cfg.joins[S.turn]||[]).forEach(d=>{ if(free(S,d.x,d.y)){ S.units.push(mk(d,'p')); S.log.push('¡Llegan los nuestros! '+d.name+'.'); } });
     await banner(S,'Turno '+S.turn,S.cfg.armyP||'Cuervo Gris','#5a8ad8');
     upkeep(S,'p'); for(const u of side(S,'p')){ if(!side(S,'e').length) break; S.cur=u.id; const pr=choose(orders(S,u),'Turno '+S.turn+' · '+u.name+' · '+tag(u)+' · '+u.troops+' soldados · Moral '+u.moral+' · '+RAZA[u.raza].n,'cmd'); menuCorner(S); const v=await pr;
+      if(v&&v.k==='duel'&&!AUTO&&typeof DUELO!=='undefined'){ const t=S.units.find(x=>x.id===v.t); /* v47: el duelo de generales se juega (duelo.js); en la prueba automática sigue la tirada */
+        const pid=u.leader||'ilian', eid=(t&&t.leader)||'capitan_rosa'; const keep=scene; const r=await DUELO.run({p:pid,e:eid,eName:t?t.name:'General enemigo',bg:S.cfg.bg||'prados',title:'Duelo de generales',endE:0,lines:eid}); v.res=!!r.win; setScene(keep); }
       apply(S,u,v); await showClash(S); await sleep(AUTO?10:220); if(lost(S)) break; }
     S.cur=null; if(lost(S)||!side(S,'e').length) break;
     await banner(S,'Turno '+S.turn,S.cfg.armyE||'Rosa Ceniza','#d05060');
@@ -31567,9 +31675,9 @@ ARC.cap(7,{
       if(!inParty('gaspar')) ARC.set('gaspar_feria'); if(!inParty('tessa')) ARC.set('tessa_feria');
       await painted('ruinas','c7_feria',st=>({
         gasparCompra:async()=>{ G.oro=Math.max(0,G.oro-30); G.items.tonico=(G.items.tonico|0)+1; ARC.join('gaspar',n); ARC.set('mercaderia_devuelta'); tst('gaspar'); ARC.log('rec:gaspar:2a'); },
-        duelo:async()=>{ const B=await ARC.fightIn(st,{zone:'ruinas',party:['ilian'],must:['ilian'],boss:true,pick:false,music:'jefe',noLose:true,enemies:[['rocio_duelo',n+1]],endAt:{key:'rocio_duelo',pv:0.3}});
-          const u=B&&B.units&&B.units.find(v=>v.side==='e'&&v.key==='rocio_duelo'); const gano=!!(u&&u.pv<=u.pvMax*0.3+1); if(gano) ARC.set('rocio_ok'); ARC.log('duelo:rocio:'+(gano?'gana':'pierde'));
-          Object.values(G.party).forEach(m=>{ if(m.pv<=0) m.pv=1; }); },
+        duelo:async()=>{ playMusic('arena'); /* v47: duelo uno contra uno (src/nucleo/duelo.js): intercambios de tres golpes, aliento y la seña de Ilian; Rocío se rinde al 30 % */
+          const r=await DUELO.run({p:'ilian',e:'rocio',eName:'Rocío Lux',bg:'ruinas',title:'Duelo de honor',endE:30,lines:'rocio'}); const gano=!!r.win;
+          if(gano) ARC.set('rocio_ok'); ARC.log('duelo:rocio:'+(gano?'gana':'pierde')); playMusic(musUbic('escena','c7_feria','jefe')); },
         joinRocio:async()=>{ ARC.join('rocio',n); tst('rocio'); ARC.log('rec:rocio'); },
         rocioInvitada:async()=>{ ARC.set('rocio_invitada'); tst('rocioInv'); },
         joinNilo:async()=>{ ARC.join('nilo',n); tst('nilo'); ARC.log('rec:nilo'); },
