@@ -989,7 +989,7 @@ const MUS={
 function playJingle(name){ try{ AU.init(); if(!AU.ctx) return; AU.resume(); const T=MUS[name]; if(!T) return; const c=AU.ctx, t0=c.currentTime+0.06, dur=T.len*T.step;
   const m=AU.bus('mus'); if(m){ m.gain.setTargetAtTime(volGain('mus')*0.25,c.currentTime,0.08); m.gain.setTargetAtTime(volGain('mus'),t0+dur,0.4); }
   T.parts.forEach(p=>p.notes.forEach(n=>playInst(p.inst,t0+n[0]*T.step,n[1],n[2]*T.step,n[3],AU.sfx,0,n[4]))); }catch(e){} }
-function playMusic(name){
+function playMusic(name){ try{ const H=AU.hist||(AU.hist=[]); if(H[H.length-1]!==name){ H.push(name); if(H.length>400) H.shift(); } }catch(e){} /* v45.2: registro de lo que sonó (pruebas) */
   AU.init(); if(!AU.ctx) return; AU.resume();
   if(AU.cur && AU.cur.name===name) return;
   stopMusic(); if(!name) return; const tr=MUS[name]; if(!tr) return;
@@ -1378,6 +1378,28 @@ const MUS_LIBRE=[['greensleeves','Greensleeves','Inglaterra, s. XVI · taberna m
   ['scarborough','Scarborough Fair','Balada inglesa tradicional · caminos del norte'],['marinero','Drunken Sailor','Canción marinera tradicional · taberna de puerto']];
 // Nivelado: La Folía y Scarborough Fair quedaban por debajo del resto (rms ≈ 0,02–0,025 en los temas tranquilos).
 [['folia',1.5],['scarborough',1.3]].forEach(([k,f])=>MUS[k].parts.forEach(p=>p.notes.forEach(n=>{ n[3]=(n[3]==null?0.8:n[3])*f; })));
+/* ============================================================
+   v45.2 · UBICACIÓN DE LA MÚSICA NUEVA (25/11/2026). Una sola tabla decide qué suena dónde: para cambiar un lugar,
+   se edita acá y nada más. Si una zona, escena o batalla no figura, suena lo que ya tenía (Hollin, Calma, Intriga, Fogón…).
+   Lo que todavía no se juega (arcos 3 a 6) queda anotado en MUS_FUTURO para cablearlo cuando exista el capítulo.
+   ============================================================ */
+const MUS_UBIC={
+  zona:{ aldea:'pan_humo', granja:'pan_humo', albardon:'scarborough', granja_vieja:'ruinas_raso', campamento:'vispera' },
+  escena:{
+    c2_hollin:'greensleeves', c2_fin:'greensleeves',   // la taberna de Hollin
+    c2_viaje:'lluvia_murallas',                          // el duelo de Nach en la carreta
+    c3_salida:'scarborough',                             // dejar Hollin por el camino
+    c5_fogon:'vispera', c6_base:'vispera', c7_fin:'vispera', // fogones y la base antes de algo grande
+    c7_capilla:'dies_irae',                              // el responso de Odo
+    c7_feria:'perla_sur',                                // Rocío Lux aparece en la feria
+    c8_d6_pregones:'jueces'                              // los edictos de la Inquisición de Sellos
+  },
+  batalla(cfg){ const m=cfg.music||'batalla'; if(m!=='batalla') return m; if(cfg.zone==='puente'||((G&&G.chapter)||1)>=6) return 'puente_choque'; return m; }
+};
+const MUS_FUTURO={ promesa:'momentos de Brian y Rocío', vals_coronas:'evento de danza', redes_alba:'ciudad costera', fiordo:'pueblos nórdicos (Skjald, Valkhar)',
+  mercado_arenas:'ciudad con mercado', tinta_vino:'personajes pintorescos', estandartes:'ejércitos rivales en la guerra', arena:'duelos y torneos', jueces:'apariciones de los Jueces',
+  jueces_pelea:'peleas contra Jueces', sombras_casa:'asesinos de la Inquisición', marinero:'taberna de puerto', folia:'la región del sur' };
+function musUbic(tipo,id,def){ try{ if(tipo==='batalla') return MUS_UBIC.batalla(id); const v=MUS_UBIC[tipo]&&MUS_UBIC[tipo][id]; return (v&&MUS[v])?v:def; }catch(e){ return tipo==='batalla'?((id&&id.music)||'batalla'):def; } }
 /* ============================================================
    BAKE — atlas de imágenes pregeneradas ("horneado")
    build.js (con BAKE=1) arma el juego, lo abre en Chromium sin ventana, genera con los
@@ -21331,7 +21353,7 @@ async function runBattle(cfg){
   layout(B); B.units.forEach(u=>{ u.x=u.hx+(u.side==='e'?-160:160); u.y=u.hy; });
   warmArt(cfg.zone,B.units.map(sprOf).concat(['olaf'])); B.units.forEach(u=>{ headOf(sprOf(u),24); headOf(sprOf(u),36); }); setScene(battleView(B)); hideDialog(); clearMenu(); UI.pad.hidden=true;
   await cmbArtReady(B); /* p4: espera el fondo y las cabecitas de la línea de turnos (atlas / Worker) antes de abrir la pantalla */
-  playMusic(cfg.music||'batalla'); await fadeTo(0,350); renderHUD(B,null);
+  playMusic(musUbic('batalla',cfg)); await fadeTo(0,350); renderHUD(B,null);
   battleStartBarks(B);
   await sleep(500);
   if(cfg.intro) await cfg.intro(B);
@@ -24202,7 +24224,7 @@ function renderOptions(B){
 const SALA={prev:undefined,cur:null};
 function salaVolver(){ if(SALA.prev===undefined) return; const p=SALA.prev; SALA.prev=undefined; SALA.cur=null; try{ stopMusic(); if(p) playMusic(p); }catch(e){} }
 function optMusica(B){
-  const s=optSection(B,'Sala de música'); s.appendChild(el('div','op-note','Temas nuevos del juego (todavía no asignados a lugares). Tocá uno para escucharlo; «Volver a la partida» devuelve la música que sonaba.'));
+  const s=optSection(B,'Sala de música'); s.appendChild(el('div','op-note','Temas del juego. Algunos ya suenan en la historia y otros esperan a los arcos que vienen. Tocá uno para escucharlo; «Volver a la partida» devuelve la música que sonaba.'));
   const marks=[]; const pinta=()=>marks.forEach(([b,k])=>{ const on=SALA.cur===k; b.classList.toggle('on',on); b.setAttribute('aria-pressed',String(on)); });
   const lista=(sec,L)=>{ const grid=el('div','op-grid'); sec.appendChild(grid); const cols=[el('div','pz-col'),el('div','pz-col')]; grid.append(...cols);
   L.forEach(([k,tit,uso],i)=>{ const r=el('div','op-row'); const tx=el('span','op-vl'); tx.appendChild(el('b',null,tit)); tx.appendChild(el('small',null,uso)); r.appendChild(tx);
@@ -26757,7 +26779,7 @@ async function enter(id,spawn){ const w=ensure(); if(id===MAPA) id='global'; con
   else { arcCaravanStop(); resetFollowers(); buildActors(Z); buildCaravan(Z); w.x=Math.round(x); w.y=Math.round(y); const pid=placeOf(Z.id); if(pid&&(w.places[pid]||0)<2) w.places[pid]=2; }
   w.zone=Z.id; w.face=face;
   updCam(true); CUR.sayStage=S; CUR.sayGet=sayGet;
-  if(Z.music) try{ playMusic(Z.music); }catch(e){}
+  if(Z.music) try{ playMusic(musUbic('zona',Z.id,Z.music)); }catch(e){}
   try{ warmArt(Z.bgZone==='prados_m'&&!ENV.zones.includes('prados_m')?'prados':Z.bgZone,[]); }catch(e){}
   // nombre de zona (no se repite si volvés en menos de 60 s)
   const now=nowS(); if(!S.lastPlate[Z.id]||now-S.lastPlate[Z.id]>60){ S.plate={name:Z.name,sub:(Z.sub||'')+(Z.lvl?' · '+((typeof UIT!=='undefined'&&UIT.nivelCorto)||'Nv.')+' '+Z.lvl:''),t0:T}; S.lastPlate[Z.id]=now; }
@@ -26885,7 +26907,7 @@ async function back(st){ if(st&&st.wcam){ const il=st.actors[S.P.id]; if(il&&!il
   if(S.Z&&S.P&&!S.global&&!okPos(S.Z,S.P.x,S.P.y)){ const f=nearestOk(S.Z,S.P.x,S.P.y); S.P.x=f.x; S.P.y=f.y; } if(S.Z&&!S.global) checkPos(st&&st.name?'escena:'+st.name:'combate');
   if(S.Z&&!S.global){ if(!S.P||S.P.id!==leaderId()){ const x=S.P?S.P.x:0,y=S.P?S.P.y:0; mkLeader(x,y,1); } arcCaravanStop(); resetFollowers(); buildActors(S.Z); buildCaravan(S.Z); }
   hideDialog(); updCam(true); setScene(S); CUR.sayStage=S; CUR.sayGet=sayGet; UI.pad.hidden=false; UI.act.disabled=true; UI.act.textContent=WL('acercate','Acercate a algo');
-  if(S.Z&&S.Z.music) try{ playMusic(S.Z.music); }catch(e){} await fadeTo(0,SP(250)); }
+  if(S.Z&&S.Z.music) try{ playMusic(musUbic('zona',S.Z.id,S.Z.music)); }catch(e){} await fadeTo(0,SP(250)); }
 
 /* ---------- interacción ---------- */
 function interactables(){ const out=[]; const Z=S.Z; if(!Z) return out; const w=ensure();
@@ -27227,7 +27249,7 @@ function stage(name,opt){ opt=opt||{}; const Z=S.Z; const st=mkStage(Z.bgZone===
     if(!Z._z){ S.stageCam=cam; const il=st.actors.ilian||st.list[0]; hourTint(c,Z,il?il.x:W/2,il?il.y-18:H/2); S.stageCam=null; ambDraw(c,st.zone,dt); } drawDirOver(c,st,dt); };
   return st; }
 async function sceneIn(name,opt){ opt=opt||{}; hideDialog(); clearBubs(); UI.pad.hidden=true; const st=stage(name,opt); warmArt(null,st.list.map(a=>a.spr)); setScene(st);
-  if(opt.music) try{ playMusic(opt.music); }catch(e){} st.cam.tvig=st.cam.vigBase=0.25; await fadeTo(0,SP(opt.ms||200)); return st; }
+  if(opt.music) try{ playMusic(musUbic('escena',name,opt.music)); }catch(e){} st.cam.tvig=st.cam.vigBase=0.25; await fadeTo(0,SP(opt.ms||200)); return st; }
 
 /* ---------- historia: explorar hasta el disparador del paso ---------- */
 function startState(){ const w=ensure(); if(!w.zone){ w.zone=zid('prados'); w.x=24; w.y=156; w.face=1; w.caravan=w.caravan||'prados'; } }
@@ -27241,7 +27263,7 @@ async function go(step){ const sd=STORY[step]; if(!sd) return null; resetIfNewGa
   { const fm=AUTO&&/farm=(\d+)/.exec(location.hash), E=encApi(); if(fm&&E&&E.farmGroup&&(G.chap||1)>=2&&S.Z&&!S.global&&S.Z.enc&&!(w.farm||(w.farm={}))[S.Z.id]){ w.farm[S.Z.id]=1; for(let i=0;i<+fm[1];i++){ const g=E.farmGroup(S.Z.id); if(!g) break; await sideBattle(null,async()=>{ await E.start(g,S.Z.id,{}); }); } } }
   if(sd.now||already){ if(S.Z.id!==zid0){ const m0=(zone(zid0).marks||{})[sd.mark]; await enter(zid0,m0?{x:m0.x,y:m0.y}:null); } S.busy=true; hideDialog(); const m=(S.Z.marks||{})[sd.mark]; return {zone:S.Z.id,x:S.P.x,y:S.P.y,anchor:m?{x:m.x,y:m.y}:{x:S.P.x,y:S.P.y}}; }
   S.goal=Object.assign({step},sd); S.auto=AUTO||!!S.forceAuto; hideDialog(); setScene(S); CUR.sayStage=S; CUR.sayGet=sayGet; UI.pad.hidden=false; UI.act.disabled=true; UI.act.textContent=WL('acercate','Acercate a algo');
-  if(S.Z.music) try{ playMusic(S.Z.music); }catch(e){}
+  if(S.Z.music) try{ playMusic(musUbic('zona',S.Z.id,S.Z.music)); }catch(e){}
   prewarm([zid0]);
   const p=new Promise(r=>{ S.goalRes=r; }); S.busy=false; await fadeTo(0,SP(300));
   if(!S.firstLine&&step==='prados'&&!w.seen.salida){ w.seen.salida=1; S.firstLine=true; const m=S.F.find(f=>f.id==='maela')||S.F[0]; if(m&&!AUTO) bubble(WL('salida','La paga corre desde que salimos. Hollin queda atrás, batidor.'),()=>scene===S?{x:m.x-S.cam.x,y:m.y-actorH(m)-4-S.cam.y}:null,3200,'amb'); }
@@ -27888,7 +27910,7 @@ function hooks(extra){ const H={
   try{ if(typeof RECL!=='undefined') Object.assign(H,RECL.hooks); }catch(e){} // v27: zarpaSeVa / zarpaFirme (reclutas.js)
   return Object.assign(H,extra||{}); }
 const CAPMIN={2:7,3:9,4:10,5:11};
-async function stage(bg,name,hk,opt){ opt=opt||{}; if(opt.music) playMusic(opt.music); const st=await stageIn(bg,name,opt.ms||600,opt); await playScene(name,stageCtx(st,hooks(hk))); hideDialog(); if(!opt.keep) await PFXI.cover('C9',opt.out||400); /* pixelfx: cierre de escena con iris */ return st; }
+async function stage(bg,name,hk,opt){ opt=opt||{}; if(opt.music) playMusic(musUbic('escena',name,opt.music)); const st=await stageIn(bg,name,opt.ms||600,opt); await playScene(name,stageCtx(st,hooks(hk))); hideDialog(); if(!opt.keep) await PFXI.cover('C9',opt.out||400); /* pixelfx: cierre de escena con iris */ return st; }
 async function world(name,at,hk,opt){ opt=opt||{}; const st=await WORLD.sceneIn(name,{at,ms:opt.ms||400,music:opt.music}); await playScene(name,stageCtx(st,hooks(hk))); hideDialog(); if(opt.keep) return st; await WORLD.back(st); return st; }
 // escena pintada desde el pueblo (charla con un vecino en su interior) y vuelta a explorar Hollin donde estaba
 async function townScene(api,bg,name,hk,opt){ hideDialog(); await fadeTo(1,300); await stage(bg,name,hk,Object.assign({keep:true},opt||{})); await fadeTo(1,300);
@@ -30496,7 +30518,7 @@ try{ ARC.merge(6); }catch(e){ console.error('[arco2] textos cap 6',e); }
 const L6=()=>LINES.cap6||{};
 const tst=k=>{ if(!AUTO) toast((L6().toasts||{})[k]||'',2400); };
 const mark=x=>{ try{ window.__LDC_ARCO2=(window.__LDC_ARCO2||[]).concat([x]); }catch(e){} }; // rastro para la prueba automática
-async function painted(bg,name,hk,opt){ opt=opt||{}; mark('>'+name); arc2SpFix(); if(opt.music) playMusic(opt.music); const st=await stageIn(bg,name,opt.ms||600,opt);
+async function painted(bg,name,hk,opt){ opt=opt||{}; mark('>'+name); arc2SpFix(); if(opt.music) playMusic(musUbic('escena',name,opt.music)); const st=await stageIn(bg,name,opt.ms||600,opt);
   await playScene(name,stageCtx(st,ARC.hooks(typeof hk==='function'?hk(st):(hk||{})))); hideDialog(); mark('<'+name); await PFXI.cover('C9',opt.out||400); return st; }
 const noche=k=>(c)=>{ c.fillStyle='rgba(10,14,40,'+k+')'; c.fillRect(0,0,W,H); };
 // Eco del Viejo del Juncal (C-07): embestida a todo el frente (≈30 % de su vida) y los derriba (pierden turno); una vez por combate
@@ -31495,7 +31517,7 @@ const L7=()=>LINES.cap7||{};
 const tst=(k,n)=>{ if(!AUTO) toast(String((L7().toasts||{})[k]||'').replace('%n',n!=null?n:''),2400); };
 const mark=x=>{ try{ window.__LDC_ARCO2=(window.__LDC_ARCO2||[]).concat([x]); }catch(e){} };
 const noche=k=>(c)=>{ c.fillStyle='rgba(10,14,40,'+k+')'; c.fillRect(0,0,W,H); };
-async function painted(bg,name,hk,opt){ opt=opt||{}; mark('>'+name); try{ arc2SpFix(); }catch(e){} if(opt.music) playMusic(opt.music); const st=await stageIn(bg,name,opt.ms||600,opt); if(opt.post){ const d0=st.draw; st.draw=(c,dt)=>{ d0(c,dt); opt.post(c,dt); }; } /* v39: capa final (la quema tiñe encima de la luz del escenario) */
+async function painted(bg,name,hk,opt){ opt=opt||{}; mark('>'+name); try{ arc2SpFix(); }catch(e){} if(opt.music) playMusic(musUbic('escena',name,opt.music)); const st=await stageIn(bg,name,opt.ms||600,opt); if(opt.post){ const d0=st.draw; st.draw=(c,dt)=>{ d0(c,dt); opt.post(c,dt); }; } /* v39: capa final (la quema tiñe encima de la luz del escenario) */
   await playScene(name,stageCtx(st,ARC.hooks(typeof hk==='function'?hk(st):(hk||{})))); hideDialog(); mark('<'+name); await PFXI.cover('C9',opt.out||400); return st; }
 const lvlCore=()=>{ try{ const v=Object.values(G.party||{}).map(m=>m.lvl|0).sort((a,b)=>b-a).slice(0,6); return Math.max(14,Math.round(v.reduce((a,b)=>a+b,0)/Math.max(1,v.length))); }catch(e){ return 16; } };
 const inParty=id=>!!((G.party||{})[id]||(G.away||{})[id]);
@@ -31896,7 +31918,7 @@ const L8=()=>LINES.cap8||{};
 const tst=(k,n)=>{ if(!AUTO) toast(String((L8().toasts||{})[k]||'').replace('%n',n!=null?n:''),2400); };
 const mark=x=>{ try{ window.__LDC_ARCO2=(window.__LDC_ARCO2||[]).concat([x]); }catch(e){} };
 const noche=k=>(c)=>{ c.fillStyle='rgba(10,14,40,'+k+')'; c.fillRect(0,0,W,H); };
-async function painted(bg,name,hk,opt){ opt=opt||{}; mark('>'+name); try{ arc2SpFix(); }catch(e){} if(opt.music) playMusic(opt.music); const st=await stageIn(bg,name,opt.ms||600,opt);
+async function painted(bg,name,hk,opt){ opt=opt||{}; mark('>'+name); try{ arc2SpFix(); }catch(e){} if(opt.music) playMusic(musUbic('escena',name,opt.music)); const st=await stageIn(bg,name,opt.ms||600,opt);
   await playScene(name,stageCtx(st,ARC.hooks(typeof hk==='function'?hk(st):(hk||{})))); hideDialog(); mark('<'+name); await PFXI.cover('C9',opt.out||400); return st; }
 const lvlCore=()=>{ try{ const v=Object.values(G.party||{}).map(m=>m.lvl|0).sort((a,b)=>b-a).slice(0,6); return Math.max(14,Math.round(v.reduce((a,b)=>a+b,0)/Math.max(1,v.length))); }catch(e){ return 16; } };
 const inParty=id=>!!((G.party||{})[id]||(G.away||{})[id]);
