@@ -8565,7 +8565,7 @@ Z.granja={ build(m,R){ const P=HDP.prados, hz=HZ+10, sx=120, sy=80;
   for(let i=0;i<18;i++) hdPut(f,stTall(P,i%6),W-R()*50,H+2-R()*8,2+R()*0.8);
   f.save(); f.globalCompositeOperation='source-atop'; f.fillStyle='rgba(30,16,10,.3)'; f.fillRect(0,0,W,H); f.restore(); comp(m,f.canvas,0);
   finishHD(m,R,hz,[[0,'rgba(120,140,190,.35)'],[0.5,'rgba(255,210,140,.3)'],[1,'rgba(70,40,30,.4)']],'#140c06',0.45);
-}, anim(c,dt,st){ smoke(c,st,'chim',dt,10,...casaChim('granja',1),'rgba(220,210,200,',14,6,6,0.35); birds(c,st,dt,5,20,90,'rgba(40,30,30,.7)',1); pollen(c,st,dt,22,'#fff0c0',150,290); }};
+}, anim(c,dt,st){ birds(c,st,dt,5,20,90,'rgba(40,30,30,.7)',1); pollen(c,st,dt,22,'#fff0c0',150,290); }};
 /* --- Aldea del Bosque Antiguo: casas de techo de paja bajo árboles enormes, faroles al anochecer --- */
 Z.aldea={ build(m,R){ const P=HDP.sauces, hz=HZ+8;
   vg(m,0,hz,[[0,'#1a2030'],[0.5,'#3a4048'],[0.85,'#8a7060'],[1,'#c89a6a']]); glow(m,240,hz-10,220,'#ffb870',0.35);
@@ -8588,7 +8588,7 @@ Z.aldea={ build(m,R){ const P=HDP.sauces, hz=HZ+8;
   f.save(); f.globalCompositeOperation='source-atop'; f.fillStyle='rgba(6,10,8,.4)'; f.fillRect(0,0,W,H); f.restore(); comp(m,f.canvas,0);
   finishHD(m,R,hz,[[0,'rgba(30,40,70,.5)'],[0.5,'rgba(255,170,100,.26)'],[1,'rgba(20,30,20,.5)']],'#060806',0.55);
 }, anim(c,dt,st){ st.t=(st.t||0)+dt; [[121,HZ+28],[372,HZ+32]].forEach(([x,y],i)=>{ const a=0.22+0.08*Math.sin(st.t*7+i*2)+0.05*Math.sin(st.t*13+i); c.save(); c.globalCompositeOperation='lighter'; c.globalAlpha=a; c.drawImage(sprGlow('#ffb050'),x-30,y-60,60,60); c.restore(); });
-  smoke(c,st,'chim1',dt,8,...casaChim('aldea',0),'rgba(200,190,180,',12,5,5,0.25); smoke(c,st,'chim2',dt,8,...casaChim('aldea',2),'rgba(200,190,180,',12,5,5,0.25);
+  
   fireflies(c,st,dt,18,'#ffe890',120,260); }};
 /* --- Molle ocupado: pueblo quemado, cielo de humo rojizo, casas sin techo, ceniza y brasas --- */
 Z.molle={ build(m,R){ const P=HDP.prados, hz=HZ+12;
@@ -8628,7 +8628,7 @@ Z.montana={ build(m,R){ const P=HDP.nieve, hz=HZ+10, sx=360, sy=60;
   const f=L(); for(let i=0;i<3;i++) conifer(f,R,W-20+i*14,H+10,90+R()*30,'#0e161c','#3a4c58','#05080c',1); conifer(f,R,10,H+14,110,'#0e161c','#3a4c58','#05080c',1);
   f.save(); f.globalCompositeOperation='source-atop'; f.fillStyle='rgba(10,14,22,.25)'; f.fillRect(0,0,W,H); f.restore(); comp(m,f.canvas,0);
   finishHD(m,R,hz,[[0,'rgba(140,170,210,.4)'],[0.5,'rgba(240,240,240,.2)'],[1,'rgba(40,50,70,.42)']],'#0a1018',0.45);
-}, anim(c,dt,st){ smoke(c,st,'chim',dt,8,...casaChim('montana',0),'rgba(220,220,230,',12,5,5,0.3); snowfall(c,st,dt,60); mist(c,st,dt,4,90,180,'#eef2f8',0.35,3); birds(c,st,dt,2,20,70,'rgba(30,40,60,.7)',0.8); }};
+}, anim(c,dt,st){ snowfall(c,st,dt,60); mist(c,st,dt,4,90,180,'#eef2f8',0.35,3); birds(c,st,dt,2,20,70,'rgba(30,40,60,.7)',0.8); }};
 function snowfall(c,st,dt,n){ st.sn=st.sn||Array.from({length:n},()=>({x:Math.random()*W,y:Math.random()*H,v:10+Math.random()*22,r:0.5+Math.random()*1.3,ph:Math.random()*9}));
   c.save(); c.fillStyle='rgba(255,255,255,.8)'; st.sn.forEach(p=>{ p.y+=p.v*dt; p.ph+=dt; p.x+=(Math.sin(p.ph)*8+14)*dt; if(p.y>H){ p.y=-4; p.x=Math.random()*W; } if(p.x>W) p.x-=W; c.globalAlpha=0.4+p.r*0.3; c.beginPath(); c.arc(p.x,p.y,p.r,0,TAU); c.fill(); }); c.restore(); }
 /* --- Selva del sur: verde húmedo, copas que tapan el cielo, lianas, bruma y luz que se filtra --- */
@@ -8719,12 +8719,31 @@ function intFloor(m,R,hz,kind,pal){ const vx=240, vy=40, t0=(hz-vy)/(H-vy); m.sa
   else { for(let i=0;i<2200;i++){ const y=hz+Math.pow(R(),1.4)*(H-hz), tt=(y-hz)/(H-hz), x=R()*W; hdE(m,x,y,0.6+tt*2.6,0.3+tt*1.1,rh(PL,0.1+R()*0.45),0.55); } }
   m.restore(); const z=m.createLinearGradient(0,hz,0,hz+30); z.addColorStop(0,rgba(pal.ao,0.6)); z.addColorStop(1,'rgba(0,0,0,0)'); m.fillStyle=z; m.fillRect(0,hz,W,30); }
 function shaft(m,x,w,col,a){ m.save(); m.globalCompositeOperation='lighter'; const g=m.createLinearGradient(x,0,x-60,H); g.addColorStop(0,rgba(col,a)); g.addColorStop(1,rgba(col,0)); m.fillStyle=g; m.beginPath(); m.moveTo(x,0); m.lineTo(x+w,0); m.lineTo(x+w-70,H); m.lineTo(x-80,H); m.closePath(); m.fill(); m.restore(); }
+/* v48.5 · utilería de interiores (dibujada, sin PixelLab): estantes, barriles, herramientas, hierbas, alfombra, velas, telarañas */
+function iBarril(m,x,y,s){ const w=9*s,h=13*s; const g=m.createLinearGradient(x-w,0,x+w,0); g.addColorStop(0,'#2a1a10'); g.addColorStop(0.4,'#6a4628'); g.addColorStop(1,'#1e140c'); m.fillStyle=g; m.beginPath(); m.ellipse(x,y-h/2,w,h/2,0,0,TAU); m.fill(); m.fillRect(x-w,y-h,w*2,h*0.0001);
+  m.fillStyle='rgba(0,0,0,.25)'; m.beginPath(); m.ellipse(x,y,w*1.1,2.2*s,0,0,TAU); m.fill(); m.strokeStyle='#3a3a3e'; m.lineWidth=1.2*s; [0.25,0.75].forEach(u=>{ m.beginPath(); m.moveTo(x-w*0.98,y-h*u); m.quadraticCurveTo(x,y-h*u+2*s,x+w*0.98,y-h*u); m.stroke(); }); m.fillStyle='#4a3020'; m.beginPath(); m.ellipse(x,y-h,w*0.8,2.4*s,0,0,TAU); m.fill(); }
+function iSaco(m,x,y,s,col){ m.fillStyle=col||'#8a7a5a'; m.beginPath(); m.moveTo(x-7*s,y); m.quadraticCurveTo(x-9*s,y-10*s,x-3*s,y-14*s); m.lineTo(x+3*s,y-14*s); m.quadraticCurveTo(x+9*s,y-10*s,x+7*s,y); m.closePath(); m.fill(); m.fillStyle='rgba(0,0,0,.25)'; m.fillRect(x-7*s,y-3*s,14*s,3*s); m.strokeStyle='#4a3a26'; m.lineWidth=1; m.beginPath(); m.moveTo(x-3*s,y-13*s); m.lineTo(x+3*s,y-13*s); m.stroke(); }
+function iEstante(m,R,x,y,w,cols){ m.fillStyle='#3a2616'; m.fillRect(x,y,w,3); m.fillStyle='#5a3c22'; m.fillRect(x,y,w,1); m.fillStyle='#2a1a0e'; m.fillRect(x+3,y+3,2,6); m.fillRect(x+w-5,y+3,2,6);
+  for(let px=x+4;px<x+w-6;px+=6+R()*5){ const c=cols[(R()*cols.length)|0], h=4+R()*7, ww=3+R()*3; m.fillStyle=c; if(R()<0.5){ m.beginPath(); m.ellipse(px+ww/2,y-h/2,ww/2+0.6,h/2,0,0,TAU); m.fill(); m.fillRect(px+ww/2-1,y-h-1.5,2,2); } else m.fillRect(px,y-h,ww,h); m.fillStyle='rgba(255,240,200,.25)'; m.fillRect(px+0.5,y-h+0.5,0.8,h-1); } }
+function iHierbas(m,R,x0,x1,y){ m.strokeStyle='#2a1a10'; m.lineWidth=0.8; m.beginPath(); m.moveTo(x0,y); m.lineTo(x1,y); m.stroke(); for(let x=x0+4;x<x1;x+=7+R()*6){ const h=8+R()*8; line(m,x,y,x,y+3,0.6,'#2a1a10',1); const col=pick2(R,['#5a6a2a','#6a7a3a','#8a8a4a','#e8e0c8','#a8502a']); for(let k=0;k<6;k++){ m.fillStyle=col; m.beginPath(); m.ellipse(x+(R()-0.5)*3,y+3+k*h/6,1.6,2,0,0,TAU); m.fill(); } } }
+function iTelarana(m,x,y,r,dir){ m.save(); m.strokeStyle='rgba(220,220,230,.22)'; m.lineWidth=0.5; for(let a=0;a<=4;a++){ const an=dir*(a/4)*Math.PI/2; m.beginPath(); m.moveTo(x,y); m.lineTo(x+Math.cos(an)*r*dir,y+Math.sin(Math.abs(an))*r); m.stroke(); }
+  for(let k=1;k<=4;k++){ m.beginPath(); for(let a=0;a<=4;a++){ const an=(a/4)*Math.PI/2, rr=r*k/4; const px=x+Math.cos(an)*rr*dir, py=y+Math.sin(an)*rr; a?m.quadraticCurveTo(x+Math.cos(an-0.2)*rr*0.85*dir,y+Math.sin(an-0.2)*rr*0.85,px,py):m.moveTo(px,py); } m.stroke(); } m.restore(); }
+function iAlfombra(m,R,cx,cy,w,h,c1,c2){ m.save(); m.fillStyle=c1; m.beginPath(); m.ellipse(cx,cy,w,h,0,0,TAU); m.fill(); m.strokeStyle=c2; m.lineWidth=1.6; m.beginPath(); m.ellipse(cx,cy,w*0.8,h*0.75,0,0,TAU); m.stroke(); m.lineWidth=0.8; m.beginPath(); m.ellipse(cx,cy,w*0.5,h*0.45,0,0,TAU); m.stroke();
+  for(let i=0;i<500;i++){ const a=R()*TAU, r=Math.sqrt(R()); m.fillStyle=rgba(R()<0.5?'#000000':'#ffffff',0.05); m.fillRect(cx+Math.cos(a)*w*r,cy+Math.sin(a)*h*r,1,1); } m.restore(); }
+function iCandelabro(m,x,y,h){ m.fillStyle='#2a2420'; m.fillRect(x-1,y-h,2,h); m.fillRect(x-5,y-2,10,2); m.fillRect(x-7,y-h,14,1.6); [-6,0,6].forEach(dx=>{ m.fillStyle='#e8e0c8'; m.fillRect(x+dx-1,y-h-6,2,6); m.save(); m.globalCompositeOperation='lighter'; hdSoft(m,x+dx,y-h-8,6,7,'#ffc070',0.5); m.restore(); m.fillStyle='#ffe0a0'; m.fillRect(x+dx-0.6,y-h-8.5,1.2,2.4); }); }
+function iEstandarte(m,x,y,w,h,col,emb){ m.fillStyle='#2a2018'; m.fillRect(x-w/2-2,y-2,w+4,2); m.fillStyle=col; m.beginPath(); m.moveTo(x-w/2,y); m.lineTo(x+w/2,y); m.lineTo(x+w/2,y+h); m.lineTo(x,y+h-6); m.lineTo(x-w/2,y+h); m.closePath(); m.fill();
+  m.fillStyle='rgba(0,0,0,.2)'; m.fillRect(x+w/2-3,y,3,h-2); m.strokeStyle=emb||'#c8a040'; m.lineWidth=1; m.beginPath(); m.moveTo(x,y+6); m.lineTo(x,y+18); m.moveTo(x-6,y+9); m.lineTo(x+6,y+9); m.stroke(); m.beginPath(); m.arc(x-6,y+12,3,0,Math.PI); m.arc(x+6,y+12,3,0,Math.PI); m.stroke(); }
+function iCadena(m,x,y0,y1){ for(let y=y0;y<y1;y+=3){ m.strokeStyle=(y/3)%2?'#4a4a50':'#2a2a30'; m.lineWidth=1; m.beginPath(); m.ellipse(x,y+1.5,1,1.6,0,0,TAU); m.stroke(); } }
 const PIN={wood:HDP.taberna.wood,rock:HDP.taberna.rock,dirt:HDP.prados.dirt,ao:'#0a0604'};
 /* --- Herrería: piedra ahumada, piso de tierra, el resplandor de la fragua a la izquierda --- */
 Z.herreria={ build(m,R){ const hz=150; intWall(m,R,hz,'piedra',PIN,-0.06); [[0,8,W,8]].forEach(([x,y,w,h])=>{ m.fillStyle='#1e120a'; m.fillRect(x,y,w,h); });
   [70,250,410].forEach(x=>{ m.fillStyle='#22160c'; m.fillRect(x-5,0,10,hz); m.fillStyle='#5a3e26'; m.fillRect(x-5,0,1.4,hz); });
   for(let i=0;i<6;i++){ const x=300+i*16; line(m,x,30,x,48+R()*10,0.6,'#2a1a10',1); m.fillStyle='#8a8a90'; m.fillRect(x-3,48,6,2); } // herramientas colgadas
+  iEstante(m,R,188,86,96,['#5a5a60','#3a3a40','#8a6a3a','#6a4a2a']); iEstante(m,R,196,112,80,['#4a4a50','#7a5a3a','#5a5a60']); // herraduras, jarros, limas
+  [[204,52],[222,58],[240,52]].forEach(([x,y])=>{ m.strokeStyle='#5a5a62'; m.lineWidth=2.2; m.beginPath(); m.arc(x,y,4.5,Math.PI*0.15,Math.PI*0.85,true); m.stroke(); }); iCadena(m,336,0,70); m.fillStyle='#3a3a40'; m.fillRect(330,70,12,4);
   intFloor(m,R,hz,'tierra',PIN); m.save(); m.globalCompositeOperation='lighter'; hdSoft(m,120,120,200,140,'#ff8a30',0.35); m.restore();
+  for(let i=0;i<60;i++){ const x=170+R()*26, y=hz+4+R()*10; hdE(m,x,y,1.2+R()*2,0.8+R()*1.4,R()<0.15?'#a83a14':'#141010',0.9); } // montón de carbón junto a la fragua
+  iBarril(m,330,hz+10,1.1); iBarril(m,348,hz+6,0.9); iSaco(m,312,hz+12,1,'#6a5a44'); iTelarana(m,0,0,26,1); iTelarana(m,W,0,22,-1);
   finishHD(m,R,hz,[[0,'rgba(255,140,60,.4)'],[1,'rgba(60,20,8,.45)']],'#080302',0.6,{np:0,gr:0.03});
 }, anim(c,dt,st){ embers(c,st,dt,22,110,HZ-21,30,'#ffb060'); smoke(c,st,'fr',dt,6,110,HZ-95,'rgba(90,80,70,',14,6,6,0.22); st.t=(st.t||0)+dt; c.save(); c.globalCompositeOperation='lighter'; c.globalAlpha=0.08+0.05*Math.sin(st.t*9)*Math.sin(st.t*3.3); c.fillStyle='#ff7a20'; c.fillRect(0,0,W,H); c.restore(); }};
 /* --- Capilla: nave de piedra, vitral, altar al fondo y bancos; techo con vigas y un boquete por donde entra el cielo --- */
@@ -8732,14 +8751,20 @@ Z.capilla={ build(m,R){ const hz=152; intWall(m,R,hz,'piedra',PIN,0.06);
   vg(m,0,22,[[0,'#6a84a8'],[1,'#a8b8c8']],150,330); for(let i=0;i<7;i++){ const x=150+i*30+R()*6; line(m,x,0,x+(R()-0.5)*14,22+R()*8,4,'#140c08',1); } // el boquete del techo, con vigas quemadas
   m.fillStyle='#1a100a'; m.fillRect(0,0,150,14); m.fillRect(330,0,W-330,14);
   [[40,1],[440,0]].forEach(([x])=>{ m.fillStyle=rh(PIN.rock,0.1); m.fillRect(x-14,0,28,hz); m.fillStyle=rh(PIN.rock,0.4); m.fillRect(x-14,0,2,hz); });
+  iEstandarte(m,104,40,26,64,'#5a1e1e'); iEstandarte(m,376,40,26,64,'#5a1e1e'); iCadena(m,150,14,56); iCadena(m,330,14,56); [[150,56],[330,56]].forEach(([x,y])=>{ m.fillStyle='#2a2420'; m.fillRect(x-6,y,12,3); m.save(); m.globalCompositeOperation='lighter'; hdSoft(m,x,y-2,10,8,'#ffc070',0.35); m.restore(); });
+  iTelarana(m,150,14,18,1); iTelarana(m,330,14,18,-1);
   intFloor(m,R,hz,'lajas',PIN); shaft(m,250,40,'#fff4d0',0.18); shaft(m,170,22,'#c8d8ff',0.1);
+  iCandelabro(m,176,hz+8,34); iCandelabro(m,304,hz+8,34); for(let i=0;i<14;i++){ const x=R()<0.5?20+R()*60:400+R()*60, y=hz+30+R()*100; m.save(); m.translate(x,y); m.rotate((R()-0.5)*1.4); m.fillStyle='#1a120c'; m.fillRect(-10,-1.5,20+R()*10,3); m.fillStyle='#3a2416'; m.fillRect(-10,-1.5,20,1); m.restore(); } // tablas quemadas caídas del techo
   finishHD(m,R,hz,[[0,'rgba(200,210,255,.3)'],[1,'rgba(40,30,30,.45)']],'#060406',0.55,{np:0,gr:0.03});
 }, anim(c,dt,st){ pollen(c,st,dt,26,'#fff6dc',20,280); st.t=(st.t||0)+dt; [[224,HZ-23],[256,HZ-23]].forEach(([x,y],i)=>{ c.save(); c.globalCompositeOperation='lighter'; c.globalAlpha=0.25+0.08*Math.sin(st.t*7+i*2); hdSoft(c,x,y,12,14,'#ffcf80',0.6); c.restore(); }); }};
 /* --- Casa (y altillo): revoque con entramado, piso de tablas, fuego del hogar --- */
 Z.casa={ build(m,R){ const hz=150; intWall(m,R,hz,'revoque',PIN,0);
   m.save(); m.fillStyle='#24180e'; m.beginPath(); m.moveTo(0,0); m.lineTo(0,46); m.lineTo(W/2,0); m.closePath(); m.fill(); m.beginPath(); m.moveTo(W,0); m.lineTo(W,46); m.lineTo(W/2,0); m.closePath(); m.fill(); m.restore(); // techo a dos aguas del altillo
   m.fillStyle='#1a1a2e'; m.fillRect(330,40,40,34); vg(m,42,72,[[0,'#3a4a78'],[1,'#8a7a8a']],332,368); m.fillStyle='#2a180e'; m.fillRect(349,40,2,34); m.fillRect(330,56,40,2); m.strokeStyle='#4a3020'; m.lineWidth=2.5; m.strokeRect(330,40,40,34);
-  intFloor(m,R,hz,'tablas',PIN); shaft(m,350,24,'#d0d8ff',0.1); m.save(); m.globalCompositeOperation='lighter'; hdSoft(m,70,130,150,110,'#ff9a40',0.3); m.restore();
+  iEstante(m,R,166,78,64,['#a8603a','#6a7a8a','#c8b890','#7a4a2a','#e0d8c0']); iEstante(m,R,172,104,52,['#8a5a3a','#c8b890','#5a6a4a']); iHierbas(m,R,182,316,31);
+  iTelarana(m,W/2-40,10,14,-1); iTelarana(m,W/2+40,10,14,1);
+  intFloor(m,R,hz,'tablas',PIN); shaft(m,350,24,'#d0d8ff',0.1);
+  iAlfombra(m,R,250,226,92,22,'#6a2a22','#c8a050'); iBarril(m,318,hz+8,1); iSaco(m,336,hz+12,0.9,'#9a8a6a'); m.save(); m.translate(298,hz+2); m.rotate(-0.12); m.fillStyle='#6a4a2a'; m.fillRect(-1,-46,2,46); m.fillStyle='#b8a060'; m.beginPath(); m.moveTo(-5,0); m.lineTo(5,0); m.lineTo(3,-12); m.lineTo(-3,-12); m.closePath(); m.fill(); m.restore(); // escoba m.save(); m.globalCompositeOperation='lighter'; hdSoft(m,70,130,150,110,'#ff9a40',0.3); m.restore();
   finishHD(m,R,hz,[[0,'rgba(255,170,90,.35)'],[1,'rgba(60,30,14,.42)']],'#080402',0.58,{np:0,gr:0.03});
 }, anim(c,dt,st){ embers(c,st,dt,10,94,HZ-5,18,'#ffb060'); pollen(c,st,dt,14,'#fff2d8',40,260); }};
 /* --- Puesto: plaza de mercado (la plaza de Hollin con tenderetes en lugar del pozo) --- */
@@ -8837,6 +8862,9 @@ function calleCiudad(casas,emblema,esc){ const L0=[[10,98,1.25,0],[80,58,0.92,0.
   out.push([emblema,240,8,esc||1.0,0,null,{lejos:0.12,color:{h:0},asiento:0}]);
   for(let k=L0.length-1;k>=0;k--){ const [x,by,sc,lj]=L0[k]; out.push([casas[(k*2)%casas.length],x,by,sc,1,null,{lejos:lj,asiento:0}]); out.push([casas[(k*2+1)%casas.length],W-x,by,sc,0,null,{lejos:lj,asiento:0}]); }
   return out; }
+/* v48.5 · Hollin en llamas: la misma plaza, con el cielo teñido y brasas (el fuego de los techos lo pone la capa viva) */
+Z.calle_quema={ build(m,R){ Z.calle.build(m,R); m.save(); m.globalCompositeOperation='multiply'; m.fillStyle='rgb(170,90,80)'; m.fillRect(0,0,W,H); m.restore(); m.save(); m.globalCompositeOperation='lighter'; hdSoft(m,240,HZ-20,300,90,'#ff5a20',0.25); m.restore(); },
+  anim(c,dt,st){ embers(c,st,dt,30,240,HZ+40,440,'#ffb060'); smoke(c,st,'q1',dt,12,120,HZ-60,'rgba(50,40,40,',30,12,12,0.35); smoke(c,st,'q2',dt,12,360,HZ-50,'rgba(50,40,40,',30,12,12,0.35); } };
 /* ============================================================
    v48.1 (25/11/2026) · CASAS PINTADAS (PixelLab) en lugar de las casas de cajas: aldea, granja, Molle y la plaza de Hollin.
    Se pintan en una capa aparte, encima del fondo cacheado (que puede venir del Worker o del atlas), con el tono de luz de
@@ -8845,30 +8873,32 @@ function calleCiudad(casas,emblema,esc){ const L0=[[10,98,1.25,0],[80,58,0.92,0.
    ============================================================ */
 const CASAS={
   // orden = orden de pintado: primero lo lejano (lejos: bruma del horizonte), después lo cercano
-  granja:{tint:['rgba(255,190,120,.16)','rgba(60,40,70,.10)'],grass:1,list:[['aldea_b',96,12,0.3,0,null,{lejos:0.55}],['granja_casa',444,13,0.3,1,null,{lejos:0.55}],['granja_casa',206,14,0.6,0,[74,11]],['granja_granero',352,20,0.8,0]]},
-  aldea:{tint:['rgba(255,150,80,.10)','rgba(20,24,48,.38)'],grass:1,list:[['aldea_a',250,8,0.3,1,null,{lejos:0.5}],['aldea_b',160,8,0.46,1],['aldea_b',424,12,0.5,0],['aldea_a',72,14,0.56,0,[81,7]],['aldea_c',330,12,0.58,0,[44,7]]]},
-  molle:{tint:['rgba(255,110,50,.12)','rgba(30,12,10,.36)'],list:[['molle_a',110,14,0.3,0,null,{lejos:0.5}],['molle_c',300,14,0.3,1,null,{lejos:0.5}],['molle_a',38,16,0.56,1],['molle_b',268,16,0.52,0],['molle_c',452,16,0.56,1],['molle_b',180,18,0.64,1],['molle_c',362,20,0.62,0]]},
+  granja:{luz:0.15,tint:['rgba(255,190,120,.16)','rgba(60,40,70,.10)'],grass:1,list:[['aldea_b',96,12,0.3,0,null,{lejos:0.55}],['granja_casa',444,13,0.3,1,null,{lejos:0.55}],['granja_casa',206,14,0.6,0,[74,11]],['granja_granero',352,20,0.8,0]]},
+  aldea:{luz:0.42,tint:['rgba(255,150,80,.10)','rgba(20,24,48,.38)'],grass:1,list:[['aldea_a',250,8,0.3,1,null,{lejos:0.5}],['aldea_b',160,8,0.46,1],['aldea_b',424,12,0.5,0],['aldea_a',72,14,0.56,0,[81,7]],['aldea_c',330,12,0.58,0,[44,7]]]},
+  molle:{fuego:0.5,tint:['rgba(255,110,50,.12)','rgba(30,12,10,.36)'],list:[['molle_a',110,14,0.3,0,null,{lejos:0.5}],['molle_c',300,14,0.3,1,null,{lejos:0.5}],['molle_a',38,16,0.56,1],['molle_b',268,16,0.52,0],['molle_c',452,16,0.56,1],['molle_b',180,18,0.64,1],['molle_c',362,20,0.62,0]]},
   montana:{tint:['rgba(200,220,255,.10)','rgba(30,40,70,.14)'],list:[['mon_torre',300,12,0.34,1,null,{lejos:0.6}],['mon_pinos',200,12,0.5,1],['mon_torre',92,14,0.72,0],['mon_cabana',384,18,0.62,0,[45,12]],['mon_pinos',458,20,0.58,0]]},
   selva:{tint:['rgba(200,255,200,.06)','rgba(10,40,20,.20)'],grass:1,P:'selva',list:[['sel_choza',300,8,0.3,0,null,{lejos:0.5}],['sel_choza',196,10,0.5,1],['sel_templo',380,14,0.86,0],['sel_arbol',84,18,0.95,0]]},
   desierto:{tint:['rgba(255,200,150,.14)','rgba(90,50,40,.12)'],list:[['des_tienda',150,14,0.3,0,null,{lejos:0.5}],['des_ruina',330,14,0.3,1,null,{lejos:0.6}],['des_roca',455,14,0.5,1],['des_ruina',252,16,0.55,0],['des_tienda',380,20,0.66,1],['des_roca',70,22,0.88,0]]},
-  guerra:{tint:['rgba(255,200,150,.14)','rgba(40,30,40,.14)'],grass:1,P:'guerra',color:[{h:0},{h:16,s:0.7,l:1.1},{h:-8,s:0.5,l:0.82},{h:190,s:0.25,l:0.95},{h:30,s:0.9,l:0.9}],
+  guerra:{banderas:[[152,HZ-14,22,'#7a2a22'],[328,HZ-22,30,'#2a3a6a'],[446,HZ-12,20,'#7a2a22']],gente:{n:4,ids:['soldado','guardia','ballestero'],y:[HZ+14,HZ+26]},tint:['rgba(255,200,150,.14)','rgba(40,30,40,.14)'],grass:1,P:'guerra',color:[{h:0},{h:16,s:0.7,l:1.1},{h:-8,s:0.5,l:0.82},{h:190,s:0.25,l:0.95},{h:30,s:0.9,l:0.9}],
     list:[['gue_mando',60,12,0.3,1,null,{lejos:0.5}],['gue_mando',176,12,0.3,0,null,{lejos:0.5}],['gue_mando',430,12,0.32,1,null,{lejos:0.5}],['gue_mando',110,20,0.56,1],['gue_mando',420,22,0.6,0],['gue_mando',300,16,0.78,0]]},
-  costa:{tint:['rgba(255,245,220,.08)','rgba(40,60,80,.12)'],list:[['cos_barco',380,-8,0.3,1,null,{lejos:0.5}],['cos_barco',214,0,0.5,0],['cos_faro',62,6,0.72,0]]},
+  costa:{agua:[HZ-18,HZ+26],tint:['rgba(255,245,220,.08)','rgba(40,60,80,.12)'],list:[['cos_barco',380,-8,0.3,1,null,{lejos:0.5}],['cos_barco',214,0,0.5,0],['cos_faro',62,6,0.72,0]]},
   herreria:{tint:['rgba(255,140,60,.12)','rgba(30,14,8,.22)'],list:[['her_armas',404,20,0.82,1],['her_fragua',110,16,1.0,0],['her_yunque',256,44,0.76,0]]},
   capilla:{tint:['rgba(220,220,255,.06)','rgba(20,16,20,.18)'],list:[['cap_vitral',240,-10,0.95,0,null,{sh:0,asiento:0}],['cap_altar',240,20,0.85,0],['cap_bancos',104,66,0.85,0],['cap_bancos',376,66,0.85,1]]},
   casa:{tint:['rgba(255,170,90,.10)','rgba(30,18,10,.2)'],list:[['casa_cama',406,34,0.8,1],['casa_hogar',80,18,1.0,0],['casa_mesa',254,46,0.8,0]]},
-  puesto:{tint:['rgba(255,240,210,.06)','rgba(120,150,190,.10)'],list:[['calle_b',120,15,0.72,0],['calle_a',360,14,0.78,1],['calle_c',470,16,0.7,1],['pue_tablado',250,18,0.62,0],['pue_puesto',86,32,0.62,0],['pue_carro',404,36,0.5,1]]},
+  puesto:{gente:{n:8,ids:['aldeano','aldeana','anciano','nino','parroquiano','aprendiz','cocinera'],y:[HZ+18,HZ+32]},tint:['rgba(255,240,210,.06)','rgba(120,150,190,.10)'],list:[['calle_b',120,15,0.72,0],['calle_a',360,14,0.78,1],['calle_c',470,16,0.7,1],['pue_tablado',250,18,0.62,0],['pue_puesto',86,32,0.62,0],['pue_carro',404,36,0.5,1]]},
   volcan:{tint:['rgba(255,90,40,.14)','rgba(30,10,8,.25)'],list:[['vol_fuerte',170,12,0.3,1,null,{lejos:0.5}],['vol_roca',250,12,0.45,1],['vol_fuerte',384,16,0.72,0],['vol_roca',88,14,0.82,0]]},
-  fiordo:{tint:['rgba(200,220,255,.08)','rgba(20,28,40,.2)'],list:[['fio_casa',60,44,0.5,0],['fio_drakkar',224,30,0.62,0],['fio_casa',404,46,0.62,1]]},
-  canales:{tint:['rgba(255,220,180,.08)','rgba(60,50,60,.1)'],list:[['can_palacio',420,-4,0.7,1],['can_palacio',150,-2,0.9,0],['can_puente',306,24,0.75,0]]},
+  fiordo:{agua:[HZ-12,HZ+36],tint:['rgba(200,220,255,.08)','rgba(20,28,40,.2)'],list:[['fio_casa',60,44,0.5,0],['fio_drakkar',224,30,0.62,0],['fio_casa',404,46,0.62,1]]},
+  canales:{agua:[HZ-10,HZ+22],tint:['rgba(255,220,180,.08)','rgba(60,50,60,.1)'],list:[['can_palacio',420,-4,0.7,1],['can_palacio',150,-2,0.9,0],['can_puente',306,24,0.75,0]]},
   abismo:{tint:['rgba(255,60,40,.16)','rgba(30,4,4,.25)'],list:[['abi_obelisco',452,10,0.45,1],['abi_hueso',330,14,0.85,0],['abi_obelisco',110,14,0.75,0]]},
-  calle:{tint:['rgba(255,240,210,.06)','rgba(120,150,190,.10)'],props:1,list:[['calle_b',262,15,0.72,0],['calle_a',44,16,0.8,0],['calle_c',152,16,0.82,0],['calle_a',350,14,0.74,1],['calle_b',444,16,0.74,1]]},
+  calle:{gente:{n:6,ids:['aldeano','aldeana','anciano','nino','parroquiano','aprendiz','cocinera','guardia'],y:[HZ+16,HZ+30]},tint:['rgba(255,240,210,.06)','rgba(120,150,190,.10)'],props:1,list:[['calle_b',262,15,0.72,0],['calle_a',44,16,0.8,0],['calle_c',152,16,0.82,0],['calle_a',350,14,0.74,1],['calle_b',444,16,0.74,1]]},
   // v48.4 · ciudades con calle en perspectiva
-  castel:{tint:['rgba(220,230,255,.06)','rgba(40,44,60,.12)'],color:[{h:0},{h:196,s:0.42,l:0.96},{h:0,s:0.4,l:0.86},{h:26,s:0.8},{h:-16,s:0.95,l:0.82}],list:calleCiudad(['calle_a','calle_b','calle_c','granja_casa'],'cit_castillo',1.15)},
-  aurea:{tint:['rgba(255,230,180,.12)','rgba(80,60,30,.08)'],color:[{h:0,s:0.3,cal:0.55},{h:10,s:0.45,cal:0.4},{h:0,s:0.25,cal:0.65},{h:20,s:0.35,cal:0.5}],list:calleCiudad(['calle_b','calle_a','calle_c','granja_casa'],'cit_templo',1.1)},
-  lisandra:{tint:['rgba(255,210,180,.10)','rgba(60,40,40,.10)'],color:[{h:0},{h:40,s:1.0},{h:150,s:0.45,l:0.9},{h:-30,s:0.9},{h:200,s:0.6},{h:70,s:0.6}],list:calleCiudad(['calle_c','calle_a','granja_casa','calle_b'],'cit_gremio',1.1)},
-  vesper:{tint:['rgba(255,170,110,.10)','rgba(20,20,50,.34)'],color:[{h:0,l:0.9},{h:196,s:0.42,l:0.86},{h:-16,s:0.9,l:0.8},{h:26,s:0.7,l:0.85}],list:calleCiudad(['calle_c','calle_a','calle_b','aldea_c'],'cit_almacen',1.0)},
-  equinoccia:{tint:['rgba(240,244,255,.08)','rgba(80,90,120,.06)'],color:[{h:0,s:0.3,cal:0.5},{h:200,s:0.4,cal:0.45},{h:30,s:0.3,cal:0.55}],list:calleCiudad(['calle_b','calle_a','calle_c'],'cit_catedral',1.2)}
+  castel:{banderas:[[204,30,20,'#2a4a8a'],[284,24,22,'#2a4a8a']],gente:{n:8,ids:['aldeano','aldeana','anciano','nino','parroquiano','aprendiz','cocinera','guardia'],y:[HZ+10,HZ+40]},tint:['rgba(220,230,255,.06)','rgba(40,44,60,.12)'],color:[{h:0},{h:196,s:0.42,l:0.96},{h:0,s:0.4,l:0.86},{h:26,s:0.8},{h:-16,s:0.95,l:0.82}],list:calleCiudad(['calle_a','calle_b','calle_c','granja_casa'],'cit_castillo',1.15)},
+  aurea:{banderas:[[208,58,18,'#c8a030'],[272,58,18,'#c8a030']],gente:{n:8,ids:['aldeano','aldeana','anciano','nino','parroquiano','aprendiz','cocinera','soldado'],y:[HZ+10,HZ+40]},tint:['rgba(255,230,180,.12)','rgba(80,60,30,.08)'],color:[{h:0,s:0.3,cal:0.55},{h:10,s:0.45,cal:0.4},{h:0,s:0.25,cal:0.65},{h:20,s:0.35,cal:0.5}],list:calleCiudad(['calle_b','calle_a','calle_c','granja_casa'],'cit_templo',1.1)},
+  lisandra:{banderas:[[236,40,16,'#2a6a5a']],gente:{n:9,ids:['aldeano','aldeana','anciano','nino','parroquiano','aprendiz','cocinera'],y:[HZ+10,HZ+40]},tint:['rgba(255,210,180,.10)','rgba(60,40,40,.10)'],color:[{h:0},{h:40,s:1.0},{h:150,s:0.45,l:0.9},{h:-30,s:0.9},{h:200,s:0.6},{h:70,s:0.6}],list:calleCiudad(['calle_c','calle_a','granja_casa','calle_b'],'cit_gremio',1.1)},
+  vesper:{luz:0.6,gente:{n:6,ids:['parroquiano','aldeano','guardia','aprendiz'],y:[HZ+10,HZ+40]},tint:['rgba(255,170,110,.10)','rgba(20,20,50,.34)'],color:[{h:0,l:0.9},{h:196,s:0.42,l:0.86},{h:-16,s:0.9,l:0.8},{h:26,s:0.7,l:0.85}],list:calleCiudad(['calle_c','calle_a','calle_b','aldea_c'],'cit_almacen',1.0)},
+  equinoccia:{banderas:[[214,30,18,'#e8e0c0'],[266,30,18,'#e8e0c0']],gente:{n:6,ids:['anciano','aldeana','aldeano','guardia'],y:[HZ+10,HZ+40]},tint:['rgba(240,244,255,.08)','rgba(80,90,120,.06)'],color:[{h:0,s:0.3,cal:0.5},{h:200,s:0.4,cal:0.45},{h:30,s:0.3,cal:0.55}],list:calleCiudad(['calle_b','calle_a','calle_c'],'cit_catedral',1.2)},
+  // v48.5 · Hollin en llamas (cap. 7): la plaza con fuego en los techos
+  calle_quema:{fuego:1,tint:['rgba(255,120,60,.16)','rgba(40,12,8,.3)'],props:1,list:[['calle_b',262,15,0.72,0],['calle_a',44,16,0.8,0],['calle_c',152,16,0.82,0],['calle_a',350,14,0.74,1],['calle_b',444,16,0.74,1]]}
 };
 const CASAIMG={}, CASAOV={};
 function casaImg(n){ if(typeof window==='undefined'||typeof Image==='undefined') return null; let im=CASAIMG[n]; if(!im){ const src='art/fondos/casas/'+n+'.png'; im=CASAIMG[n]=(window.LDC_IMG?window.LDC_IMG(src):Object.assign(new Image(),{src})); } return (im.complete&&im.naturalWidth)?im:null; }
@@ -8882,7 +8912,7 @@ function casaChim(zone,i){ const e=CASAS[zone].list.find(q=>q[5])&&CASAS[zone].l
    - Profundidad: o.lejos (0..1) achica el contraste y le pone la bruma del horizonte, para filas de casas lejanas.
    Opciones por elemento (7.º campo): {sh:0 sin sombra, asiento:0 sin falda, hue:grados, lejos:0..1} */
 const CASAMETA={}, CASAVAR={};
-(function(){ const n={}; Object.keys(CASAS).forEach(z=>CASAS[z].list.forEach((e,i)=>{ const k=e[0]; CASAVAR[z+':'+i]=n[k]=(n[k]===undefined?0:n[k]+1); })); })();
+(function(){ const n={}; Object.keys(CASAS).forEach(z=>CASAS[z].list.forEach((e,i)=>{ const k=e[0]; CASAVAR[z+':'+i]=n[k]=(n[k]===undefined?0:n[k]+1); })); CASAS.calle_quema.list.forEach((e,i)=>{ CASAVAR['calle_quema:'+i]=CASAVAR['calle:'+i]; }); })(); // la plaza que arde tiene las mismas casas que la plaza
 const CASA_VAR=[{h:0},{h:26,s:0.8},{h:196,s:0.42,l:0.96},{h:0,s:0.4,l:0.86},{h:-16,s:0.95,l:0.82},{h:40,s:0.55,l:1.04},{h:110,s:0.35,l:0.9},{h:-34,s:0.6,l:0.9}];
 function casaMeta(n,im){ if(CASAMETA[n]) return CASAMETA[n]; const t=cv(128,128), g=t.getContext('2d'); g.drawImage(im,0,0); let d; try{ d=g.getImageData(0,0,128,128).data; }catch(e){ return CASAMETA[n]={bot:121,baseH:12,x0:8,x1:120}; }
   const wid=[], x0s=[], x1s=[]; let bot=0, top=128; for(let y=0;y<128;y++){ let a=-1,b=-1; for(let x=0;x<128;x++) if(d[(y*128+x)*4+3]>40){ if(a<0) a=x; b=x; } wid[y]=a<0?0:b-a+1; x0s[y]=a; x1s[y]=b; if(a>=0){ bot=y; if(top===128) top=y; } }
@@ -8897,35 +8927,81 @@ function casaRecolor(g,v){ if(!v||(!v.h&&!v.s&&!v.l&&!v.cal)) return; const id=g
     const C=(1-Math.abs(2*l-1))*sat, X=C*(1-Math.abs((h/60)%2-1)), m0=l-C/2; const k=((h/60)|0)%6; const t=[[C,X,0],[X,C,0],[0,C,X],[0,X,C],[X,0,C],[C,0,X]][k];
     d[i]=(t[0]+m0)*255; d[i+1]=(t[1]+m0)*255; d[i+2]=(t[2]+m0)*255; }
   g.putImageData(id,0,0); }
-function casaLayer(zone,k){ const cfg=CASAS[zone]; if(!cfg) return null; const hit=CASAOV[zone]; if(hit&&hit.k===k) return hit.c; const ims=cfg.list.map(e=>casaImg(e[0])); if(ims.some(i=>!i)) return null;
+/* v48.5 · CAPA VIVA de los edificios. casaLayer arma una vez por zona: el suelo de apoyo (sombras, faldas, matas) en un lienzo y
+   cada edificio como pieza suelta (lienzo propio ya teñido y espejado), con sus chimeneas, ventanas encendidas y techo.
+   Cada cuadro, bg() los pinta con paralaje (si hay cámara), y encima: humo de cada chimenea, ventanas que titilan, fuego en
+   los techos (cfg.fuego), reflejos en el agua (cfg.agua), estandartes (cfg.banderas) y pobladores caminando (cfg.gente). */
+// chimeneas en coordenadas del sprite (128×128), medidas sobre la hoja con regla
+const CASA_CHIM={aldea_a:[81,7],aldea_c:[44,7],granja_casa:[74,12],mon_cabana:[45,12],calle_a:[44,12],calle_b:[88,22],calle_c:[41,12],fio_casa:[24,18]};
+function casaLayer(zone,k){ const cfg=CASAS[zone]; if(!cfg) return null; const hit=CASAOV[zone]; if(hit&&hit.k===k) return hit; const ims=cfg.list.map(e=>casaImg(e[0])); if(ims.some(i=>!i)) return null;
   // muestras del fondo real: el suelo para la falda, el horizonte para la bruma de lo lejano
   let S=null; try{ const sc=cv(W,H), sg=sc.getContext('2d'); sg.drawImage(k,0,0,W,H); S=sg.getImageData(0,0,W,H).data; }catch(e){}
   const at=(x,y)=>{ x=clamp(x|0,0,W-1); y=clamp(y|0,0,H-1); const i=(y*W+x)*4; return S?[S[i],S[i+1],S[i+2]]:[60,50,40]; };
-  const m=L(), R=mkR(7000+(SEEDS[zone]||0));
+  const m=L(), R=mkR(7000+(SEEDS[zone]||0)), items=[];
   cfg.list.forEach((e,i)=>{ const [n,cx,by,sc,fl]=e, o=e[6]||{}, im=ims[i], base=HZ+by, s=128*sc, M=casaMeta(n,im);
     const t=cv(128,128), g=t.getContext('2d'); g.drawImage(im,0,0);
+    // ventanas encendidas: píxeles cálidos y claros del sprite original (antes del tinte), agrupados en celdas de 6 px
+    let win=[]; try{ const d=g.getImageData(0,0,128,128).data, cell={}; for(let y=0;y<128;y++) for(let x=0;x<128;x++){ const q=(y*128+x)*4; if(d[q+3]>200&&d[q]>200&&d[q+1]>140&&d[q+2]<130&&d[q]-d[q+2]>90){ const kk=((x/6)|0)+','+((y/6)|0); cell[kk]=(cell[kk]||0)+1; } }
+      win=Object.keys(cell).filter(kk=>cell[kk]>=3).map(kk=>kk.split(',').map(v=>+v*6+3)).slice(0,10); }catch(err){}
     casaRecolor(g,Object.assign({},(cfg.color||CASA_VAR)[(CASAVAR[zone+':'+i]||0)%(cfg.color||CASA_VAR).length],o.color||{}));
     g.globalCompositeOperation='source-atop'; cfg.tint.forEach(col=>{ g.fillStyle=col; g.fillRect(0,0,128,128); });
     const sh=g.createLinearGradient(0,M.bot-M.baseH-26,0,M.bot); sh.addColorStop(0,'rgba(0,0,0,0)'); sh.addColorStop(1,'rgba(10,8,6,.2)'); g.fillStyle=sh; g.fillRect(0,0,128,128);
     if(o.lejos){ const hc=at(cx,HZ-6); g.fillStyle='rgba('+hc[0]+','+hc[1]+','+hc[2]+','+(0.25+o.lejos*0.45)+')'; g.fillRect(0,0,128,128); }
-    // el sprite se apoya por su base real (la fila más baja con pintura), no por el borde del lienzo
-    const top=base-(M.bot+1)*sc, X=xs=>fl?cx+(64-xs)*sc:cx+(xs-64)*sc;
+    // pieza suelta: el sprite al tamaño de pantalla (×2 para nitidez), ya espejado
+    const SS2=2, P=cv(Math.ceil(s*SS2),Math.ceil(s*SS2)), pg=P.getContext('2d'); pg.imageSmoothingEnabled=true; pg.imageSmoothingQuality='high'; if(fl){ pg.translate(P.width,0); pg.scale(-1,1); } pg.drawImage(t,0,0,P.width,P.height);
+    const top=base-(M.bot+1)*sc, X=xs=>fl?cx+(64-xs)*sc:cx+(xs-64)*sc, Y=ys=>top+ys*sc;
     if(!(o.sh===0)){ m.fillStyle='rgba(16,10,6,.28)'; m.beginPath(); m.ellipse(cx,base-1,(M.x1-M.x0)*0.5*sc+4,4+3*sc,0,0,TAU); m.fill(); }
-    m.save(); m.imageSmoothingEnabled=true; m.imageSmoothingQuality='high'; m.translate(cx,top); if(fl) m.scale(-1,1); m.drawImage(t,-64*sc,0,s,s); m.restore();
+    // techo: el punto más alto de la silueta en tres columnas del cuerpo (para las llamas)
+    const roof=[0.3,0.5,0.7].map(u=>{ const xs=M.x0+(M.x1-M.x0)*u; let ys=0; try{ const d=g.getImageData(xs|0,0,1,128).data; while(ys<127&&d[ys*4+3]<60) ys++; }catch(err){ ys=30; } return [X(xs),Y(ys+4)]; });
+    const ch=CASA_CHIM[n]; items.push({cv:P,x:cx-s/2,y:top,w:s,h:s,base,sc,lejos:o.lejos||0,chim:ch?[X(ch[0]),Y(ch[1])]:null,win:win.map(([wx,wy])=>[X(wx),Y(wy)]),roof,bot:M.bot,refl:o.refl!==0});
     if(o.asiento!==0&&S){ const xa=Math.min(X(M.x0),X(M.x1))-3, xb=Math.max(X(M.x0),X(M.x1))+3, hh=Math.max(3,Math.min(M.baseH*sc+1,10)), y0=base-hh;
-      // sombra de contacto al pie del edificio
       const gr=m.createLinearGradient(0,y0-6,0,y0+hh*0.5); gr.addColorStop(0,'rgba(0,0,0,0)'); gr.addColorStop(1,'rgba(8,6,4,.2)'); m.fillStyle=gr; m.fillRect(xa+6,y0-4,xb-xa-12,hh*0.5+4);
-      // falda de suelo: motas con el color del fondo de esa zona, densas abajo y que se desvanecen hacia arriba y a los lados
-      const N=((xb-xa)*hh*1.6)|0; for(let q=0;q<N;q++){ const u=R(), x=xa+u*(xb-xa), v=Math.pow(R(),0.7), y=base+3-v*(hh+3), edge=Math.sin(u*Math.PI);
-        const a=clamp((1-v)*1.4,0,1)*clamp(edge*1.8,0,1); if(a<0.05) continue; const c=at(x+(R()-0.5)*16,base+5+R()*10);
-        m.fillStyle='rgba('+c[0]+','+c[1]+','+c[2]+','+a.toFixed(2)+')'; m.beginPath(); m.ellipse(x,y,0.8+R()*1.8,0.6+R()*1.1,0,0,TAU); m.fill(); } }
-    if(cfg.grass){ const P=HDP[cfg.P||(zone==='aldea'?'sauces':'prados')]; for(let q=0;q<9;q++) hdPut(m,stTuft(P,(R()*6)|0,(R()*2)|0),cx+(R()-0.5)*(M.x1-M.x0)*sc,base+1+R()*3,0.5+R()*0.25); } });
-  if(cfg.props) calleProps(m,mkR(1112),HZ+14);
-  CASAOV[zone]={k,c:m.canvas}; return m.canvas; }
+      items[items.length-1].falda=[xa,xb,hh];
+      const N=((xb-xa)*hh*1.6)|0, F=[]; for(let q=0;q<N;q++){ const u=R(), x=xa+u*(xb-xa), v=Math.pow(R(),0.7), y=base+3-v*(hh+3), edge=Math.sin(u*Math.PI);
+        const a=clamp((1-v)*1.4,0,1)*clamp(edge*1.8,0,1); if(a<0.05) continue; const c=at(x+(R()-0.5)*16,base+5+R()*10); F.push([x,y,0.8+R()*1.8,0.6+R()*1.1,'rgba('+c[0]+','+c[1]+','+c[2]+','+a.toFixed(2)+')']); }
+      items[items.length-1].F=F; }
+    if(cfg.grass){ const Pp=HDP[cfg.P||(zone==='aldea'?'sauces':'prados')]; items[items.length-1].mat=[]; for(let q=0;q<9;q++) items[items.length-1].mat.push([(R()*6)|0,(R()*2)|0,cx+(R()-0.5)*(M.x1-M.x0)*sc,base+1+R()*3,0.5+R()*0.25]); items[items.length-1].P=Pp; } });
+  // la falda y las matas van delante de cada edificio: se pintan en una capa propia por pieza (pieza.front)
+  items.forEach(it=>{ if(!it.F&&!it.mat) return; const fx0=Math.floor(it.x-14), fy0=Math.floor(it.base-26), fw=Math.ceil(it.w+28), fh=40; const fc=cv(fw*2,fh*2), f=fc.getContext('2d'); f.scale(2,2); f.translate(-fx0,-fy0);
+    if(it.F) it.F.forEach(([x,y,rx,ry,col])=>{ f.fillStyle=col; f.beginPath(); f.ellipse(x,y,rx,ry,0,0,TAU); f.fill(); }); if(it.mat) it.mat.forEach(([a,b,x,y,sz])=>hdPut(f,stTuft(it.P,a,b),x,y,sz)); it.front={c:fc,x:fx0,y:fy0,w:fw,h:fh}; delete it.F; delete it.mat; });
+  let props=null; if(cfg.props){ const pp=L(); calleProps(pp,mkR(1112),HZ+14); props=pp.canvas; }
+  return CASAOV[zone]={k,ground:m.canvas,items,props}; }
+// paralaje: cuánto se corre cada altura de la pantalla por cada píxel de cámara. Pivote en la banda de las unidades (y≈190):
+// el cielo va en contra, el horizonte un poco menos, el primer plano a favor. Las unidades quedan quietas respecto de su suelo.
+const PIV=190; function parF(y){ return y<HZ-40?-0.55:y<HZ?-0.55+0.2*(y-(HZ-40))/40:y<PIV?-0.35*(PIV-y)/(PIV-HZ):0.3*(y-PIV)/(H-PIV); }
+function drawStrips(c,img,camx,y0,y1,step){ const ks=(img.height||H)/H; for(let y=y0;y<y1;y+=step){ const hh=Math.min(step,y1-y); c.drawImage(img,0,y*ks,img.width,hh*ks,camx*parF(y+hh/2),y,W,hh+0.4); } }
+function bandera(c,x,y,len,col,t,i){ c.save(); c.strokeStyle='#2a2018'; c.lineWidth=1.2; c.beginPath(); c.moveTo(x,y); c.lineTo(x,y+len); c.stroke();
+  const fw=len*0.55, fh=len*0.3; c.fillStyle=col; c.beginPath(); c.moveTo(x,y+1); for(let k=0;k<=8;k++){ const u=k/8; c.lineTo(x+u*fw,y+1+Math.sin(t*4+u*4+i)*u*2.4); } for(let k=8;k>=0;k--){ const u=k/8; c.lineTo(x+u*fw,y+1+fh+Math.sin(t*4+u*4+i+0.6)*u*2.4); } c.closePath(); c.fill();
+  c.fillStyle='rgba(0,0,0,.18)'; c.beginPath(); for(let k=0;k<=8;k++){ const u=k/8; c.lineTo(x+u*fw,y+1+fh*0.55+Math.sin(t*4+u*4+i+0.3)*u*2.4); } for(let k=8;k>=0;k--){ const u=k/8; c.lineTo(x+u*fw,y+1+fh+Math.sin(t*4+u*4+i+0.6)*u*2.4); } c.closePath(); c.fill(); c.restore(); }
+function llama(c,x,y,h,t,ph){ const f=0.75+0.25*Math.sin(t*11+ph)*Math.sin(t*7.3+ph*2); const hh=h*f, w=h*0.3; c.save(); c.globalCompositeOperation='lighter';
+  hdSoft(c,x,y-hh*0.4,w*2.2,hh*1.2,'#ff6a20',0.35); [['#ff5a14',1,1],['#ffa030',0.7,0.75],['#fff0a0',0.38,0.45]].forEach(([col,ks,kw])=>{ c.fillStyle=col; c.beginPath(); c.moveTo(x-w*kw,y); c.quadraticCurveTo(x-w*kw*0.6,y-hh*ks*0.6,x+Math.sin(t*6+ph)*w*0.4,y-hh*ks); c.quadraticCurveTo(x+w*kw*0.6,y-hh*ks*0.6,x+w*kw,y); c.closePath(); c.fill(); }); c.restore(); }
+function vidaCasas(c,zone,dt,camx,ov){ const cfg=CASAS[zone], st=STATE['_vida_'+zone]||(STATE['_vida_'+zone]={}); st.t=(st.t||0)+dt; const t=st.t;
+  ov.items.forEach((it,i)=>{ const dx=camx*parF(it.base);
+    if(cfg.agua&&it.refl&&it.base>=cfg.agua[0]-6&&it.base<=cfg.agua[1]){ const rh=Math.min(it.h*0.55,cfg.agua[1]-it.base); const ks=it.cv.height/it.h;
+      for(let j=0;j<rh;j+=2){ const sy=(it.bot+1)*it.sc-j-2; if(sy<0) break; c.globalAlpha=0.3*(1-j/rh); c.drawImage(it.cv,0,sy*ks,it.cv.width,2*ks,it.x+dx+Math.sin(t*2.2+j*0.45)*(0.6+j*0.04),it.base+j,it.w,2); } c.globalAlpha=1; }
+    if(it.chim&&!cfg.fuego) smoke(c,st,'ch'+i,dt,it.lejos?5:8,it.chim[0]+dx,it.chim[1],it.lejos?'rgba(200,200,205,':'rgba(225,222,218,',10+it.sc*8,4+it.sc*4,5+it.sc*7,it.lejos?0.12:0.2);
+    if(it.win.length&&!cfg.fuego){ c.save(); c.globalCompositeOperation='lighter'; it.win.forEach(([x,y],j)=>{ const a=(cfg.luz||0.22)*(0.65+0.35*Math.sin(t*(1.3+j*0.37)+j*2.1)*Math.sin(t*0.7+j)); hdSoft(c,x+dx,y,4*it.sc+2,3.4*it.sc+1.6,'#ffb860',a); }); c.restore(); }
+    if(cfg.fuego&&!it.lejos){ it.roof.forEach(([x,y],j)=>{ if((i+j)%3===1) return; const hv=[0.7,1,0.55][(i+j)%3]; llama(c,x+dx+((i*7+j*5)%5-2),y+4,(5+it.sc*9)*cfg.fuego*hv,t,i*3+j); }); smoke(c,st,'fu'+i,dt,12,it.roof[1][0]+dx,it.roof[1][1]-6,'rgba(45,38,38,',28,12,10+it.sc*6,0.3); } });
+  if(cfg.banderas) cfg.banderas.forEach(([x,y,len,col],i)=>bandera(c,x+camx*parF(y+len),y,len,col,t,i));
+  if(cfg.gente&&!ov.sinGente&&typeof NPCV!=='undefined'&&!(typeof BGPOST!=='undefined'&&BGPOST.f)){ const G=cfg.gente; if(!st.gente) st.gente=Array.from({length:G.n},(_,j)=>({id:G.ids[j%G.ids.length],seed:zone+'·'+j,x:Math.random()*W,y:G.y[0]+Math.random()*(G.y[1]-G.y[0]),v:(Math.random()<0.5?-1:1)*(5+Math.random()*9),ph:Math.random()*5}));
+    st.gente.sort((a,b)=>a.y-b.y).forEach(p=>{ p.x+=p.v*dt; if(p.x<-20) p.x=W+18; if(p.x>W+20) p.x=-18; const s=0.22+0.3*(p.y-HZ)/60; try{ NPCV.draw(c,p.id,p.seed,p.x+camx*parF(p.y),p.y,{anim:'walk',t:t+p.ph,face:p.v>0?1:-1,scale:s,alpha:0.92}); }catch(e){} }); } }
 /* ---------- API de fondos ---------- */
-const CACHE={}, STATE={}, SEEDS={castel:2828,aurea:2929,lisandra:3030,vesper:3131,equinoccia:3232,herreria:2121,capilla:2222,casa:2323,puesto:1111,volcan:2424,fiordo:2525,canales:2626,abismo:2727,montana:1616,selva:1717,desierto:1818,guerra:1919,costa:2020,rio:1212,granja:1313,aldea:1414,molle:1515,calle:1111,prados:101,sauces:202,pantano:303,campamento:404,puente:505,noche:606,taberna:707,ruinas:808,ruinasLuz:808,titulo:909};
+const CACHE={}, STATE={}, SEEDS={calle_quema:1111,castel:2828,aurea:2929,lisandra:3030,vesper:3131,equinoccia:3232,herreria:2121,capilla:2222,casa:2323,puesto:1111,volcan:2424,fiordo:2525,canales:2626,abismo:2727,montana:1616,selva:1717,desierto:1818,guerra:1919,costa:2020,rio:1212,granja:1313,aldea:1414,molle:1515,calle:1111,prados:101,sauces:202,pantano:303,campamento:404,puente:505,noche:606,taberna:707,ruinas:808,ruinasLuz:808,titulo:909};
 function build(zone){ const z=Z[zone]; if(!z) return null; const m=L(); z.build(m,mkR(SEEDS[zone]||1)); return CACHE[zone]=m.canvas; }
-function bg(c,zone,dt){ if(!Z[zone]) zone='prados'; dt=clamp(dt||0,0,0.1); let k=CACHE[zone]; if(!k&&HOOK.miss) k=HOOK.miss(zone); if(!k) k=build(zone); c.save(); c.imageSmoothingEnabled=true; c.drawImage(k,0,0,W,H); const ov=casaLayer(zone,k); if(ov) c.drawImage(ov,0,0,W,H); const st=STATE[zone]||(STATE[zone]={}); Z[zone].anim(c,dt,st); c.restore(); }
+/* v48.5b · En combate las unidades de la fila de atrás pisan en y≈140 (slotPos): ningún edificio puede tener su base más abajo
+   que eso, o el soldado queda «parado sobre la casa». En combate: (1) se sacan los elementos cercanos (base > HZ+24: casas del
+   primer plano de las ciudades, muebles del medio de los interiores); (2) todo el fondo sube D px para que las bases que quedan
+   caigan detrás de la fila de atrás (y ≤ 134), y el borde de abajo se completa estirando la última franja; (3) sin pobladores. */
+const PIE_ATRAS=134;
+function bg(c,zone,dt,cam){ if(!Z[zone]) zone='prados'; dt=clamp(dt||0,0,0.1); let k=CACHE[zone]; if(!k&&HOOK.miss) k=HOOK.miss(zone); if(!k) k=build(zone); c.save(); c.imageSmoothingEnabled=true;
+  const camx=cam&&cam.x?cam.x:0, comb=!!(cam&&cam.combate); const ov=casaLayer(zone,k);
+  let items=ov?ov.items:[], D=0; if(ov&&comb){ items=items.filter(it=>it.base<=HZ+24); D=items.length?clamp(Math.max(...items.map(it=>it.base))-PIE_ATRAS,0,28):0; }
+  if(D){ const ks=(k.height||H)/H; c.drawImage(k,0,(H-2)*ks,k.width,2*ks,0,H-D-1,W,D+1); c.translate(0,-D); }
+  if(camx){ drawStrips(c,k,camx,0,H,3); if(ov) drawStrips(c,ov.ground,camx,HZ-60,H,3); } else { c.drawImage(k,0,0,W,H); if(ov) c.drawImage(ov.ground,0,0,W,H); }
+  if(ov){ items.forEach(it=>{ const dx=camx*parF(it.base); c.drawImage(it.cv,it.x+dx,it.y,it.w,it.h); if(it.front) c.drawImage(it.front.c,it.front.x+dx,it.front.y,it.front.w,it.front.h); });
+    if(ov.props&&!comb){ if(camx) drawStrips(c,ov.props,camx,0,H,3); else c.drawImage(ov.props,0,0,W,H); }
+    try{ vidaCasas(c,zone,dt,camx,{items,sinGente:comb}); }catch(e){} }
+  const st=STATE[zone]||(STATE[zone]={}); if(camx){ c.translate(camx*-0.2,0); } Z[zone].anim(c,dt,st); c.restore(); }
 function prewarm(list){ (list||Object.keys(Z)).forEach(z=>{ if(!CACHE[z]) build(z); }); }
 
 /* ============================================================
@@ -20593,7 +20669,7 @@ const ARTIMG=new Map();
 const PREIMG=(typeof window!=='undefined'&&window.LDC_PRE)||null; // v27: el arte crítico ya bajado por js/loader.js (<img> por ruta, sin data: URI)
 function artImage(src){ if(!src) return null; let im=ARTIMG.get(src); if(!im){ im=PREIMG&&PREIMG[src]; if(!im){ im=(window.LDC_IMG?window.LDC_IMG(src):Object.assign(new Image(),{src:src})); } ARTIMG.set(src,im); } return (im.complete&&im.naturalWidth)?im:null; }
 function artEntry(k){ return window.LDC_ART?window.LDC_ART[k]:null; }
-function drawBG(c,zone,dt){ const im=artImage(artEntry('bg:'+zone)); if(im){ const sm=c.imageSmoothingEnabled; c.imageSmoothingEnabled=true; c.drawImage(im,0,0,W,H); c.imageSmoothingEnabled=sm; return; } ENV.bg(c,zone,dt); }
+function drawBG(c,zone,dt,cam){ const im=artImage(artEntry('bg:'+zone)); if(im){ const sm=c.imageSmoothingEnabled; c.imageSmoothingEnabled=true; c.drawImage(im,0,0,W,H); c.imageSmoothingEnabled=sm; return; } ENV.bg(c,zone,dt,cam); }
 const LOOPA={idle:1,walk:1,talk:1,sit:1,low:1};
 // silueta blanca de una hoja (para el destello de golpe)
 const ARTWHITE=new Map();
@@ -22454,8 +22530,8 @@ function battleView(B){
       const rk=cRate(); if(rk!==1) T+=dt*(rk-1); const dts=dt*rk;
       const k=FX.camera(); c.save(); c.translate(W/2+k.sx,H/2+k.sy); c.scale(k.zoom,k.zoom); c.translate(-k.x,-k.y);
       const pk=punchK(); if(pk){ c.translate(pk.x,pk.y); c.scale(pk.z,pk.z); c.translate(-pk.x,-pk.y); }
-      { const tb=performance.now()/1000; c.save(); c.translate(W/2+Math.sin(tb*0.11)*2.4,H/2+Math.sin(tb*0.17)*1.1); c.scale(1.014,1.014); c.translate(-W/2,-H/2); /* v48: el fondo respira apenas, separado de las unidades (paralaje de cámara viva) */
-      drawBG(c,B.zone,dt); try{ AMBZ.battle(c,B.zone,dt); }catch(e){} try{ AMBI.battle(c,B.zone,dt); }catch(e){} c.restore(); } /* escenarios (js/ambiente.js): velo, viñeta y partículas del fondo, debajo de las unidades */ { const bp=B.bgPost||BGPOST.f; if(bp) try{ bp(c,dt); }catch(e){} } /* v39: capa propia del combate sobre el fondo (la quema de Hollin; BGPOST.f vale para todos los combates del tramo) */ if(SHIFT.y) c.translate(0,SHIFT.y); /* ficha abierta: las unidades bajan para no quedar tapadas */ FX.drawUnder(c); try{ PFX.draw(c,'back','battle'); }catch(e){} /* pixelfx: lo que va detrás de las unidades */
+      { const tb=performance.now()/1000; c.save(); c.translate(W/2,H/2+Math.sin(tb*0.17)*1.1); c.scale(1.03,1.03); c.translate(-W/2,-H/2); /* v48: el fondo respira, separado de las unidades. v48.5: paralaje por capas (cielo, horizonte, edificios, suelo) con pivote en las unidades; la cámara de FX al encuadrar también lo mueve */
+      const camx=clamp(Math.sin(tb*0.11)*6+(k.x-W/2)*0.35,-12,12); drawBG(c,B.zone,dt,{x:camx,combate:true}); try{ AMBZ.battle(c,B.zone,dt); }catch(e){} try{ AMBI.battle(c,B.zone,dt); }catch(e){} c.restore(); } /* escenarios (js/ambiente.js): velo, viñeta y partículas del fondo, debajo de las unidades */ { const bp=B.bgPost||BGPOST.f; if(bp) try{ bp(c,dt); }catch(e){} } /* v39: capa propia del combate sobre el fondo (la quema de Hollin; BGPOST.f vale para todos los combates del tramo) */ if(SHIFT.y) c.translate(0,SHIFT.y); /* ficha abierta: las unidades bajan para no quedar tapadas */ FX.drawUnder(c); try{ PFX.draw(c,'back','battle'); }catch(e){} /* pixelfx: lo que va detrás de las unidades */
       // los cuadros de las bestias pueden llegar unos cuadros tarde (atlas / Worker): al tenerlos, se rearma la formación con las cajas reales
       if(B._bbEst && !AUTO && (B._bbTry=(B._bbTry||0)+1)%8===1){ if(B.units.every(u=>bodyBox(u))) stageLayout(B); else if(B._bbTry>480) B._bbEst=false; }
       B.units.forEach(u=>moveUnit(u,dts));
@@ -25449,7 +25525,7 @@ const AMBZ=(()=>{
     rio:{tint:null,sound:'rio'}, granja:{tint:null,sound:'pajaros'}, aldea:{tint:null,sound:'pajaros'}, molle:{tint:null,sound:'viento'}, calle:{tint:null,sound:'pueblo'},
     montana:{tint:null,sound:'viento'}, selva:{tint:null,sound:'pajaros'}, desierto:{tint:null,sound:'viento'}, guerra:{tint:null,sound:'viento'}, costa:{tint:null,sound:'rio'},
     herreria:{tint:null,sound:'herreria'}, capilla:{tint:null,sound:'capilla'}, casa:{tint:null,sound:'casa'}, puesto:{tint:null,sound:'pueblo'},
-    castel:{tint:null,sound:'pueblo'}, aurea:{tint:null,sound:'pueblo'}, lisandra:{tint:null,sound:'pueblo'}, vesper:{tint:null,sound:'rio'}, equinoccia:{tint:null,sound:'viento'},
+    calle_quema:{tint:null,sound:'viento'}, castel:{tint:null,sound:'pueblo'}, aurea:{tint:null,sound:'pueblo'}, lisandra:{tint:null,sound:'pueblo'}, vesper:{tint:null,sound:'rio'}, equinoccia:{tint:null,sound:'viento'},
     volcan:{tint:null,sound:'viento'}, fiordo:{tint:null,sound:'viento'}, canales:{tint:null,sound:'rio'}, abismo:{tint:null,sound:'viento'},
     mapa:      {tint:null, sound:'viento'}
   };
@@ -32158,8 +32234,8 @@ ARC.cap(7,{
         const g=c.createLinearGradient(0,0,0,H); g.addColorStop(0,'rgba(40,10,10,'+(0.45+k)+')'); g.addColorStop(0.55,'rgba(120,35,10,'+(0.18+k)+')'); g.addColorStop(1,'rgba(255,120,30,'+(0.22+k)+')'); c.fillStyle=g; c.fillRect(0,0,W,H);
         c.fillStyle='rgba(255,170,70,.85)'; brasas.forEach(b=>{ b.y-=b.v*(dt||0.016); b.x+=Math.sin(ft*2+b.v)*0.3; if(b.y<-4){ b.y=H+4; b.x=Math.random()*W; } c.fillRect(Math.round(b.x),Math.round(b.y),2,2); }); c.restore(); };
       BGPOST.f=fuego;
-      try{ await painted('calle','c7_quema',st=>({
-        plaza:async()=>{ cuenta(await ARC.fightIn(st,{zone:'calle',party:null,music:'batalla',enemies:[['soldado',n],['soldado',n],[typeof lanceroKey==='function'?lanceroKey():'soldado',n],['ballestero',n]]})); },
+      try{ await painted('calle_quema','c7_quema',st=>({
+        plaza:async()=>{ cuenta(await ARC.fightIn(st,{zone:'calle_quema',party:null,music:'batalla',enemies:[['soldado',n],['soldado',n],[typeof lanceroKey==='function'?lanceroKey():'soldado',n],['ballestero',n]]})); },
         taberna:async()=>{ cuenta(await ARC.fightIn(st,{zone:'taberna',party:null,music:'batalla',enemies:[['sabueso',n],['sabueso',n],['soldado',n],['ballestero',n]]})); },
         herreria:async()=>{ cuenta(await ARC.fightIn(st,{zone:'herreria',party:null,boss:true,music:'jefe',enemies:[['montero',n+1],['jinete',n],['soldado',n]]})); },
         conteo:async()=>{ G.flags.hollin_salvados=salv; if(salv>=24) ARC.set('hollin_muchos'); else if(salv<14) ARC.set('hollin_pocos'); ARC.set('hollin_quemado'); tst('salvados',salv); ARC.log('salvados:'+salv); } }),{music:'batalla',post:fuego}); } finally { BGPOST.f=null; } heal(); },
