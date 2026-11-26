@@ -21164,6 +21164,27 @@ window.addEventListener('keyup',e=>{ if(KEYS.isUp(e,'avanzar')) FASTHOLD=false; 
 window.addEventListener('blur',()=>{ FASTHOLD=false; });
 // velocidad de texto en el encabezado (junto a Música)
 const TXTLBL={lenta:'lento',normal:'normal',rapida:'rápido'}; const TXTSUBS=[];
+/* v48.6 · Accesibilidad básica: tamaño de letra (diálogos, menús y opciones) y alto contraste. Se guarda con las opciones. */
+const LETRA={normal:'Normal',grande:'Grande',muy:'Muy grande'}; let LETRAMODE=store.get('letra','normal'); if(!LETRA[LETRAMODE]) LETRAMODE='normal'; let CONTRASTE=store.get('contraste','no')==='si';
+(function(){ try{ const css=`body.tl-grande #dline{--dfs:20px!important} body.tl-muy #dline{--dfs:23px!important}
+ body.tl-grande #dname{font-size:16px!important} body.tl-muy #dname{font-size:18px!important}
+ body.tl-grande #menu .mi{font-size:16px!important} body.tl-muy #menu .mi{font-size:18px!important}
+ body.tl-grande #menu .mi .mc{font-size:13.5px!important} body.tl-muy #menu .mi .mc{font-size:15px!important}
+ body.tl-grande #menuTitle{font-size:13px!important} body.tl-muy #menuTitle{font-size:15px!important}
+ body.tl-grande .op-wrap{font-size:1.1em} body.tl-muy .op-wrap{font-size:1.22em}
+ body.acc-con{--muted:#dfe5f0;--text:#ffffff}
+ body.acc-con #dialog{background:rgba(4,6,10,.97)!important;border-color:#f2f2f2!important}
+ body.acc-con #dline{color:#ffffff!important;text-shadow:0 1px 0 #000,0 0 3px #000!important}
+ body.acc-con #dialog.narr #dline{color:#eef4ff!important}
+ body.acc-con #menuBox{background:rgba(4,6,10,.97)!important;border-color:#f2f2f2!important}
+ body.acc-con #menu .mi{color:#ffffff!important;border-color:#cfd6e4!important}
+ body.acc-con #menu .mi .mc{color:#e6ebf4!important}
+ body.acc-con .op-note,body.acc-con .op-lbl{color:#eef2f8!important}`;
+  const st=document.createElement('style'); st.id='ldc-acc'; st.textContent=css; document.head.appendChild(st); }catch(e){} })();
+function aplicarAcc(){ try{ const b=document.body; if(!b) return; b.classList.toggle('tl-grande',LETRAMODE==='grande'); b.classList.toggle('tl-muy',LETRAMODE==='muy'); b.classList.toggle('acc-con',CONTRASTE); }catch(e){} }
+function setLetra(m){ if(!LETRA[m]) return; LETRAMODE=m; store.set('letra',m); aplicarAcc(); }
+function setContraste(v){ CONTRASTE=!!v; store.set('contraste',v?'si':'no'); aplicarAcc(); }
+if(document.body) aplicarAcc(); else document.addEventListener('DOMContentLoaded',aplicarAcc);
 function setTxtMode(m){ if(!TXTSPD[m]) return; TXTMODE=m; store.set('txtspd',m); TXTSUBS.forEach(f=>{ try{ f(); }catch(e){} }); }
 { const mb=document.getElementById('btnMute'); if(mb&&mb.parentNode){ const b=document.createElement('button'); b.className='iconbtn'; b.id='btnTxt'; b.type='button';
     const upd=()=>{ b.textContent='Texto: '+TXTLBL[TXTMODE]; b.title='Velocidad del texto: '+TXTLBL[TXTMODE]+' (tocá para cambiar; también en Menú › Opciones)'; }; upd(); TXTSUBS.push(upd);
@@ -24750,6 +24771,12 @@ function optGeneral(B){
   ['lenta','normal','rapida'].forEach(m=>{ const b=btn('op-segb'+(TXTMODE===m?' on':''),TXTLBL[m][0].toUpperCase()+TXTLBL[m].slice(1),()=>{ setTxtMode(m); seg.querySelectorAll('.op-segb').forEach(x=>{ const on=x.dataset.m===TXTMODE; x.classList.toggle('on',on); x.setAttribute('aria-checked',String(on)); }); runPrev(); });
     b.dataset.m=m; b.setAttribute('role','radio'); b.setAttribute('aria-checked',String(TXTMODE===m)); seg.appendChild(b); });
   row.appendChild(seg); st.appendChild(row); st.appendChild(prev); runPrev();
+  // v48.6 · accesibilidad: tamaño de letra y alto contraste
+  const segRow=(lbl,aria,opts,cur,set)=>{ const r=el('div','op-row'); r.appendChild(el('span','op-lbl',lbl)); const sg=el('div','op-seg'); sg.setAttribute('role','radiogroup'); sg.setAttribute('aria-label',aria);
+    opts.forEach(([v,t])=>{ const b=btn('op-segb'+(cur()===v?' on':''),t,()=>{ set(v); sg.querySelectorAll('.op-segb').forEach(x=>{ const on=x.dataset.v===String(cur()); x.classList.toggle('on',on); x.setAttribute('aria-checked',String(on)); }); }); b.dataset.v=String(v); b.setAttribute('role','radio'); b.setAttribute('aria-checked',String(cur()===v)); sg.appendChild(b); });
+    r.appendChild(sg); return r; };
+  st.appendChild(segRow('Tamaño de letra','Tamaño de letra',[['normal','Normal'],['grande','Grande'],['muy','Muy grande']],()=>LETRAMODE,setLetra));
+  st.appendChild(segRow('Alto contraste','Alto contraste',[[false,'No'],[true,'Sí']],()=>CONTRASTE,setContraste));
   st.appendChild(el('div','op-note','Durante el diálogo: '+KEYS.label('rapido')+' prende el texto rápido, mantener '+KEYS.label('avanzar')+' adelanta y '+KEYS.label('saltar')+' salta la escena.'));
   // pantalla
   const sp=optSection(left,'Pantalla');
@@ -28074,6 +28101,38 @@ const DUELO_FRASES={
     D:['A ver qué traés.','Vení vos, que yo espero.','Guardia arriba. Dale.'],
     X:['¡Ahora sí, a todo o nada!','Si no caés con esta, me retiro.','¡Que hablen las Mellizas!'] },
   capitan_rosa:{ A:['Por la Rosa, de frente.','Un golpe limpio y se termina.'], D:['Que venga. La Rosa no retrocede.','Mostrame lo que te enseñaron.'], X:['¡Ceniza o gloria!','¡Todo por la columna!'] },
+  // v48.6 (26/11): frases propias de los generales enemigos. Cada lista dice la verdad sobre el PRIMER golpe del rival:
+  // A = ataca, D = se cubre, X = desesperado. El jugador que escucha aprende a leerlos.
+  lancero_rosa:{ A:['La punta va primero. Siempre.','Una estocada y a casa.','Contá los pasos: el tercero es tuyo.'],
+    D:['El asta es más larga que tu brazo. Vení si te da.','Muro de lanzas. Probá.','Quieto. Que el que se mueve, se clava.'],
+    X:['¡Carga de lanza, sin escudo!','¡Al pecho, aunque me cueste el mío!','¡Que se rompa el asta o vos!'] },
+  rc_caballero:{ A:['Un jinete no espera.','Te paso por encima, a pie y todo.','Espuela y filo.'],
+    D:['Bajé del caballo, no de la guardia.','El escudo de la Rosa aguanta más que vos.','Te dejo venir. Después te cobro.'],
+    X:['¡Como en la carga de Varne!','¡Todo el peso, de una!','¡Que el último golpe sea el mío!'] },
+  ballestero:{ A:['De cerca también tiro.','No me hace falta la ballesta para esto.','Un virote de mano, directo.'],
+    D:['Yo espero. Siempre espero.','La paciencia es el arma del que apunta.','Mové vos primero.'],
+    X:['¡Si fallo esta, me muero acá!','¡A quemarropa!','¡El último virote!'] },
+  varek:{ A:['Hollin ardió por menos que esto.','Arrodillate y termino rápido.','El Regente me paga por golpe.'],
+    D:['¿Eso es el Cuervo Gris? Vení, cachorro.','Mi armadura vio más guerras que vos.','Te dejo cansarte primero.'],
+    X:['¡Ceniza y Rosa, hasta el final!','¡Si caigo, caigo encima tuyo!','¡Que arda todo!'] },
+  valdris:{ A:['Escorpión contra escorpión. El aguijón primero.','Sin yelmo no se miente. Ataco.','Un tajo negro, derecho.'],
+    D:['Te leo como vos me leés.','El espadón también sabe esperar.','Quieto. Mirá cómo respiro.'],
+    X:['¡Que el veneno decida!','¡Todo, como si no hubiera mañana!','¡Si muero, que sea de frente!'] },
+  casimir:{ A:['Vine a matarte. No lo olvidé.','Rápido y limpio, como me enseñaron.','Primero la garganta.'],
+    D:['Te estudio. Tengo tiempo.','No me apuro: el contrato no vence.','Mostrame la mano, Varre.'],
+    X:['¡Si no te mato ahora, no te mato nunca!','¡Todo el contrato en un golpe!','¡Ahora o me voy con las manos vacías!'] },
+  selene:{ A:['Sentencia: primer golpe.','El Tribunal no pregunta dos veces.','Por la balanza, ataco.'],
+    D:['La ley espera a que el reo hable.','Decreto: quietud.','Demostrá tu inocencia, si podés.'],
+    X:['¡Juicio sumario!','¡Que la balanza se rompa!','¡Sentencia final, sin apelación!'] },
+  hrafna:{ A:['¡Valkhar pega primero y pregunta después!','La Brasa no espera.','Un hachazo, como en el norte.'],
+    D:['Vení, sureño. Calentame las manos.','El fuego aguanta. Probá apagarlo.','Te dejo acercarte. Es más divertido.'],
+    X:['¡Por Karhos y la nieve!','¡Todo al fuego!','¡Que me canten en las sagas!'] },
+  mhurren:{ A:['Maté dragones más grandes que vos.','Hacha arriba. Ahí va.','Un golpe, un trofeo.'],
+    D:['Los dragones también se apuran. Por eso mueren.','Espero como en la caza.','Movete. Quiero ver tus patas.'],
+    X:['¡Como contra el Viejo Rojo!','¡Fuego en el hacha, todo!','¡Ahora o nunca, presa!'] },
+  garmo:{ A:['Me pagan por adelantado. Cumplo.','Las garras primero, después hablamos.','Un zarpazo y cobro.'],
+    D:['Yo huelo el miedo. Esperá un poco.','No me muevo hasta que vos te muevas.','El rastreador espera.'],
+    X:['¡Por la plata o por el orgullo, todo!','¡Aullido pagado!','¡A muerte, que el que paga no pregunta!'] },
   _:{ A:['Ahí voy.','Derecho.'], D:['Te espero.','Vení.'], X:['¡Todo o nada!','¡Ahora!'] }
 };
 const DUELO_SENA={ ilian:{name:'El Ojo',sub:'Ves uno de los tres golpes del rival antes de elegir',usos:2},
@@ -31036,7 +31095,14 @@ LINES.cap6 = {
       ['say','ilian','No lo matamos.','d'],
       ['say','casimir','Eso dicen todos los carteles que no dicen nada.','a'],
       ['narr','Nach baja corriendo la escalera, a medio vestir, con Don Pico en la mano. Detrás, Maela. Detrás, todos.'],
+      ['say','ilian','Quietos. Vino por mí.','t'],
+      ['say','casimir','Por fin alguien con modales.','h'],
       ['hook','battle'],
+      ['if',{flag:'casimir_salva_nach'},
+        [['narr','El estoque de escarcha le abre el brazo a Ilian y lo tira contra la piedra. Casimir levanta la llama para terminar.'],
+         ['say','nach','Modales los tengo yo.','a'],
+         ['narr','Don Pico baja de plano sobre el hombro de Casimir. No es un golpe limpio. Es un golpe de hermano.']],
+        [['narr','Ilian le lee el tercer paso antes de que lo dé. El estoque pasa de largo; la daga no.']]],
       ['narr','Casimir cae de rodillas en la piedra mojada. La llama se le apaga en la mano. El estoque sigue frío.'],
       ['say','casimir','Termínenlo. No me gusta esperar.','t'],
       ['say','severo','No.','t'],
@@ -31189,7 +31255,8 @@ ARC.cap(6,{
     async c6_casimir(){ const n=lvlCore();
       await painted('ruinas','c6_casimir',st=>({
         battle:async()=>{ Object.values(G.party).forEach(m=>{ if(m) m.imp=0; });
-          await ARC.fightIn(st,{zone:'ruinas',party:null,boss:true,music:'jefe',must:['ilian'],enemies:[['casimir_jefe',n+2]],endAt:{key:'casimir_jefe',pv:0.25}}); },
+          /* v48.6: el muelle es un duelo (duelo.js): Casimir vino por Ilian, e Ilian frena a los demás. Si Ilian pierde, Nach entra con Don Pico (texto condicional). */
+          try{ playMusic('jefe'); }catch(e){} const r=await DUELO.run({p:'ilian',e:'casimir',eName:'Casimir Vey',eSpr:'casimir',bg:'ruinas',title:'El muelle',endE:25,endP:20,lines:'casimir'}); if(!r.win) ARC.set('casimir_salva_nach'); try{ playMusic('intriga'); }catch(e){} },
         joinCasimir:async()=>{ ARC.join('casimir',n); tst('casimir'); ARC.log('rec:casimir'); } }),{music:'intriga',over:noche(0.5)});
       Object.values(G.party).forEach(m=>{ const s=stats(m); if(m.pv<=0) m.pv=1; }); },
     async c6_barones(){ await painted('ruinas','c6_barones',{finCap:async()=>{ ARC.set('barones_bastion'); await ARC.capEnd(6); }},{music:'intriga'}); },
@@ -32894,6 +32961,106 @@ ARC.cap(8,{
         c.fillStyle='#e0b860'; c.font='700 '+FSZ(13)+'px "Alegreya Sans SC", system-ui, sans-serif'; c.fillText('FIN DEL ARCO II · EL ARCO III SIGUE EN LA PRÓXIMA VERSIÓN',W/2,146); c.fillStyle='#d9dfec'; c.font='14px Alegreya, Georgia, serif'; c.fillText('Tu partida quedó guardada acá.',W/2,172); }});
       await fadeTo(0,600); await choose([{label:'Volver al título',value:1,cls:'primary',icon:'back'}],'Fin del Arco II'); try{ location.reload(); }catch(e){} await new Promise(()=>{}); }
   }});
+})();
+/* ==================== MÓDULO arco2/fogones.js ==================== */
+/* ============================================================
+   v48.6 (26/11/2026) · CHARLAS DE FOGÓN del Arco II (Armonía, Etapa 10 §2.3 y §2.5): escenas cortas entre pares, en el Bastión.
+   Se ofrecen al cerrar tres tramos (después de «Ruina recuperada» en el 6, de la tercera lumbre en el 7 y del reencuentro en el 8):
+   un menú con las charlas cuyos dos personajes están en el ejército y que todavía no se vieron; se elige una, otra o «Seguir».
+   Suben la afinidad del par. Son optativas: la prueba automática no las juega (no cambian la huella de la partida).
+   ============================================================ */
+LINES.cap_fogon = {
+  labels: { cf_estanque:'Ilian y Olaf · el estanque de los sellos', cf_forja:'Bram y Tessa · la fragua', cf_leyes:'Casimir y Severo · la biblioteca',
+    cf_surcos:'Dov y Faelan · la huerta', cf_edric:'Elowen e Ysa · el jardín', cf_pulseada:'Nach y Hoskel · la sala de armas', cf_lira:'Ilian y Nach · la muralla' },
+  scenes: {
+    cf_estanque: [
+      ['vig',0.4],
+      ['narr','El estanque del patio es agua quieta sobre piedra grabada. De día no se ve nada. De noche, con la luna justa, las letras del fondo parecen moverse.'],
+      ['say','ilian','«Ka-thel»… no. Eso no dice. Eso lo dije yo, hace diecisiete años.','t'],
+      ['narr','Olaf se sienta en el borde, de cara al agua. No ve. Igual mira el mismo punto que Ilian, un círculo de letras más gastado que el resto.'],
+      ['say','ilian','¿Vos también lo sentís, viejo? Ahí abajo hay algo que no quiere que lo lea.','n'],
+      ['narr','Olaf estira una pata y toca el agua. Las letras se borran en ondas.'],
+      ['say','ilian','Tenés razón. Esta noche no. Esta noche dejamos que duerma.','h']
+    ],
+    cf_forja: [
+      ['vig',0.3],
+      ['narr','La fragua del Bastión ya tira. Bram le pone a Tessa un martillo en la mano y un pedazo de hierro al rojo sobre el yunque.'],
+      ['say','bram','Tres golpes y lo das vuelta. Tres y vuelta. No le pegues como si te debiera plata.','n'],
+      ['say','tessa','¿Y si me debe?','h'],
+      ['narr','Los tres golpes salen torcidos. El cuarto también. El hierro queda con forma de algo que no existe.'],
+      ['say','tessa','Bram. Te lo digo con cariño: a mí me gusta el arco. El arco no se queja.','t'],
+      ['say','bram','El arco tampoco te cuida la espalda en una pared. Igual… esa punta que hiciste sirve para flecha. Fea, pero sirve.','h'],
+      ['say','tessa','¿Fea pero sirve? Me la quedo. Es lo más lindo que me dijeron este mes.','h']
+    ],
+    cf_leyes: [
+      ['vig',0.5],
+      ['narr','En la biblioteca a medio armar hay una vela, dos sillas y un solo libro de leyes, que se pasan de mano en mano desde hace tres horas.'],
+      ['say','casimir','La cláusula cuarta dice «heredero real». Edric era heredero. Por eso la Concordia se rompió con él, no con el rey.','n'],
+      ['say','severo','La cláusula cuarta dice «se juzga como crimen». No dice quién juzga. Esa palabra que falta es la que se usó para matarlos a ustedes.','t'],
+      ['say','casimir','Usted defiende una ley que lo echó.','a'],
+      ['say','severo','Defiendo lo que la ley debería decir. Es otro oficio. Peor pago.','n'],
+      ['narr','Casimir cierra el libro con cuidado, como se cierra una carta ajena.'],
+      ['say','casimir','Le escribía a Edric los discursos sobre la justicia. Nunca le pregunté si creía en ellos.','s'],
+      ['say','severo','Pregúntese si usted cree. Él ya no puede contestar; usted sí.','n']
+    ],
+    cf_surcos: [
+      ['vig',0.3],
+      ['narr','Teo midió la huerta alta y la partió en dos. A Dov le tocó la mitad con piedras. A Faelan, la mitad con raíces. Nadie quiso cambiar.'],
+      ['say','dov','Los surcos van derechos. Una línea. Como una runa.','a'],
+      ['say','faelan','Los surcos van como baja el agua. La tierra no lee runas, maese enano.','t'],
+      ['say','dov','La tierra no lee nada. Por eso hay que escribirle encima.','a'],
+      ['narr','Pasan la tarde discutiendo cada palmo. Al final la huerta queda con surcos derechos que se doblan, exactamente, donde baja el agua.'],
+      ['say','faelan','Hace cuatrocientos años, un enano y un elfo hicieron un jardín así en Sylvaren. Se pelearon todo el tiempo.','n'],
+      ['say','dov','¿Y qué pasó con el jardín?','o'],
+      ['say','faelan','Sigue ahí. Ellos no.','h']
+    ],
+    cf_edric: [
+      ['vig',0.4],
+      ['narr','El jardín del claustro todavía es un banco de piedra y un sauce que nadie plantó. Elowen se sienta. Ysa se sienta al lado, sin pedir permiso.'],
+      ['say','ysa','Todos te miran como a la viuda de un príncipe. Vos mirás el sauce como si te debiera algo.','n'],
+      ['say','elowen','Me iban a casar con él para cerrar una frontera. Lo vi tres veces. Era amable. Hablaba de caballos.','t'],
+      ['say','elowen','No lo amaba, Ysa. Y lo lloro igual. ¿Eso me hace mentirosa?','s'],
+      ['say','ysa','Te hace honesta. Llorás al que pudo haber sido. Es el duelo más largo que hay.','n'],
+      ['narr','Elowen se ríe por primera vez desde Castel Brenn. Es una risa corta, sorprendida de sí misma.']
+    ],
+    cf_pulseada: [
+      ['vig',0.3],
+      ['narr','Sala de armas. Un barril puesto de pie, dos codos encima. Nach y Hoskel se miran como se miran los toros viejos.'],
+      ['say','nach','A tres. Uno…','d'],
+      ['say','hoskel','En mi clan se cuenta hasta cinco. Los de cinco tienen más paciencia.','n'],
+      ['narr','Simona se sienta al lado de Nach, mira a Hoskel fijo y ladra una sola vez. Hoskel parpadea. Nach gana.'],
+      ['say','hoskel','Eso fue trampa de perro.','a'],
+      ['say','nach','Eso fue estrategia de perro. Revancha mañana. Sin Simona.','h'],
+      ['say','hoskel','Mañana hasta cinco.','h']
+    ],
+    cf_lira: [
+      ['vig',0.6],
+      ['narr','Muralla norte, de noche. Ilian toca la lira de la madre. Le sale mal la tercera nota, como siempre, desde que tenía diez años.'],
+      ['say','nach','Mamá la tocaba igual. Mal en la tercera.','h'],
+      ['say','ilian','No me acuerdo. Me acuerdo de la canción, no de ella tocándola.','s'],
+      ['say','nach','Yo tenía tres. No me acuerdo de nada. Me acuerdo de vos tocándola.','n'],
+      ['narr','Ilian sigue. La tercera nota sale mal otra vez. Ninguno de los dos la corrige.']
+    ]
+  },
+  cast: { cf_estanque:['ilian','olaf'], cf_forja:['bram','tessa'], cf_leyes:['casimir','severo'], cf_surcos:['dov','faelan'], cf_edric:['elowen','ysa'],
+    cf_pulseada:['nach','simona','hoskel'], cf_lira:['ilian','nach'] },
+  aff: { scene: { cf_estanque:[['ilian','olaf',3]], cf_forja:[['bram','tessa',3]], cf_leyes:[['casimir','severo',3]], cf_surcos:[['dov','faelan',4]],
+    cf_edric:[['elowen','ysa',3]], cf_pulseada:[['nach','hoskel',3]], cf_lira:[['ilian','nach',3]] } },
+  fondos: { cf_estanque:'ruinas', cf_forja:'herreria', cf_leyes:'casa', cf_surcos:'aldea', cf_edric:'capilla', cf_pulseada:'herreria', cf_lira:'noche' },
+  tandas: { c6_base:['cf_estanque','cf_forja'], c7_lumbre3:['cf_leyes','cf_surcos','cf_edric','cf_forja','cf_estanque'], c8_reencuentro:['cf_pulseada','cf_lira','cf_leyes','cf_surcos','cf_edric'] }
+};
+try{ ARC.merge('_fogon'); }catch(e){ console.error('[arco2] charlas de fogón',e); }
+const FOGON=(function(){
+  const L=()=>LINES.cap_fogon, enEj=id=>!!((G.party||{})[id]||(G.away||{})[id]);
+  const visto=id=>!!((G.flags.chats||{})[id]);
+  const libre=id=>!visto(id)&&(L().cast[id]||[]).filter(x=>x!=='olaf'&&x!=='simona').every(enEj); // Olaf y Simona van con sus dueños
+  async function ofrecer(tanda){ if(AUTO) return; const ids=(L().tandas[tanda]||[]); let vueltas=0;
+    while(vueltas++<3){ const disp=ids.filter(libre); if(!disp.length) return;
+      const v=await choose(disp.map(id=>({label:L().labels[id],sub:'Charla de fogón',value:id,icon:'go'})).concat([{label:'Seguir',value:null,cls:'primary'}]),'El Bastión, de noche','cmd');
+      if(!v) return; try{ await painted(L().fondos[v]||'ruinas',v,{},{music:'fogon',over:v==='cf_lira'?null:noche(0.25)}); }catch(e){ console.error('[fogón]',v,e); }
+      (G.flags.chats||(G.flags.chats={}))[v]=true; try{ ARC.log('fogon:'+v); }catch(e){} } }
+  Object.keys(L().tandas).forEach(st=>{ try{ ARC.step(st,'post',()=>ofrecer(st)); }catch(e){} });
+  return {ofrecer,libre};
 })();
 /* ==================== MÓDULO viaje.js ==================== */
 /* ============================================================
