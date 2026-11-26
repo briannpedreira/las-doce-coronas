@@ -23379,11 +23379,11 @@ const SKIPOPS={say:1,narr:1,think:1,whisper:1,emote:1,wait:1,title:1,sfx:1,shake
 async function playScene(name,ctx){
   const cmds=LINES.scenes[name]; if(!cmds){ console.warn('escena sin datos',name); return; }
   pxWarmCmds(cmds); // v26-fix: retratos pixel del elenco pedidos antes de la primera línea
-  const prevOk=SKIP.ok; SKIP.ok=!AUTO; syncSkipBtn(); sceneEnter();
+  const prevOk=SKIP.ok, prevOn=SKIP.on; SKIP.ok=!AUTO; syncSkipBtn(); sceneEnter();
   try{
   await runCmds(cmds,ctx,name);
   if(!(ctx&&ctx.noAff)) try{ affList(((LINES.aff||{}).scene||{})[name]); }catch(e){}
-  } finally { SKIP.ok=prevOk; if(!prevOk) SKIP.on=false; syncSkipBtn(); sceneExit(); }
+  } finally { SKIP.ok=prevOk; SKIP.on=prevOk?prevOn:false; /* v49.1: el salteo de una escena anidada no se filtra a la que la contiene */ syncSkipBtn(); sceneExit(); }
 }
 // cuerpo del intérprete (escenas v2: lo reusan '?' e 'if' para sus comandos anidados; respeta SKIP)
 async function runCmds(cmds,ctx,name){
@@ -23581,7 +23581,12 @@ Object.assign(SPRMAP,{gato_capilla:'gato_pueblo'}); // cocinera, parroquiano y a
 Object.assign(NPCNAME,{cocinera:'Cocinera',parroquiano:'Parroquiano',aprendiz:'Aprendiz de Bram',gato_capilla:'Gato'});
 // Arco I (Tanda 0, S8): cfg opcional = estado de Hollin por capítulo {tag, lead, fol, npcs:[ids visibles], wander:[...WDEF], lines:{npc:{first,again}}, extra(api)->[], tint, auto(api)}.
 // Sin cfg se comporta exactamente como en el Cap. 1.
-function townExplore(cfg){ cfg=cfg||null;
+/* v49.1 (bug de Brian, 26/11: «una vez que salteás una conversación, el resto en la ciudad se saltean solas»): el pueblo se explora
+   desde un hook de escena (explorar), así que corría con SCDEPTH>0 y SKIP.ok prendido; el salteo de una charla de NPC quedaba
+   prendido para todo el pueblo. Ahora la exploración corre aislada, como si no hubiera escena afuera, y al salir se restaura. */
+async function townExplore(cfg){ const sv={ok:SKIP.ok,d:SCDEPTH}; SKIP.ok=false; SKIP.on=false; SKIP.arm=0; SCDEPTH=0; syncSkipBtn();
+  try{ return await townExplore0(cfg); } finally { SCDEPTH=sv.d; SKIP.ok=sv.ok; SKIP.on=false; SKIP.arm=0; syncSkipBtn(); try{ if(FASTTXT) setFast(false); }catch(e){} } }
+function townExplore0(cfg){ cfg=cfg||null;
   return new Promise(res=>{
     const TW=ENV.town; TW.chestOpen=!!G.flags.cofre; const sp=TW.spots;
     const LH=LINES.hollin||{ex:{},doors:{},secret:{},enter:{},rooms:{},toy:{lines:[]}};
@@ -23914,11 +23919,11 @@ async function playChat(S,ch,ni){
   fadeTo(0,140);
   // llegan caminando y se sientan alrededor del fuego (en paralelo con el fundido)
   await Promise.all(st.list.map((a,k)=>sleep(k*30).then(()=>tweenTo(a,a.seat[0],a.seat[1],200)).then(()=>{ a.walking=false; a.base=a.sits?'sit':null; a.at=T; a.face=a.x<FX.x?1:-1; })));
-  const prevOk=SKIP.ok; SKIP.ok=!AUTO; sceneEnter();
+  const prevOk=SKIP.ok, prevOn=SKIP.on; SKIP.ok=!AUTO; SKIP.on=false; sceneEnter();
   let bonus=0;
   try{ for(const ln of ch.lines){ if(SKIP.on&&ln[0]!=='?') continue;
       if(ln[0]==='?'){ hideDialog(); const o=await choose(ln[1].map((x,k)=>({label:x.label,value:k,cls:k===0?'primary':'',auto:k===0,icon:'chat'})),ln[2]||'¿Qué respondés?'); const x=ln[1][o]; bonus+=x.aff||0; for(const [w,t,e] of (x.lines||[])){ if(SKIP.on) break; await say(w,t,e||'n'); } continue; }
-      const [who,text,expr]=ln; await say(who,text,expr||'n'); } } finally { SKIP.ok=prevOk; SKIP.on=false; syncSkipBtn(); sceneExit(); }
+      const [who,text,expr]=ln; await say(who,text,expr||'n'); } } finally { SKIP.ok=prevOk; SKIP.on=prevOk?prevOn:false; syncSkipBtn(); sceneExit(); }
   try{ if(ch.pair){ const e=affEntry(ch.pair[0],ch.pair[1]); if(e&&!e.seen.includes(ch.id)) e.seen.push(ch.id); if(bonus) affAdd(ch.pair[0],ch.pair[1],bonus); } }catch(e){}
   hideDialog(); (G.flags.chats||(G.flags.chats={}))[ch.id]=true;
   st.cam.tbars=0; await fadeTo(1,110); setScene(S); S.cast=null; S.olafProxy=null; S.dim=0; fadeTo(0,140);
@@ -24688,7 +24693,9 @@ save=function(cp){ const same=SAVES.st.cp===cp; G.cp=cp; SAVES.auto(same?'interi
     if(st.cp&&st.cp===G.cp&&k<st.done){ toast('Ese combate ya estaba ganado en la partida guardada',2200); return; }
     const r=await _battle(cfg); if(st.cp===G.cp) st.done=Math.max(st.done,k+1); SAVES.auto('combate'); return r; }; }
 { const _ps=playScene; const hasBattle=n=>{ const c=LINES.scenes[n]; return !!(c&&c.some(x=>x[0]==='hook'&&x[1]==='battle')); };
-  playScene=async function(name,ctx){ const st=SAVES.st; if(st.cp&&st.idx<st.done&&hasBattle(name)) SKIP.on=true; return _ps(name,ctx); }; }
+  playScene=async function(name,ctx){ const st=SAVES.st; if(!(st.cp&&st.idx<st.done&&hasBattle(name))) return _ps(name,ctx);
+    /* v49.1: la escena ya jugada (combate ganado en la partida guardada) se saltea sola, pero el salteo no sale de ella */
+    const was=SKIP.on; SKIP.on=true; try{ return await _ps(name,ctx); } finally { SKIP.on=was; } }; }
 
 /* ---------- lista de ranuras (pausa: guardar/cargar/borrar · título: cargar/borrar) ---------- */
 function slotCard(id,rec,mode,host,refresh,onLoad,onSave){
@@ -34715,7 +34722,7 @@ window.__LDC={get G(){return G}, combateTest:(cfg)=>{ try{ if(!G||!G.party||!Obj
   fondoTest:()=>({drawBG,ENV,AMBZ:(typeof AMBZ!=='undefined'?AMBZ:null),AMBI:(typeof AMBI!=='undefined'?AMBI:null),W,H}), // v48: fondos de combate (tools/verify/fondos.js)
   musicaTest:()=>({AU,playInst,MUS,MUS_BIBLIA,MUS_LIBRE,MUSBIB_ERR,renderOptions,OPTV}), // v45: render de los temas (tools/verify/musica.js)
   arteTest:()=>({SPR,troop:WAR._troop,ICONOS,artImage}), // v42: control del arte del lote (tools/verify/lote_arte.js)
-  miniTest:()=>({miniReal,miniDraw,town:ENV.town,zones:ZONES}), get skip(){ return {on:SKIP.on,ok:SKIP.ok,fast:FASTTXT,auto:AUTO,txt:TXTMODE}; }, cerrarDialogo:()=>hideDialog(), sceneProbe:(cmds)=>{ LINES.scenes.__probe=cmds; return playScene('__probe',{get:()=>null,hooks:{},noAff:true}).then(()=>{ hideDialog(); return 'ok'; }); }, // v44.3: control del salteo (tools/verify/salteo.js) // v43: capturas del minimapa (tools/verify/minimapa.js)
+  miniTest:()=>({miniReal,miniDraw,town:ENV.town,zones:ZONES}), get skip(){ return {on:SKIP.on,ok:SKIP.ok,fast:FASTTXT,auto:AUTO,txt:TXTMODE}; }, cerrarDialogo:()=>hideDialog(), sceneProbe:(cmds,hooks,name)=>{ const nm=name||'__probe'; LINES.scenes[nm]=cmds; return playScene(nm,{get:()=>null,hooks:hooks||{},noAff:true}).then(()=>{ hideDialog(); return 'ok'; }); }, // v44.3: control del salteo (tools/verify/salteo.js) // v43: capturas del minimapa (tools/verify/minimapa.js)
   // stageTest: reproduce una escena suelta (para capturas y pruebas de puesta)
   chatTest:async(ni,id)=>escenaTest(id||'af_hermanos'), escenaTest:(id,zone)=>escenaTest(id,zone), get town(){ return CUR.town; }, esc:{avail:escenaAvail,pend:escenasPendientes,meta:escenaMeta,lost:escenaLost,seen:escenaSeen,play:playEscena,affKey}, migrar:()=>{ migrarEscenas(); return {chats:Object.keys(G.flags.chats||{}),parcial:G.flags.escParcial||{},choice:G.flags.escChoice||{}}; },
   stageTest:async(zone,name,flags)=>{ Object.assign(ENV.flags,flags||{}); const pz=name==='campamento'?presoPuesta():null; const st=await stageIn(zone,name,200); if(name==='emboscada_post'){ PTIRO.dress(st); await PTIRO.tiro(st); } else if(zone==='puente'&&name==='puente') PTIRO.dress(st,'puente'); await playScene(name,stageCtx(st,Object.assign({valdrisVisible:async()=>{ ENV.flags.valdris=true; },silencio:async()=>{},partyChange:async()=>{},battle:async()=>{},derrumbe:async()=>{ await PTIRO.derrumbe(st); }},pz?pz.hooks(st):{}))); hideDialog(); return 'ok'; }, get scene(){return scene}, get B(){return CUR.B}, get bossTurns(){return CUR.bossTurns}, get ended(){return (CUR.endCount||0)>0}, get bossLog(){return CUR.bossLog||[]},
