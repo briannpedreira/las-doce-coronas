@@ -172,7 +172,7 @@ if(!A["sprite:sasquatch"])A["sprite:sasquatch"]={"src": LDC_ASSET("art/ref/sasqu
 A["dlgport:sasquatch"]=LDC_ASSET("art/ref/sasquatch/retrato-px.png"); // v38: retrato provisorio recortado de la hoja
 if(!A["sprite:lancero_rosa"])A["sprite:lancero_rosa"]={"src": LDC_ASSET("art/ref/lancero/sprite.png"), "fw": 85, "fh": 79, "bw": 40, "bh": 60, "sc": 1, "seatDrop": 17, "oy": 2, "anims": {"idle": [0, 6, 6.8], "walk": [1, 6, 10], "attack": [2, 8, 14.7], "cast": [3, 8, 12.5], "hit": [4, 4, 11.8], "guard": [5, 4, 14.3], "low": [6, 4, 10], "ko": [7, 8, 11.1], "victory": [8, 9, 12.5], "talk": [9, 7, 10], "sit": [10, 6, 5], "nod": [11, 5, 10], "shake": [12, 5, 10.4], "point": [13, 3, 5], "shrug": [14, 3, 5.6], "laugh": [15, 4, 8.3], "surprise": [16, 3, 7.5], "think": [17, 2, 2.5], "cross": [18, 2, 2.5], "bow": [19, 3, 4.5], "walk_e": [20, 6, 10], "walk_s": [21, 6, 10], "walk_n": [22, 6, 10], "idle_s": [23, 4, 4.5], "idle_n": [24, 4, 4.5], "shoot": [2, 8, 14.7]}, "hit": {"attack": 0.22, "cast": 0.44, "shoot": 0.22}};
 if(!A["sprite:noko"])A["sprite:noko"]={"src": LDC_ASSET("art/ref/noko/sprite.png"), "fw": 72, "fh": 66, "bw": 40, "bh": 60, "sc": 1, "seatDrop": 17, "oy": 2, "anims": {"idle": [0, 6, 6.8], "walk": [1, 6, 10], "attack": [2, 7, 14], "cast": [3, 8, 12.5], "hit": [4, 4, 11.8], "guard": [5, 4, 14.3], "low": [6, 4, 10], "ko": [7, 8, 11.1], "victory": [8, 9, 12.5], "talk": [9, 7, 10], "sit": [10, 6, 5], "nod": [11, 5, 10], "shake": [12, 5, 10.4], "point": [13, 3, 5], "shrug": [14, 3, 5.6], "laugh": [15, 4, 8.3], "surprise": [16, 3, 7.5], "think": [17, 2, 2.5], "cross": [18, 2, 2.5], "bow": [19, 3, 4.5], "walk_e": [20, 6, 10], "walk_s": [21, 6, 10], "walk_n": [22, 6, 10], "idle_s": [23, 4, 4.5], "idle_n": [24, 4, 4.5], "shoot": [2, 7, 14]}, "hit": {"attack": 0.22, "cast": 0.44, "shoot": 0.22}};
-if(!A["sprite:ferro"])A["sprite:ferro"]={"src": LDC_ASSET("art/ref/ferro/sprite.png"), "fw": 77, "fh": 66, "bw": 40, "bh": 61, "sc": 1, "seatDrop": 17, "oy": 2, "anims": {"idle": [0, 6, 6.8], "walk": [1, 6, 10], "attack": [2, 7, 14], "cast": [3, 8, 12.5], "hit": [4, 4, 11.8], "guard": [5, 4, 14.3], "low": [6, 4, 10], "ko": [7, 8, 11.1], "victory": [8, 9, 12.5], "talk": [9, 7, 10], "sit": [10, 6, 5], "nod": [11, 5, 10], "shake": [12, 5, 10.4], "point": [13, 3, 5], "shrug": [14, 3, 5.6], "laugh": [15, 4, 8.3], "surprise": [16, 3, 7.5], "think": [17, 2, 2.5], "cross": [18, 2, 2.5], "bow": [19, 3, 4.5], "walk_e": [20, 6, 10], "walk_s": [21, 6, 10], "walk_n": [22, 6, 10], "idle_s": [23, 4, 4.5], "idle_n": [24, 4, 4.5], "shoot": [2, 7, 14]}, "hit": {"attack": 0.22, "cast": 0.44, "shoot": 0.22}};
+if(!A["sprite:ferro"])A["sprite:ferro"]={"src": LDC_ASSET("art/ref/ferro/sprite.png"), "fw": 77, "fh": 66, "bw": 40, "bh": 61, "sc": 0.84, "seatDrop": 17, "oy": 2, "anims": {"idle": [0, 6, 6.8], "walk": [1, 6, 10], "attack": [2, 7, 14], "cast": [3, 8, 12.5], "hit": [4, 4, 11.8], "guard": [5, 4, 14.3], "low": [6, 4, 10], "ko": [7, 8, 11.1], "victory": [8, 9, 12.5], "talk": [9, 7, 10], "sit": [10, 6, 5], "nod": [11, 5, 10], "shake": [12, 5, 10.4], "point": [13, 3, 5], "shrug": [14, 3, 5.6], "laugh": [15, 4, 8.3], "surprise": [16, 3, 7.5], "think": [17, 2, 2.5], "cross": [18, 2, 2.5], "bow": [19, 3, 4.5], "walk_e": [20, 6, 10], "walk_s": [21, 6, 10], "walk_n": [22, 6, 10], "idle_s": [23, 4, 4.5], "idle_n": [24, 4, 4.5], "shoot": [2, 7, 14]}, "hit": {"attack": 0.22, "cast": 0.44, "shoot": 0.22}};
 if(!A["sprite:tessa"])A["sprite:tessa"]={"src": LDC_ASSET("art/ref/tessa/sprite.png"), "fw": 88, "fh": 63, "bw": 22, "bh": 53, "sc": 1, "seatDrop": 13, "oy": 2, "anims": {"idle": [0, 6, 6.818182], "walk": [1, 6, 10.0], "attack": [2, 8, 11.111111], "cast": [3, 10, 12.5], "hit": [4, 4, 11.764706], "guard": [5, 4, 14.285714], "low": [6, 4, 10.0], "ko": [7, 8, 11.111111], "victory": [8, 9, 12.5], "talk": [9, 7, 10.0], "sit": [10, 6, 4.918033], "nod": [11, 5, 10.0], "shake": [12, 5, 10.416667], "point": [13, 3, 5.0], "shrug": [14, 3, 5.555556], "laugh": [15, 4, 8.333333], "surprise": [16, 3, 7.5], "think": [17, 2, 2.5], "cross": [18, 2, 2.5], "bow": [19, 3, 4.545455], "walk_e": [20, 6, 10.0], "walk_s": [21, 6, 10.0], "walk_n": [22, 6, 10.0], "idle_s": [23, 4, 4.545455], "idle_n": [24, 4, 4.545455], "shoot": [2, 8, 11.111111]}, "hit": {"attack": 0.4, "shoot": 0.4, "cast": 0.44}};
 if(!A["sprite:valdris"])A["sprite:valdris"]={"src": LDC_ASSET("art/ref/valdris/sprite.png"), "fw": 94, "fh": 76, "bw": 34, "bh": 67, "sc": 1, "seatDrop": 20, "oy": 2, "anims": {"idle": [0, 6, 6.818182], "walk": [1, 6, 10.0], "attack": [2, 8, 11.764706], "cast": [3, 10, 12.5], "hit": [4, 4, 11.764706], "guard": [5, 4, 14.285714], "low": [6, 4, 10.0], "ko": [7, 8, 11.111111], "victory": [8, 9, 12.857143], "talk": [9, 7, 10.0], "sit": [10, 6, 4.918033], "nod": [11, 5, 10.0], "shake": [12, 5, 10.416667], "point": [13, 3, 5.0], "shrug": [14, 3, 5.555556], "laugh": [15, 4, 8.333333], "surprise": [16, 3, 7.5], "think": [17, 2, 2.5], "cross": [18, 2, 2.5], "bow": [19, 3, 4.545455], "walk_e": [20, 6, 10.0], "walk_s": [21, 6, 10.0], "walk_n": [22, 6, 10.0], "idle_s": [23, 4, 4.545455], "idle_n": [24, 4, 4.545455], "shoot": [2, 8, 11.764706]}, "hit": {"attack": 0.22, "shoot": 0.22, "cast": 0.44}};
 if(!A["sprite:ysa"])A["sprite:ysa"]={"src": LDC_ASSET("art/ref/ysa/sprite.png"), "fw": 74, "fh": 63, "bw": 28, "bh": 54, "sc": 1, "seatDrop": 13, "oy": 2, "anims": {"idle": [0, 6, 6.818182], "walk": [1, 6, 10.0], "attack": [2, 8, 11.764706], "cast": [3, 10, 12.5], "hit": [4, 4, 11.764706], "guard": [5, 4, 14.285714], "low": [6, 4, 10.0], "ko": [7, 8, 11.111111], "victory": [8, 9, 12.5], "talk": [9, 7, 10.0], "sit": [10, 6, 4.918033], "nod": [11, 5, 10.0], "shake": [12, 5, 10.416667], "point": [13, 3, 5.0], "shrug": [14, 3, 5.555556], "laugh": [15, 4, 8.333333], "surprise": [16, 3, 7.5], "think": [17, 2, 2.5], "cross": [18, 2, 2.5], "bow": [19, 3, 4.545455], "walk_e": [20, 6, 10.0], "walk_s": [21, 6, 10.0], "walk_n": [22, 6, 10.0], "idle_s": [23, 4, 4.545455], "idle_n": [24, 4, 4.545455], "shoot": [2, 8, 11.764706]}, "hit": {"attack": 0.22, "shoot": 0.22, "cast": 0.44}};
@@ -11568,6 +11568,19 @@ const ENC_PRADOS={rate:1/215,road:0.25,need:'c1',bgZone:'prados_m',table:[{w:45,
 const ENC_SAUCES={rate:1/130,road:0.25,need:'c1',bgZone:'sauces',table:[{w:10,enemies:['jefe_bandido','bandido','arquero']},{w:35,enemies:['bandido','arquero']},{w:20,enemies:['bandido','bandido']},{w:15,enemies:['lobo','lobo','bandido']},{w:15,enemies:['bandido','bandido','arquero']},{w:10,enemies:['lobo_bosque','lobo_bosque']},{w:5,enemies:['lobo_bosque','lobo_bosque','lobo']}]};
 const ENC_LINDE={rate:1/130,road:0.25,need:'c2',bgZone:'pantano',table:[{w:35,enemies:['jabali','jabali']},{w:25,enemies:['jabali','lobo','lobo']},{w:25,enemies:['alfa','lobo','lobo']},{w:15,enemies:['alfa','jabali']}],noUnique:true};
 const ENC_GW={rate:1/215,road:0.25,need:'c1',bgZone:'prados_m',bgForest:'sauces',table:[{w:50,enemies:['lobo','lobo']},{w:30,enemies:['lobo','lobo','lobo']},{w:20,enemies:['bandido','arquero']}]};
+const ENC_COMARCA=[ // v50 · comarcas del mapa: fauna del lugar + patrullas de la Rosa desde el capítulo «rosa»
+  {id:'brezo',near:['hollin','prados','torre','granja'],bg:'prados_m',bosque:'sauces',need:'c1',rosa:3,
+    fauna:[{w:40,enemies:['lobo','lobo']},{w:25,enemies:['lobo','lobo','lobo']},{w:25,enemies:['bandido','arquero']},{w:10,enemies:['alfa','lobo']}],
+    patrulla:[[30,['soldado','soldado']],[25,['soldado','lancero']],[20,['jinete','ballestero']]]},
+  {id:'sauces',near:['sauces','gruta'],bg:'sauces',bosque:'sauces',need:'c1',rosa:3,
+    fauna:[{w:40,enemies:['lobo_bosque','lobo_bosque']},{w:30,enemies:['bandido','bandido','arquero']},{w:15,enemies:['jabali','lobo_bosque']},{w:15,enemies:['alfa','lobo_bosque']}],
+    patrulla:[[25,['soldado','ballestero']]]},
+  {id:'pantano',near:['zorro','linde','altar','juncal','albardon','granja_vieja','bastion'],bg:'pantano',need:'c2',rosa:5,
+    fauna:[{w:40,enemies:['jabali','jabali']},{w:30,enemies:['jabali','lobo']},{w:30,enemies:['alfa','lobo','lobo']}],
+    patrulla:[[30,['sabueso','sabueso']],[20,['soldado','sabueso']]]},
+  {id:'camino',near:['campamento','puente','sirga','aldea','carboneros','vesper'],bg:'prados_m',bosque:'sauces',need:'c2',rosa:2,
+    fauna:[{w:35,enemies:['lobo_bosque','lobo_bosque']},{w:30,enemies:['jabali','jabali']},{w:15,enemies:['bandido','arquero']}],
+    patrulla:[[35,['jinete','ballestero']],[25,['soldado','soldado']],[15,['jinete','soldado','ballestero']]]} ];
 const ENC_GE={rate:1/155,road:0.25,need:'c2',bgZone:'pantano',table:[{w:40,enemies:['jabali','lobo']},{w:35,enemies:['jabali','jabali']},{w:25,enemies:['alfa','lobo']}],noUnique:true};
 
 /* ---------- HOLLIN (el pueblo existente: solo salidas y nodo) ---------- */
@@ -12152,13 +12165,57 @@ function iconFor(kind,state){ const k=kind+state; if(GICON[k]) return GICON[k]; 
   if(state===3){ x.fillStyle='#7a1a22'; x.beginPath(); x.arc(19,19,4.5,0,TAU); x.fill(); x.fillStyle='#b8323c'; x.beginPath(); x.arc(18.5,18.5,3.4,0,TAU); x.fill(); x.fillStyle='#e8c050'; x.fillRect(17,17,3,3); x.fillStyle='#fff0a0'; x.fillRect(17,17,1,1); }
   return GICON[k]=c; }
 let FOGC=null, FOGV=-1;
+/* v50 · niebla del mapa: el registro de 90×57 celdas se agranda a 4× con mezcla bilineal, se suaviza (caja de radio 3, dos pasadas)
+   y se le suma ruido de valor en dos octavas: el borde de lo descubierto queda deshilachado como bruma. Cerca del borde la niebla es
+   blanca grisácea; adentro, el pergamino del mapa. Se rehace solo cuando se descubre algo (fogVer). */
+const MISTN=(()=>{ const R=(i,j)=>{ let h=(i*374761393+j*668265263)|0; h=Math.imul(h^(h>>>13),1274126177); return ((h^(h>>>16))>>>0)/4294967296; };
+  const vn=(x,y)=>{ const xi=Math.floor(x), yi=Math.floor(y), xf=x-xi, yf=y-yi, u=xf*xf*(3-2*xf), v=yf*yf*(3-2*yf); const a=R(xi,yi), b=R(xi+1,yi), c=R(xi,yi+1), d=R(xi+1,yi+1); return a+(b-a)*u+(c-a)*v+(a-b-c+d)*u*v; };
+  return (x,y)=>vn(x/9,y/9)*0.62+vn(x/3.5+40,y/3.5+11)*0.38; })();
+function mistFog(F){ const S=4, w=90*S, h=57*S, A=new Float32Array(w*h);
+  for(let y=0;y<h;y++){ const fy=Math.min(56,Math.max(0,(y+0.5)/S-0.5)), j=Math.floor(fy), ty=fy-j, j2=Math.min(56,j+1);
+    for(let x=0;x<w;x++){ const fx=Math.min(89,Math.max(0,(x+0.5)/S-0.5)), i=Math.floor(fx), tx=fx-i, i2=Math.min(89,i+1);
+      const g=(ii,jj)=>F[jj*90+ii]?0:1; A[y*w+x]=(g(i,j)*(1-tx)+g(i2,j)*tx)*(1-ty)+(g(i,j2)*(1-tx)+g(i2,j2)*tx)*ty; } }
+  const B=new Float32Array(w*h), r=3; for(let pass=0;pass<2;pass++){
+    for(let y=0;y<h;y++){ let acc=0; for(let k=-r;k<=r;k++) acc+=A[y*w+Math.min(w-1,Math.max(0,k))]; for(let x=0;x<w;x++){ B[y*w+x]=acc/(2*r+1); acc+=A[y*w+Math.min(w-1,x+r+1)]-A[y*w+Math.max(0,x-r)]; } }
+    for(let x=0;x<w;x++){ let acc=0; for(let k=-r;k<=r;k++) acc+=B[Math.min(h-1,Math.max(0,k))*w+x]; for(let y=0;y<h;y++){ A[y*w+x]=acc/(2*r+1); acc+=B[Math.min(h-1,y+r+1)*w+x]-B[Math.max(0,y-r)*w+x]; } } }
+  const cv=zcv(w,h), cx=cv.getContext('2d'), d=cx.createImageData(w,h);
+  for(let y=0;y<h;y++) for(let x=0;x<w;x++){ const v=A[y*w+x]; let a=v+(MISTN(x,y)-0.5)*0.75*Math.min(1,v*2.2)*(1-v*0.6); a=Math.min(1,Math.max(0,(a-0.32)*1.9)); const k=(y*w+x)*4;
+    const p=a*a; d.data[k]=Math.round(238*(1-p)+226*p); d.data[k+1]=Math.round(238*(1-p)+214*p); d.data[k+2]=Math.round(232*(1-p)+184*p); d.data[k+3]=Math.round(240*Math.min(1,a*1.15)); }
+  cx.putImageData(d,0,0); return cv; }
+/* v50 · íconos del mapa (Brian: «que los pueblos, ciudades y puntos de interés estén mejor dibujados»): mini dioramas armados con los
+   edificios pintados de PixelLab (art/fondos/casas), con su sombra y piso; vistos de lejos quedan en gris. Si las imágenes no cargaron
+   todavía, se usa el ícono de siempre. */
+const MAPICO={ pueblo:[['aldea_c',-13,-1,0.25],['calle_c',9,-3,0.24],['aldea_a',-1,4,0.22]], aldea:[['aldea_b',-8,0,0.23],['aldea_a',8,2,0.21]],
+  granja:[['granja_granero',-7,0,0.22],['granja_casa',9,2,0.2]], torre:[['mon_torre',0,0,0.28]], pantano:[['sel_choza',0,0,0.24]],
+  bastion:[['cit_castillo',0,0,0.34]], campamento:[['gue_mando',0,0,0.24]], puente:[['can_puente',0,0,0.27]], borde:[['pue_carro',0,0,0.22]],
+  altar:[['des_ruina',0,0,0.22]], grieta:[['mon_torre',0,0,0.2]] };
+const MIBOT={}, MICACHE={}, MIIMG={};
+function miImg(n){ if(typeof window==='undefined'||typeof Image==='undefined') return null; let im=MIIMG[n]; if(!im){ const src='art/fondos/casas/'+n+'.png'; im=MIIMG[n]=(window.LDC_IMG?window.LDC_IMG(src):Object.assign(new Image(),{src})); } return (im.complete&&im.naturalWidth)?im:null; }
+function mapIcon(kind,st){ const L=MAPICO[kind]; if(!L) return null; const key=kind+st; if(MICACHE[key]) return MICACHE[key];
+  const ims=L.map(e=>miImg(e[0])); if(ims.some(im=>!im)) return null;
+  const bot=im=>{ const n=im.src; if(MIBOT[n]!=null) return MIBOT[n]; const t=zcv(im.width,im.height), x=t.getContext('2d'); x.drawImage(im,0,0); const d=x.getImageData(0,0,im.width,im.height).data; let b=im.height-1;
+    outer: for(let y=im.height-1;y>=0;y--) for(let xx=0;xx<im.width;xx++) if(d[(y*im.width+xx)*4+3]>40){ b=y; break outer; } return MIBOT[n]=b; };
+  const W0=72, H0=60, ax=36, ay=50, cv=zcv(W0,H0), g=cv.getContext('2d'); g.imageSmoothingEnabled=true;
+  g.fillStyle='rgba(20,16,10,.38)'; g.beginPath(); g.ellipse(ax,ay+1,L.length>1?22:15,4.5,0,0,TAU); g.fill();
+  L.map((e,i)=>[e,ims[i]]).sort((p,q)=>p[0][2]-q[0][2]).forEach(([[n,dx,dy,k],im])=>{ const w=im.width*k, h=im.height*k, b=bot(im)*k; g.drawImage(im,Math.round(ax+dx-w/2),Math.round(ay+dy-b),Math.round(w),Math.round(h)); });
+  if(st===1){ const d=g.getImageData(0,0,W0,H0); for(let i=0;i<d.data.length;i+=4){ const l=d.data[i]*0.3+d.data[i+1]*0.59+d.data[i+2]*0.11; d.data[i]=d.data[i+1]=d.data[i+2]=l*0.8+34; } g.putImageData(d,0,0); }
+  cv.ax=ax; cv.ay=ay; return MICACHE[key]=cv; }
 Z.global={id:'global',kind:'global',name:'Brenmoor del Sur',w:GW,h:GH,bgZone:'prados_m',danger:2,ambient:'mapa',stats:{buildMs:0},
   nodes:NODES, paths:{route:ROUTE,side:SIDE}, scale:3, fogCell:16, fogW:90, fogH:57, revealR:112, leadScale:0.5, speed:56,
   build(){ gBuild(); return this; }, steps:function*(){ if(typeof MATS!=='undefined'){ let cpu=0, mx=0; const it=gIter(); const pf=Z.global.stats.profMax={}, big=Z.global.stats.big=[]; let ns=0; for(;;){ const a=performance.now(); const r=it.next(); const d=performance.now()-a; cpu+=d; ns++; if(d>mx) mx=d; if(r.value) pf[r.value]=Math.max(pf[r.value]||0,Math.round(d)); if(d>45) big.push(r.value+'#'+ns+':'+Math.round(d)); if(r.done) break; yield r.value; } if(GPAINT){ Z.global.stats.cpuMs=Math.round(cpu); Z.global.stats.maxStepMs=Math.round(mx); } return; } gBuild(); yield 'listo'; }, ready:()=>!!GPAINT,
   terrain:gTerrain, solid:gSolid, denyAt:gDeny, speedAt:(x,y)=>GSPD[GTER.g[clamp(y/8|0,0,GTER.CH-1)*GTER.CW+clamp(x/8|0,0,GTER.CW-1)]],
   onRoad:(x,y)=>gTerrain(x,y)==='=',
   // aleatorios: oeste (brezo) / este (pantano); dentro de un bosque del oeste se usa el fondo de los sauces
-  encAt(x,y){ const east=x>640&&y>560; const e=east?ENC_GE:ENC_GW; const bg=!east&&gTerrain(x,y)==='T'?'sauces':e.bgZone; return Object.assign({},e,{bgZone:bg,region:east?'este':'oeste'}); }, enc:ENC_GW, encE:ENC_GE,
+  // v50 (Brian: «peleas al azar con enemigos que tengan sentido que estén cerca»): el mapa se reparte en comarcas según el lugar más cercano;
+  // cada comarca tiene su fauna y, según el capítulo, las patrullas de la Rosa que buscan a los hermanos. Probabilidad un poco más alta.
+  encAt(x,y){ const east=x>640&&y>560; const e=east?ENC_GE:ENC_GW; const ch=(typeof G!=='undefined'&&G&&G.chap)|0;
+    let best=null, bd=1e9; for(const n of NODES){ const d=Math.hypot(n.x-x,n.y-y); if(d<bd){ bd=d; best=n; } }
+    const reg=ENC_COMARCA.find(r=>best&&r.near.includes(best.id))||null;
+    if(!reg){ const bg=!east&&gTerrain(x,y)==='T'?'sauces':e.bgZone; return Object.assign({},e,{bgZone:bg,region:east?'este':'oeste'}); }
+    const lk=(k,n)=>{ try{ return typeof arcLvlKey==='function'?arcLvlKey(k,n):k; }catch(err){ return k; } };
+    const rosaN=({2:6,3:8,4:9,5:10})[Math.min(5,ch)]||6; const table=reg.fauna.slice(); if(ch>=reg.rosa) table.push(...reg.patrulla.map(([w,L])=>({w,enemies:L.map(k=>lk(k,rosaN))})));
+    const bg=gTerrain(x,y)==='T'&&reg.bosque?reg.bosque:reg.bg;
+    return {rate:1/150,road:0.35,need:reg.need||e.need,bgZone:bg,table,noUnique:true,region:east?'este':'oeste',comarca:reg.id}; }, enc:ENC_GW, encE:ENC_GE,
   nodeAt(x,y,r){ r=r||20; let best=null, bd=r; for(const n of NODES){ const d=Math.hypot(n.x-x,n.y-y); if(d<=bd){ bd=d; best=n; } } return best; },
   // o = {places:{id:0..3}, lead:{x,y}, fog:Uint8Array(90*57) 1=descubierto, fogVer:número que cambia al descubrir, labels:bool}
   draw(c,cam,dt,o){ gBuild(); o=o||{}; const zw=cam.zoom||1, vw=W/zw, vh=H/zw; const cx=clamp(cam.x,0,GW-vw), cy=clamp(cam.y,0,GH-vh);
@@ -12166,12 +12223,17 @@ Z.global={id:'global',kind:'global',name:'Brenmoor del Sur',w:GW,h:GH,bgZone:'pr
     // brillo del río y humo de chimeneas
     c.fillStyle='#eaf8ff'; for(let i=0;i<40;i++){ const t=(((T*0.03+i/40)%1)+1)%1; const p=RIVP[clamp(Math.floor(t*(RIVP.length-1)),0,RIVP.length-1)]; if(Math.sin(T*3+i)>0.3) c.fillRect(p[0]+Math.sin(i)*3,p[1],2,1); }
     [[176,566],[1346,708],[486,322]].forEach(([x,y],j)=>{ for(let i=0;i<3;i++){ const t=(((T*0.25+i/3+j*0.3)%1)+1)%1; c.globalAlpha=0.4*(1-t); c.fillStyle='#f4ecdc'; c.beginPath(); c.arc(x+t*8,y-6-t*16,1.5+t*3,0,TAU); c.fill(); } }); c.globalAlpha=1;
-    const pl=o.places||{}; for(const n of NODES){ const st=pl[n.id]==null?(n.id==='hollin'?2:0):pl[n.id]; if(!st) continue; const ic=iconFor(n.kind,st); const s=n.sub?0.75:1; c.drawImage(ic,Math.round(n.x-12*s),Math.round(n.y-20*s),24*s,24*s);
+    const pl=o.places||{}; for(const n of NODES){ const st=pl[n.id]==null?(n.id==='hollin'?2:0):pl[n.id]; if(!st) continue; const s=n.sub?0.75:1; const mi=mapIcon(n.kind,st);
+      if(mi){ const k=s*(n.kind==='bastion'||n.kind==='pueblo'?1.12:0.95); c.drawImage(mi,Math.round(n.x-mi.ax*k),Math.round(n.y-mi.ay*k),Math.round(mi.width*k),Math.round(mi.height*k)); if(st===3){ const sx=n.x+10, sy=n.y-4; c.fillStyle='#7a1a22'; c.beginPath(); c.arc(sx,sy,4.5,0,TAU); c.fill(); c.fillStyle='#b8323c'; c.beginPath(); c.arc(sx-0.5,sy-0.5,3.4,0,TAU); c.fill(); c.fillStyle='#e8c050'; c.fillRect(sx-1.5,sy-1.5,3,3); } }
+      else { const ic=iconFor(n.kind,st); c.drawImage(ic,Math.round(n.x-12*s),Math.round(n.y-20*s),24*s,24*s); }
       if(o.labels&&st>=1){ c.font='9px Georgia, serif'; c.textAlign='center'; c.lineWidth=2.4; c.strokeStyle='rgba(30,22,14,.75)'; c.strokeText(n.label,n.x,n.y+12); c.fillStyle=st===1?'#c8c0b0':'#f4e8c8'; c.fillText(n.label,n.x,n.y+12); } }
     if(hasFlag('luz_bastion')){ const b=NODES.find(n=>n.id==='bastion'), k=0.5+0.5*Math.sin(T*2.6); c.save(); c.globalCompositeOperation='lighter'; const gr=c.createRadialGradient(b.x,b.y-6,1,b.x,b.y-6,18+6*k); gr.addColorStop(0,'rgba(255,236,170,'+(0.75+0.25*k)+')'); gr.addColorStop(1,'rgba(255,200,90,0)'); c.fillStyle=gr; c.fillRect(b.x-30,b.y-36,60,60); c.fillStyle='#fff6d0'; c.fillRect(b.x-1,b.y-7,2,2); c.restore(); } // Arco I · epílogo: la luz en el castillo de la niebla
     c.restore();
-    if(o.fog){ if(!FOGC) FOGC=zcv(90,57); if(o.fogVer!==FOGV){ FOGV=o.fogVer; const x=FOGC.getContext('2d'), d=x.createImageData(90,57); for(let i=0;i<90*57;i++){ d.data[i*4]=226; d.data[i*4+1]=214; d.data[i*4+2]=184; d.data[i*4+3]=o.fog[i]?0:236; } x.putImageData(d,0,0); }
-      c.save(); c.imageSmoothingEnabled=true; c.scale(zw,zw); const ox=Math.sin(T*0.4)*2; c.drawImage(FOGC,0,0,90,57,-cx+ox,-cy,90*16,57*16); c.restore(); } },
+    if(o.fog){ if(o.fogVer!==FOGV){ FOGV=o.fogVer; FOGC=mistFog(o.fog); }
+      // v50 (Brian: «que el humo sea más efecto niebla y no tan cuadrado»): la niebla es un lienzo suave de 4× con bordes deshilachados
+      // por ruido, y encima una segunda capa que deriva despacio, así el borde de lo descubierto parece niebla que se mueve
+      c.save(); c.imageSmoothingEnabled=true; c.scale(zw,zw); const ox=Math.sin(T*0.25)*3, oy=Math.cos(T*0.19)*2; c.drawImage(FOGC,0,0,FOGC.width,FOGC.height,-cx,-cy,90*16,57*16);
+      c.globalAlpha=0.35; c.drawImage(FOGC,0,0,FOGC.width,FOGC.height,-cx+ox+6,-cy+oy+4,90*16,57*16); c.globalAlpha=1; c.restore(); } },
   drawOver(c,cam,dt,o){ gBuild(); o=o||{}; const zw=cam.zoom||1, vw=W/zw, vh=H/zw; const cx=clamp(cam.x,0,GW-vw), cy=clamp(cam.y,0,GH-vh);
     // copas sobre el líder (se lo ve a medias bajo los bosques)
     if(o.lead&&gTerrain(o.lead.x,o.lead.y)==='T'){ c.save(); c.scale(zw,zw); c.globalAlpha=0.6; const x0=o.lead.x-16, y0=o.lead.y-22; if(GCANOPY) c.drawImage(GCANOPY,x0,y0,32,26,x0-cx,y0-cy,32,26); else if(GTREES){ c.beginPath(); c.rect(x0-cx,y0-cy,32,26); c.clip(); c.imageSmoothingEnabled=true; for(const [tx,ty,st] of GTREES){ if(ty<o.lead.y-2||ty>y0+44||tx<x0-10||tx>x0+42) continue; c.drawImage(st,tx-st.ax-cx,ty-st.ay-cy,st.lw,st.lh); } } c.restore(); }
@@ -13576,14 +13638,25 @@ const LINES = {
       ['say','ilian','Le dieron la hora para que llegara tarde.','t','§4hora'],
       ['dlg','low'], ['bars',0], ['cam','reset'],
       // el caballero negro baja de la cornisa hasta Nach; la cámara lo encuadra entero (×2) con la caja abajo y vuelve al plano normal cuando se va
-      ['figura','valdris','baja','nach',34,-30,1300], ['cam','valdris',2,0,'full'],
-      ['narr','El caballero negro baja y mira a Nach. Simona no lo mira: le gruñe al caballo de Oswin.'],
+      // v50 (Brian: «la escena del caballero negro está muy rara, se acerca y nada más»): baja de la cornisa en un salto, cae a dos pasos
+      // de Nach a tamaño real, le apoya la punta en el pecho sin empujar, mira a Oswin, le cierra los ojos y se va. Nadie respira.
+      ['figura','valdris','baja','nach',40,-4,1000,1], ['shake',7], ['cam','valdris',1.6,0,'full'],
+      ['narr','El caballero negro salta de la cornisa y cae a dos pasos de Nach. La piedra del puente cruje bajo la armadura.'],
+      ['anim','nach','guard'], ['say','nach','¿Y vos quién sos?','d'],
+      ['say','ilian','Un paso más y te atravieso el yelmo.','a'],
+      ['say','maela','Quietos. Nadie se mueve.','t'],
+      ['figura','valdris','anim','attack'],
+      ['narr','El caballero levanta la espada despacio y apoya la punta en el pecho de Nach, justo sobre el corazón. No empuja. Espera.'],
+      ['say','valdris','…','n'],
       ['emote','simona','anger'],
       ['say','simona','*gruñe al fardo de lacre gris*','a'],
-      ['say','valdris','…','n'],
+      ['figura','valdris','anim',null], ['figura','valdris','baja','oswin',30,-2,800,1],
+      ['figura','valdris','anim','bow'],
+      ['narr','Baja la espada. Se arrodilla junto a Oswin y le cierra los ojos con dos dedos de hierro.'],
+      ['wait',600], ['figura','valdris','anim',null],
       ['figura','valdris','face',1],
-      ['narr','Después da media vuelta y se va sin desenvainar.'],
-      ['cam','reset'], ['figura','valdris','vuelve',1300],
+      ['narr','Se levanta, envaina sin apuro y vuelve por donde vino, sin darles del todo la espalda.'],
+      ['cam','reset'], ['figura','valdris','vuelve',1300], ['anim','nach','idle'],
       ['bars',0], ['dlg','top'],
       ['say','nach','Me miró como se mira a alguien que te debe algo.','t'],
       ['say','ilian','Alguien que hoy no quiso pelear. No me gusta esa idea.','t'],
@@ -21195,10 +21268,22 @@ function setTxtMode(m){ if(!TXTSPD[m]) return; TXTMODE=m; store.set('txtspd',m);
 let menuResolver=null, menuCols=1;
 function clearMenu(){ UI.menuBox.hidden=true; UI.menu.innerHTML=''; UI.menuTitle.hidden=true; UI.mhelp.hidden=true; menuResolver=null; }
 // opts: {label, sub, value, cls, disabled, auto, icon, cost, focus}
+let CMDU=null; // v50: personaje que elige comando (lo pone playerTurn)
 function choose(opts,title,mode){
   return new Promise(res=>{
     const cmd=mode==='cmd'; UI.menu.innerHTML=''; UI.menuBox.hidden=false;
     if(title){ UI.menuTitle.textContent=title; UI.menuTitle.hidden=false; } else UI.menuTitle.hidden=true;
+    // v50 (Brian: «el menú de comandos está muy básico, que sea más dinámico»): en combate, encabezado con el retrato, PV, PM y la barra de
+    // Ímpetu en tres tramos del personaje que actúa; las opciones entran escalonadas y la elegida brilla (CSS .cmdx)
+    const cu=cmd&&CMDU&&document.body.classList.contains('battle')?CMDU:null; UI.menuBox.classList.toggle('cmdx',!!cu); UI.menuBox.classList.remove('cmdx-in'); void UI.menuBox.offsetWidth; if(cu) UI.menuBox.classList.add('cmdx-in');
+    if(cu){ try{ UI.menuTitle.textContent=''; const hd=document.createElement('div'); hd.className='cmdh';
+      const pc=document.createElement('div'); pc.className='cmdh-p'; try{ pc.appendChild(headCanvas(cu.id,48,40)); }catch(e){} hd.appendChild(pc);
+      const inf=document.createElement('div'); inf.className='cmdh-i'; const nm=document.createElement('b'); nm.textContent=cu.name; const q=document.createElement('small'); q.textContent='¿Qué hace?'; const r1=document.createElement('div'); r1.className='cmdh-n'; r1.appendChild(nm); r1.appendChild(q); inf.appendChild(r1);
+      const bar=(cls,lab,v,mx)=>{ const r=document.createElement('div'); r.className='cmdh-b '+cls; const l=document.createElement('small'); l.textContent=lab; const t=document.createElement('span'); const i=document.createElement('i'); i.style.width=clamp(mx?v/mx*100:0,0,100)+'%'; t.appendChild(i); const n=document.createElement('em'); n.textContent=Math.max(0,Math.round(v))+'/'+mx; r.appendChild(l); r.appendChild(t); r.appendChild(n); return r; };
+      inf.appendChild(bar('pv','PV',cu.pv,cu.pvMax)); inf.appendChild(bar('pm','PM',cu.pm,cu.pmMax||cu.pm));
+      const ig=document.createElement('div'); ig.className='cmdh-imp'; const il=document.createElement('small'); il.textContent='Ímpetu'; ig.appendChild(il);
+      for(let k=0;k<3;k++){ const sg=document.createElement('span'); const f=clamp(((cu.imp||0)-k*100)/100,0,1); const fi=document.createElement('i'); fi.style.width=(f*100)+'%'; sg.appendChild(fi); if(f>=1) sg.classList.add('full'); ig.appendChild(sg); }
+      inf.appendChild(ig); hd.appendChild(inf); UI.menuTitle.appendChild(hd); }catch(e){ UI.menuTitle.textContent=title||''; } }
     const two=cmd && opts.length>5 && !WIDE; UI.menu.classList.toggle('two',two); menuCols=two?2:1;
     UI.mhelp.hidden=!cmd; UI.mhelp.textContent='';
     let first=null; const btns=[];
@@ -21213,7 +21298,7 @@ function choose(opts,title,mode){
       if(o.disabled) b.disabled=true;
       b.addEventListener('focus',()=>help(o)); b.addEventListener('pointerenter',()=>{ if(!b.disabled) help(o); });
       b.addEventListener('click',()=>{ if(b.disabled) return; sfx('blip'); clearMenu(); res(o.value); });
-      UI.menu.appendChild(b); btns.push(b); if(!first && !o.disabled) first=b; });
+      b.style.setProperty('--i',btns.length); UI.menu.appendChild(b); btns.push(b); if(!first && !o.disabled) first=b; });
     if(first) help(first._o);
     if(first && !AUTO && matchMedia('(hover:hover)').matches) first.focus({preventScroll:true});
     if(AUTO){ const o=opts.find(o=>!o.disabled && o.auto) || opts.find(o=>!o.disabled); setTimeout(()=>{ clearMenu(); res(o.value); },2); }
@@ -22036,7 +22121,7 @@ async function playerTurn(B,u){
     opts.push({label:'Objetos',sub:'Pociones '+G.items.pocion+' · Antídotos '+G.items.antidoto+' · Plumas '+G.items.pluma,value:'item',icon:'potion',cost:'×'+(G.items.pocion+G.items.antidoto+G.items.pluma)});
     if(u.id==='ilian') opts.push({label:'Cambiar arma',sub:'No gasta el turno',value:'swap',icon:'swap',cost:u.ref.weapon==='dagas'?'Dagas':'Arco'});
     opts.push({label:'Cambiar de fila',sub:'Acción ligera',value:'row',icon:'row',cost:u.row==='front'?'1.ª':'2.ª'});
-    const c=await choose(opts,u.name+' · ¿qué hace?','cmd');
+    CMDU=u; let c; try{ c=await choose(opts,u.name+' · ¿qué hace?','cmd'); } finally { CMDU=null; }
     if(c==='atacar'){ const t=await pickTarget(B,'enemy',u); if(t) return {type:'attack',target:t}; }
     else if(c==='tech'){
       const list=CHAR[u.id].tech.map(k=>({label:TECH[k].name,cost:'PM '+TECH[k].pm,icon:TECH[k].kind==='mag'?'light':(TECH[k].target==='enemy'?'star':'shield'),sub:TECH[k].desc,value:k,disabled:u.pm<TECH[k].pm||(u.st.sello>0)})); list.push({label:'Volver',value:null,cls:'back',icon:'back'});
@@ -22134,8 +22219,8 @@ UNI.sena.run=async(B)=>{ // La Seña: Ilian marca (110, a distancia) y Maela bar
     const ilian=B.units.find(v=>v.id==='ilian'), maela=B.units.find(v=>v.id==='maela');
     ilian.imp=0; maela.imp=0; B.log=uniTxt('sena','bitacora'); barkAct(B,maela,'imp',true);
     if(!AUTO&&G.flags&&!G.flags.senaVista){ G.flags.senaVista=1; try{ const pv=LINES.unisono.sena.primeraVez; if(pv){ await say(null,pv[1]); hideDialog(); } }catch(e){} }
-    const foes=B.units.filter(v=>v.side==='e'&&alive(v));
-    await runFX(B,UNI.sena.fx,{user:maela,partner:ilian,targets:foes,cine:true,cutin:[['maela','ilian'],uniTxt('sena','nombre'),'Unísono',{lines:uniCorte('sena'),emb:'sena'}],
+    const foes=B.units.filter(v=>v.side==='e'&&alive(v)); const cl=uniCorte('sena'); await uniIntro(['maela','ilian'],uniTxt('sena','nombre'),{lines:cl,emb:'sena'});
+    await runFX(B,UNI.sena.fx,{user:maela,partner:ilian,targets:foes,cine:true,cutin:[['maela','ilian'],uniTxt('sena','nombre'),'Unísono',{lines:cl,emb:'sena'}],
       jobs:[J('main',async()=>{ for(const t of foes) if(alive(t)) await applyDamage(B,ilian,t,{poder:110,ranged:true,imp:true,tech:true}); }),
             J('main',async()=>{ for(const t of foes) if(alive(t)) await applyDamage(B,maela,t,{poder:130,elem:'viento',imp:true,tech:true}); }),
             J('main',async()=>{})], // 3.er golpe: solo visual (remate)
@@ -22145,14 +22230,16 @@ UNI.asedio.run=async(B)=>{ // El Asedio (ex «Muro y Flecha»): misma lógica y 
     const ilian=B.units.find(v=>v.id==='ilian'), nach=B.units.find(v=>v.id==='nach');
     ilian.imp=0; nach.imp=0; B.log=uniTxt('asedio','bitacora'); barkAct(B,nach,'imp',true);
     nach.st.muro=1;
-    const foes=B.units.filter(v=>v.side==='e'&&alive(v));
-    await runFX(B,UNI.asedio.fx,{user:nach,partner:ilian,targets:foes,cine:true,cutin:[['nach','ilian'],uniTxt('asedio','nombre'),'Unísono',{lines:uniCorte('asedio')}],
+    const foes=B.units.filter(v=>v.side==='e'&&alive(v)); const cl=uniCorte('asedio');
+    await uniIntro(['nach','ilian'],uniTxt('asedio','nombre'),{lines:cl});
+    await runFX(B,UNI.asedio.fx,{user:nach,partner:ilian,targets:foes,cine:true,cutin:[['nach','ilian'],uniTxt('asedio','nombre'),'Unísono',{lines:cl}],
       jobs:[J('main',async()=>{ for(const t of foes) await applyDamage(B,ilian,t,{poder:240,ranged:true,imp:true,tech:true}); })],
       onApply:()=>{ addFloat(B,nach,uniTxt('asedio','flotante'),'#e0ab45'); }}); // «¡Plantado!» cuando clava a Don Pico (4,45 s)
     ilian.ct=0; nach.ct=0; return 'normal'; };
 // apertura y cierre comunes de los Unísonos nuevos: barras a 0, bitácora, «primera vez» (fuera de #prueba), corte con las líneas de Hermes
 async function uniOpen(B,k){ const U=UNI[k], A=uniU(B,U.a), Bb=uniU(B,U.b); A.imp=0; Bb.imp=0; B.log=uniTxt(k,'bitacora'); barkAct(B,A,'imp',true);
   const V=G.flags.uniVista||(G.flags.uniVista={}); if(!V[k]){ V[k]=1; if(!AUTO) try{ const pv=LINES.unisono[k].primeraVez; if(pv){ await say(pv[0]==='narr'?null:pv[0],pv[1],pv[2]||'n'); hideDialog(); } }catch(e){} }
+  try{ await uniIntro([U.a,U.b],uniTxt(k,'nombre'),{lines:uniCorte(k),emb:U.emb}); }catch(e){}
   return [A,Bb]; }
 const uniCutin=k=>[[UNI[k].a,UNI[k].b],uniTxt(k,'nombre'),'Unísono',{lines:uniCorte(k),emb:UNI[k].emb}];
 const frontFoes=B=>{ const f=B.units.filter(v=>v.side==='e'&&alive(v)&&v.row==='front'); return f.length?f:B.units.filter(v=>v.side==='e'&&alive(v)); };
@@ -22832,7 +22919,26 @@ UI.cutin.classList.add('cx');
    y en el centro el emblema del Cuervo Gris con el nombre de la técnica. No frena el combate (~1,45 s, como cutInNB). */
 let UCUTT=null;
 // x = {lines:[[id,línea],…] (una por franja), emb:'sena' (emblema y tono de La Seña)}
-function cutInUni(ids,title,x){ x=x||{}; if(REDUCED){ cutInNB(ids,title,'Unísono'); return; } const C=UI.cutin; cutReset(); C.innerHTML=''; C.classList.add('uni'); C.classList.toggle('sena',x.emb==='sena');
+/* v50 (Brian: «la escena del Unísono entre Nach e Ilian se nota precaria; que sea especial como los unites de Suikoden»): antes del golpe,
+   una apertura propia de ~2,6 s que espera: la pantalla se oscurece con franjas de cine, entra en diagonal el panel de uno (retrato grande,
+   líneas de velocidad, su frase), después el del otro desde el lado opuesto; los dos paneles chocan en un destello, aparece el emblema y el
+   nombre del Unísono en letras grandes con brillo de oro, y recién ahí arranca la coreografía. Tocar o una tecla la adelanta. */
+let UNI2T=0;
+function uniIntro(ids,title,x){ x=x||{}; if(AUTO||REDUCED) return Promise.resolve(); const C=UI.cutin; cutReset(); C.innerHTML=''; C.className=''; C.classList.add('uni2'); C.classList.toggle('sena',x.emb==='sena'); UNI2T=performance.now();
+  const nm=id=>(typeof CHAR!=='undefined'&&CHAR[id]&&CHAR[id].name)||(id.charAt(0).toUpperCase()+id.slice(1));
+  const por=id=>{ const c=document.createElement('canvas'); c.width=c.height=256; try{ paintPortrait(c.getContext('2d'),id,'a',256); }catch(e){} return c; };
+  const bars=document.createElement('div'); bars.className='u2-bars'; C.appendChild(bars);
+  const panel=(k,id)=>{ const p=document.createElement('div'); p.className='u2p '+k; const sp=document.createElement('div'); sp.className='u2-speed'; p.appendChild(sp); p.appendChild(por(id));
+    const t=document.createElement('div'); t.className='u2-name'; t.textContent=nm(id); const ln=(x.lines||[]).find(l=>l&&l[0]===id); if(ln){ const q=document.createElement('div'); q.className='u2-line'; q.textContent='«'+ln[1]+'»'; t.appendChild(q); } p.appendChild(t); return p; };
+  C.appendChild(panel('a',ids[0])); if(ids[1]) C.appendChild(panel('b',ids[1]));
+  const fl=document.createElement('div'); fl.className='u2-flash'; C.appendChild(fl);
+  const mid=document.createElement('div'); mid.className='u2-title'; const em=document.createElement('canvas'); try{ const s2=FX.emblem&&FX.emblem(x.emb); if(s2){ em.width=s2.width*5; em.height=s2.height*5; const g=em.getContext('2d'); g.imageSmoothingEnabled=false; g.drawImage(s2,0,0,em.width,em.height); } }catch(e){}
+  const sm=document.createElement('small'); sm.textContent='Unísono'; const big=document.createElement('b'); big.textContent=title; mid.appendChild(em); mid.appendChild(sm); mid.appendChild(big); C.appendChild(mid);
+  C.hidden=false; try{ sfx('imp'); }catch(e){} setTimeout(()=>{ try{ sfx('crit'); }catch(e){} },1600);
+  return new Promise(res=>{ let done=false; const end=()=>{ if(done) return; done=true; window.removeEventListener('keydown',kh,true); C.removeEventListener('pointerdown',end); C.style.pointerEvents=''; C.classList.add('u2-out'); setTimeout(()=>{ C.hidden=true; C.innerHTML=''; C.className=''; res(); },220); };
+    const kh=e=>{ e.preventDefault(); end(); }; C.style.pointerEvents='auto'; C.addEventListener('pointerdown',end); setTimeout(()=>window.addEventListener('keydown',kh,true),400);
+    setTimeout(end,3100*Math.max(SPEED||1,0.4)); }); }
+function cutInUni(ids,title,x){ x=x||{}; if(REDUCED){ cutInNB(ids,title,'Unísono'); return; } if(performance.now()-UNI2T<6000) return; // v50: ya hubo apertura propia const C=UI.cutin; cutReset(); C.innerHTML=''; C.classList.add('uni'); C.classList.toggle('sena',x.emb==='sena');
   const nm=id=>(typeof CHAR!=='undefined'&&CHAR[id]&&CHAR[id].name)||(id.charAt(0).toUpperCase()+id.slice(1));
   const por=id=>{ const c=document.createElement('canvas'); c.width=c.height=192; try{ paintPortrait(c.getContext('2d'),id,'a',192); }catch(e){} return c; };
   const band=(k,id)=>{ const b=document.createElement('div'); b.className='ub '+k; const n=document.createElement('div'); n.className='un'; n.textContent=nm(id); const ln=(x.lines||[]).find(l=>l&&l[0]===id); if(ln){ const q=document.createElement('div'); q.className='ul'; q.textContent='«'+ln[1]+'»'; n.appendChild(q); } if(k==='a'){ b.appendChild(por(id)); b.appendChild(n); } else { b.appendChild(n); b.appendChild(por(id)); } return b; };
@@ -23427,8 +23533,14 @@ async function runCmds(cmds,ctx,name){
       // junto a otro actor, ['figura',id,'vuelve',ms] la devuelve a su lugar y ['figura',id,'face',±1] la gira. No toca G ni el azar.
       case 'figura': { const st=dirStage(); const f=st&&st.figura&&st.figura(c[1]); if(!f) break;
         if(c[2]==='face'){ f.face=c[3]; await sleep(140); break; }
-        let tx=f.x, ty=f.y, ms=c[3]||900; if(c[2]==='baja'){ const y=ctx.get(c[3]); tx=(y?y.x:f.x)+(c[4]||0); ty=(y?y.y:f.y)+(c[5]||0); ms=c[6]||1100; } else if(c[2]==='vuelve'&&f.home){ tx=f.home.x; ty=f.home.y; }
-        if(Math.abs(tx-f.x)>1) f.face=tx>f.x?1:-1; if(SKIP.on){ f.x=tx; f.y=ty; break; } await tweenTo(f,tx,ty,ms); f.walking=false; if(c[2]==='baja'&&c[3]){ const y=ctx.get(c[3]); if(y&&Math.abs(y.x-f.x)>1) f.face=y.x>f.x?1:-1; } break; }
+        if(c[2]==='anim'){ f.base=c[3]||null; f.at=T; f.act=null; await sleep(120); break; } // v50: la figura cambia de pose (guardia, reverencia…)
+        if(f.k0==null) f.k0=f.k||1;
+        let tx=f.x, ty=f.y, ms=c[3]||900, k1=f.k||1; if(c[2]==='baja'){ const y=ctx.get(c[3]); tx=(y?y.x:f.x)+(c[4]||0); ty=(y?y.y:f.y)+(c[5]||0); ms=c[6]||1100; if(c[7]!=null) k1=c[7]; } else if(c[2]==='vuelve'&&f.home){ tx=f.home.x; ty=f.home.y; ms=c[3]||900; k1=f.k0; }
+        if(Math.abs(tx-f.x)>1) f.face=tx>f.x?1:-1; if(SKIP.on){ f.x=tx; f.y=ty; f.k=k1; break; }
+        /* v50 (Brian: «el caballero negro se acerca y nada más, muy raro»): al bajar de la cornisa la figura crece hasta el tamaño del
+           primer plano (antes bajaba a media escala, como un muñequito); la escala acompaña el trayecto */
+        { const k0=f.k||1, t0=nowMs(), dur=Math.max(1,ms*SPEED/cK()); const grow=async()=>{ for(;;){ const p=Math.min(1,(nowMs()-t0)/dur); const e=p<0.5?2*p*p:1-Math.pow(-2*p+2,2)/2; f.k=k0+(k1-k0)*e; if(p>=1) break; await sleep(16); } };
+          await Promise.all([tweenTo(f,tx,ty,ms),grow()]); } f.walking=false; if(c[2]==='baja'&&c[3]){ const y=ctx.get(c[3]); if(y&&Math.abs(y.x-f.x)>1) f.face=y.x>f.x?1:-1; } break; }
       case 'nota': try{ if(typeof ncAdd==='function') ncAdd(c[1],c[2]); }catch(e){ console.error(e); } break;
       case 'approach': { const y=ctx.get(c[2]); if(x&&y&&!x.side&&!x.olafOn){ const gap=c[3]||34; const tx=y.x+(x.x<y.x?-gap:gap); x.face=tx>x.x?1:-1; await tweenTo(x,tx,x.y,Math.abs(tx-x.x)*24+120); x.walking=false; x.face=y.x>x.x?1:-1; } break; }
       // escenas de afinidad v2: ['?', opciones, título] elección dentro de la escena (no se saltea: se pregunta igual; en AUTO gana la primera)
@@ -24404,10 +24516,9 @@ function itemIcon(it,kind,px){ px=px||32; const w=el('span','iv-ic'); w.style.se
 // ícono PNG solo si existe (tienda, botín y cofres): si no, null y el que llama deja lo de antes
 function pngIcon(it,kind,px){ const IC=ICX(); if(!(IC&&IC.pngReady&&IC.pngReady(it))) return null; return itemIcon(it,kind,px); }
 // cofres y recompensas: tira breve con los íconos de lo que se recibe (los ids sin PNG usan el de código; sin ICONOS, no se muestra)
-function lootPop(ids){ try{ if(AUTO||!ids||!ids.length) return; const IC=ICX(); if(!IC) return; const L=ids.filter(k=>k&&k!=='oro'); if(!L.length) return;
-  const old=document.querySelector('.loot-pop'); if(old) old.remove(); const box=el('div','loot-pop'); box.setAttribute('aria-hidden','true');
-  L.slice(0,8).forEach(k=>{ const kind=EQUIP.items[k]?'gear':(String(k).startsWith('key_')?'key':'item'); box.appendChild(itemIcon(k,kind,32)); });
-  (UI.stage||document.body).appendChild(box); requestAnimationFrame(()=>box.classList.add('on')); setTimeout(()=>{ box.classList.remove('on'); setTimeout(()=>box.remove(),400); },2600*Math.max(SPEED,0.05)); }catch(e){} }
+function lootPop(ids){ try{ if(AUTO||!ids||!ids.length) return; const L=ids.filter(k=>k&&k!=='oro'); if(!L.length) return; // v50: el mismo cartel de botín de los cofres, con nombres
+  const rows=L.slice(0,8).map(k=>{ const kind=EQUIP.items[k]?'gear':(String(k).startsWith('key_')?'key':'item'); return {kind,id:k,n:1,name:kind==='gear'?itemName(k):(((MENUTXT.items||{})[k]||{}).name||k)}; });
+  const close=lootCard(rows,'Recibís'); setTimeout(close,2800*Math.max(SPEED,0.05)); }catch(e){} }
 function meter(cls,lab,a,b,extra){ const r=el('div','gp-m '+cls); r.appendChild(el('small',null,lab)); const bar=el('span','gp-bar'); const i=el('i'); i.style.width=clamp(b?a/b*100:0,0,100)+'%'; bar.appendChild(i); if(extra) bar.appendChild(extra); r.appendChild(bar); r.appendChild(el('b',null,a+'/'+b)); return r; }
 function statusOf(m,s){ if(m.pv<=0) return ['ko','Fuera de combate']; if(m.pv<s.pv*0.35) return ['bad','Malherido']; if(m.pv<s.pv) return ['mid','Herido']; return ['ok','En forma']; }
 function bestAff(id){ try{ if(!G.aff&&typeof cxRebuildAff==='function') cxRebuildAff(); }catch(e){} const A=G.aff||{}; let best=null;
@@ -24596,28 +24707,55 @@ function openShop(key){
 /* ============================================================
    PANTALLA DE VICTORIA
    ============================================================ */
+/* v50 (Brian, 26/11: «queda muy perdido lo poco» y «mostrar si se sube de nivel, estilo Suikoden»): ventana centrada con marco de bronce.
+   Arriba: VICTORIA, la experiencia y las coronas ganadas y el botín con íconos y nombres. Abajo, una ficha por personaje (tres por fila):
+   retrato, nivel (con «NIV ↑» si subió), barras de EXP y PV y las seis estadísticas; si subió de nivel, cada estadística que mejoró
+   muestra ▲ y cuánto subió, contando de a uno, una ficha tras otra. Continuar con el botón, Enter o un toque. */
+const VSTATS=[['atk','ATK'],['mag','MAG'],['def','DEF'],['res','RES'],['vel','VEL'],['cri','CRI']];
 function victoryScreen(B,info){
   return new Promise(res=>{
-    B.winInfo=info; const V=el('div','vict'); V.setAttribute('role','dialog'); V.setAttribute('aria-label','Victoria');
-    const top=el('div','vict-top'); const gold=el('div','vict-gold'); gold.appendChild(PFXI.coinEl()); gold.appendChild(el('b',null,'+'+info.oro)); gold.appendChild(el('small',null,' '+UIT.oro.toLowerCase())); top.appendChild(gold);
-    if(info.loot.length){ const lt=el('div','vict-loot'); const agg={}; info.loot.forEach(l=>{ const k=l.kind+':'+l.id; agg[k]=(agg[k]||0)+1; }); Object.keys(agg).forEach(k=>{ const [kind,id]=k.split(':'); const sp=el('span',kind==='gear'?'gear':'',(kind==='gear'?itemName(id):MENUTXT.items[id].name)+(agg[k]>1?' ×'+agg[k]:'')); const ic=pngIcon(id,kind,24); if(ic){ sp.classList.add('wi'); sp.insertBefore(ic,sp.firstChild); } lt.appendChild(sp); }); top.appendChild(lt); }
-    V.appendChild(top);
-    const cards=el('div','vict-cards');
-    info.recs.forEach(r=>{ const m=r.m; const c=el('div','vict-card'+(m.lvl>r.lv0?' up':'')); c.dataset.id=r.id; c.appendChild(headCanvas(r.id,24,30));
-      const t=el('div','vict-t'); const a=el('div','vict-r'); a.appendChild(el('b',null,CHAR[r.id].name)); const lv=el('span','vict-lv'); lv.appendChild(el('small',null,UIT.nivelCorto+' ')); lv.appendChild(el('b',null,String(m.lvl))); a.appendChild(lv); t.appendChild(a);
-      const e=el('div','vict-r'); e.appendChild(el('small',null,'Exp. +')); e.appendChild(el('b',null,String(r.gain))); t.appendChild(e);
-      const nx=expInfo(m); const bar=el('div','pz-expbar'); const bi=el('i'); bi.style.width='0%'; bar.appendChild(bi); t.appendChild(bar); setTimeout(()=>{ bi.style.width=(nx.f*100)+'%'; },60);
-      const n=el('div','vict-r'); n.appendChild(el('small',null,nx.next==null?UIT.nivelMax:UIT.expSiguiente)); n.appendChild(el('span',null,nx.next==null?'':String(nx.next))); t.appendChild(n);
-      if(m.lvl>r.lv0) t.appendChild(el('div','vict-up','¡'+UIT.nivel+' '+m.lvl+'!'));
-      c.appendChild(t); cards.appendChild(c); });
+    B.winInfo=info; const V=el('div','vict vict2'); V.setAttribute('role','dialog'); V.setAttribute('aria-label','Victoria');
+    const head=el('div','vict-head'); head.appendChild(el('div','vict-title','Victoria'));
+    const tot=el('div','vict-tot'); const expT=info.recs.reduce((s,r)=>s+(r.gain|0),0);
+    const ex=el('div','vict-chip exp'); ex.appendChild(el('small',null,'Exp.')); ex.appendChild(el('b',null,'+'+expT)); tot.appendChild(ex);
+    const gold=el('div','vict-chip vict-gold'); try{ gold.appendChild(PFXI.coinEl()); }catch(e){} gold.appendChild(el('b',null,'+'+info.oro)); gold.appendChild(el('small',null,' '+UIT.oro.toLowerCase())); tot.appendChild(gold);
+    head.appendChild(tot); V.appendChild(head);
+    if(info.loot.length){ const lt=el('div','vict-loot'); lt.appendChild(el('small','vict-lab','Botín')); const agg={}; info.loot.forEach(l=>{ const k=l.kind+':'+l.id; agg[k]=(agg[k]||0)+1; });
+      Object.keys(agg).forEach((k,i)=>{ const [kind,id]=k.split(':'); const sp=el('span',kind==='gear'?'gear':'',(kind==='gear'?itemName(id):MENUTXT.items[id].name)+(agg[k]>1?' ×'+agg[k]:'')); const ic=pngIcon(id,kind,24); if(ic){ sp.classList.add('wi'); sp.insertBefore(ic,sp.firstChild); } sp.style.animationDelay=(0.25+i*0.12)+'s'; lt.appendChild(sp); }); V.appendChild(lt); }
+    const cards=el('div','vict-cards'); const timers=[];
+    info.recs.forEach((r,ci)=>{ const m=r.m, up=m.lvl>r.lv0; const c=el('div','vict-card'+(up?' up':'')); c.dataset.id=r.id; c.style.animationDelay=(0.1+ci*0.08)+'s';
+      const top=el('div','vc-top'); top.appendChild(el('b','vc-name',CHAR[r.id].name)); const lv=el('span','vc-lv'); lv.appendChild(el('small',null,'NIV ')); const lvb=el('b',null,String(up?r.lv0:m.lvl)); lv.appendChild(lvb); top.appendChild(lv);
+      if(up){ const tag=el('span','vc-uptag','NIV ↑'); top.appendChild(tag); } c.appendChild(top);
+      const body=el('div','vc-body'); const pc=el('div','vc-port'); pc.appendChild(headCanvas(r.id,72,60)); body.appendChild(pc);
+      const bars=el('div','vc-bars'); const s1=stats(m); let s0=s1; if(up){ try{ s0=stats(Object.assign({},m,{lvl:r.lv0})); }catch(e){ s0=s1; } }
+      const nx=expInfo(m); const eb=el('div','vc-bar exp'); eb.appendChild(el('small',null,'EXP')); const ei=el('i'); const ebar=el('span'); ebar.appendChild(ei); eb.appendChild(ebar); eb.appendChild(el('em',null,'+'+r.gain)); bars.appendChild(eb);
+      const pb=el('div','vc-bar pv'); pb.appendChild(el('small',null,'PV')); const pi=el('i'); const pbar=el('span'); pbar.appendChild(pi); pb.appendChild(pbar); pb.appendChild(el('em',null,Math.max(0,m.pv)+'/'+s1.pv)); bars.appendChild(pb);
+      timers.push(setTimeout(()=>{ ei.style.width=(nx.f*100)+'%'; pi.style.width=clamp(m.pv/s1.pv*100,0,100)+'%'; },120+ci*80));
+      const st=el('div','vc-stats'); VSTATS.forEach(([k,lab])=>{ const d=(s1[k]|0)-(s0[k]|0); const row=el('div','vc-st'+(d>0?' plus':'')); row.appendChild(el('small',null,lab)); const v=el('b',null,String(s0[k]|0)); row.appendChild(v);
+        const ar=el('span','vc-ar',d>0?'▲'+d:''); row.appendChild(ar); st.appendChild(row);
+        if(d>0) timers.push(setTimeout(()=>{ row.classList.add('on'); let n=s0[k]|0; const end=s1[k]|0; const stp=()=>{ n=Math.min(end,n+Math.max(1,Math.ceil((end-n)/4))); v.textContent=String(n); if(n<end) timers.push(setTimeout(stp,55)); }; stp(); },700+ci*260+VSTATS.findIndex(q=>q[0]===k)*70)); });
+      if(up) timers.push(setTimeout(()=>{ lvb.textContent=String(m.lvl); lv.classList.add('flash'); try{ sfx('heal'); }catch(e){} },560+ci*260));
+      bars.appendChild(st); body.appendChild(bars); c.appendChild(body); cards.appendChild(c); });
     V.appendChild(cards);
     const go=btn('vict-go','Continuar ▸',()=>done()); V.appendChild(go);
-    (WIDE?UI.stage:UI.panel).appendChild(V); if(!WIDE) UI.panel.insertBefore(V,UI.panel.firstChild);
-    let fin=false; const done=()=>{ if(fin) return; fin=true; advanceFn=null; V.remove(); B.winInfo=null; res(); };
+    UI.stage.appendChild(V);
+    let fin=false; const done=()=>{ if(fin) return; fin=true; timers.forEach(clearTimeout); advanceFn=null; V.classList.add('out'); setTimeout(()=>V.remove(),AUTO?0:180); B.winInfo=null; res(); };
     advanceFn=()=>done(); if(!AUTO) setTimeout(()=>{ try{ go.focus({preventScroll:true}); }catch(e){} },80);
     if(AUTO) setTimeout(done,2);
   });
 }
+
+/* v50 · cartel de botín de los cofres (Brian: «la moneda queda suelta y el objeto como un cuadradito en el medio de la pantalla»):
+   una tarjeta con marco de bronce justo arriba del cuadro de diálogo, con ícono, nombre y cantidad de cada cosa (las coronas con la
+   moneda que gira). Entra con un salto chico, queda mientras se lee el mensaje y se va cuando se cierra. No toca el efecto del cofre. */
+function lootCard(rows,title){ try{ if(AUTO||!rows||!rows.length) return ()=>{}; const old=document.querySelector('.loot-card'); if(old) old.remove();
+    const box=el('div','loot-card'); box.setAttribute('aria-hidden','true'); box.appendChild(el('div','lc-title',title||'Encontraste'));
+    rows.forEach((r,i)=>{ const row=el('div','lc-row'); row.style.animationDelay=(0.18+i*0.1)+'s';
+      if(r.kind==='oro'){ const bx=el('span','lc-coin'); try{ const ic=PFXI.coinEl(); if(ic) bx.appendChild(ic); }catch(e){} row.appendChild(bx); }
+      else { const ic=itemIcon(r.id,r.kind,32); if(ic) row.appendChild(ic); }
+      row.appendChild(el('b',null,r.name)); if(r.n>1||r.kind==='oro') row.appendChild(el('em',null,r.kind==='oro'?'+'+r.n:'×'+r.n)); box.appendChild(row); });
+    (UI.stage||document.body).appendChild(box); requestAnimationFrame(()=>box.classList.add('on'));
+    let gone=false; return ()=>{ if(gone) return; gone=true; box.classList.remove('on'); box.classList.add('out'); setTimeout(()=>box.remove(),260); }; }catch(e){ return ()=>{}; } }
 
 if(isIll()) document.body.classList.add('ill');
 
@@ -27484,7 +27622,10 @@ async function useProp(p){ const w=ensure(); S.busy=true; S.P.walking=false; if(
   try{ const g=S.goal; if(g&&(g.trig||[]).some(id=>id===p.id||id===p.story||(p.sets===id&&p.scene))){ S.busy=false; reachGoal({id:p.id,prop:p}); meta=true; w.seen['prop:'+p.id]=1; return; } // M5: la meta deja busy (un segundo toque no juega la escena del prop sin ganchos) y el prop queda usado
     { const esc=escenaDe(p); if(esc){ await playEscena(esc,{at:{x:p.x,y:p.y+20}}); return; } } // escenas v2: examinar el objeto con «!» juega la escena (después, su texto)
     if(p.kind==='cofre'&&!can(p.need)){ sfx('miss'); await talkLines(cofreCerrado(p)); return; } // cerrado (llave, misión o historia): se avisa y no se toca nada
-    if(p.kind==='cofre'){ if(w.chests[p.id]) return; w.chests[p.id]=1; const got=giveItems(p.items); if(p.oro){ G.oro+=p.oro; got.push(p.oro+' coronas'); } (p.gear||[]).forEach(g2=>{ gearAdd(g2); got.push((MENUTXT.equip[g2]||{}).name||g2); }); sfx('heal'); PFXI.chest(p,S.P); /* pixelfx C1: el cofre se abre (y C2 si trae oro) */ lootPop(Object.keys(p.items||{}).concat(p.gear||[])); await say(null,p.msg||(WL('cofre','Encontrás un cofre: ')+got.join(', ')+'.')); if(p.place) done(p.place);
+    if(p.kind==='cofre'){ if(w.chests[p.id]) return; w.chests[p.id]=1; const got=giveItems(p.items); if(p.oro){ G.oro+=p.oro; got.push(p.oro+' coronas'); } (p.gear||[]).forEach(g2=>{ gearAdd(g2); got.push((MENUTXT.equip[g2]||{}).name||g2); }); sfx('heal'); PFXI.chest(p,null); /* pixelfx C1: el cofre se abre · v50: la moneda ya no flota suelta sobre el líder: va en el cartel de botín */
+      const rows=[]; Object.keys(p.items||{}).forEach(k=>{ const n=p.items[k]|0; if(n<=0) return; if(k==='oro'){ rows.push({kind:'oro',name:'Coronas',n}); return; } const kind=String(k).startsWith('key_')?'key':'item'; rows.push({kind,id:k,n,name:((MENUTXT.items||{})[k]||{}).name||((typeof KEYS==='object'&&KEYS[k]&&KEYS[k].n)||k)}); });
+      if(p.oro) rows.push({kind:'oro',name:'Coronas',n:p.oro}); (p.gear||[]).forEach(g2=>rows.push({kind:'gear',id:g2,n:1,name:(MENUTXT.equip[g2]||{}).name||g2}));
+      const closeLoot=lootCard(rows,WL('cofreTit','Cofre')); try{ await say(null,p.msg||(WL('cofre','Encontrás un cofre: ')+got.join(', ')+'.')); } finally { closeLoot(); } if(p.place) done(p.place);
       { const PL=linesOf(p.post); if(PL) for(const l of PL) await sayL(l); } (Array.isArray(p.sets)?p.sets:p.sets?[p.sets]:[]).forEach(f=>flag(f,true)); if(p.run) await p.run(apiFor()); return; } // misiones: el cofre también corre sets/run (afinidad) y puede tener mensaje propio
     const k='prop:'+p.id; let L=null; PFXI.mark(p.x,p.y); // pixelfx C4: lo que se reciba al examinarlo sale de acá
     if(p.scene&&LINES.scenes[p.scene]&&!(p.once&&w.seen[k])){ w.seen[k]=1; const st=await sceneIn(p.scene,{at:{x:p.x,y:p.y+20}}); await playScene(p.scene,{get:st.get,hooks:{}}); await back(st); }
@@ -27657,7 +27798,14 @@ function drawWorld(c,dt){ const Z=S.Z, P=S.P, cam=S.cam; if(!Z||!P) return;
     for(const a of (S.npcA||[])){ const b=a.def&&a.def.bang; if(!b||a.escena||a.hidden||!vis(a.x,a.y)||!bq(b)) continue; if(PFXI.bangFx(Z.id,'n:'+a.id,a.x,a.y,actorH(a),P.x,P.y)) continue; (typeof drawBangSq==='function'?drawBangSq:drawBang)(c,Math.round(a.x),Math.round(a.y-actorH(a)-(S.near&&S.near.npc===a?18:8))); }
     for(const p of Z.props){ if(!p.bang||p.escena||!vis(p.x,p.y)||!can(p.need)||!bq(p.bang)) continue; if(PFXI.bangFx(Z.id,'p:'+p.id,p.x,p.y,16,P.x,P.y)) continue; (typeof drawBangSq==='function'?drawBangSq:drawBang)(c,Math.round(p.x),Math.round(p.y-(S.near&&S.near.prop===p?36:24))); }
     // pulido A02: «!» sobre la meta del tramo (Arco I): el disparador, el objeto o el vecino que pide la historia
-    if(S.goal&&S.goal.bang){ const gt=goalTrigger(); if(gt){ const q=gt.prop||null; const gx=q?q.x:gt.x+gt.w/2, gy=q?q.y-(S.near&&S.near.prop===q?36:24):gt.y+gt.h/2-20; if(vis(gx,gy)) drawBang(c,Math.round(gx),Math.round(gy)); } } }
+    if(S.goal&&S.goal.bang){ const gt=goalTrigger(); if(gt){ const q=gt.prop||null; let gx=q?q.x:gt.x+gt.w/2, gy=q?q.y-(S.near&&S.near.prop===q?36:24):gt.y+gt.h/2-20;
+      /* v50 (bug de Brian: «!» de la meta flotando sobre un arbusto): si no es un objeto, el «!» va sobre la cabeza de quien espera adentro del
+         disparador (el NPC de la escena) o, si no hay nadie, sobre la marca donde arranca la escena; el centro del rectángulo queda de último recurso */
+      if(!q){ const inR=a=>a&&!a.hidden&&a.x>=gt.x-8&&a.x<=gt.x+gt.w+8&&a.y>=gt.y-8&&a.y<=gt.y+gt.h+8;
+        const who=(S.npcA||[]).filter(inR).sort((u,v)=>Math.hypot(u.x-gx,u.y-gy)-Math.hypot(v.x-gx,v.y-gy))[0];
+        const m=S.goal.mark&&(S.Z.marks||{})[S.goal.mark];
+        if(who){ gx=who.x; gy=who.y-actorH(who)-6; } else if(m&&m.x!=null){ gx=m.x; gy=m.y-62; } }
+      if(vis(gx,gy)) drawBang(c,Math.round(gx),Math.round(gy)); } } }
   const nn=S.near; if(nn&&!S.busy&&!advanceFn){ const tx=nn.npc&&!nn.npc.noDraw?nn.npc:nn.fol?nn.fol:nn.rival?nn.rival.a:null; if(tx) drawHeadMark(c,Math.round(tx.x),Math.round(tx.y-actorH(tx)-6),'#ffd04a'); else drawHeadMark(c,Math.round(nn.x),Math.round(nn.y-22),'#ffd04a'); }
   drawExitMarks(c); PFXI.drawUi(c); /* pixelfx de interfaz (cofres, recolección, «!», monedas), con la cámara */ c.restore();
   if(Z.drawOver) Z.drawOver(c,cam,dt); if(!Z._z) hourTint(c,Z); }
@@ -30326,9 +30474,13 @@ function town(cfg,api,npcs){ const tag=cfg?cfg.tag:'c1';
 }
 
 /* ---------- zonas: esferas, campamentos y puntos de formación por datos ---------- */
-const ESF=[ // [zona, x, y] · junto a los mojones del cuervo y antes de los tramos largos
-  ['prados',326,132],['sauces',230,258],['linde',144,132],['campamento',470,120],['carboneros',144,126],['sirga',150,140],['albardon',176,136],['granja_vieja',70,206],['juncal',70,128]];
-const ESFG=[{id:'gl_esfera_1',x:236,y:480},{id:'gl_esfera_2',x:214,y:700}]; // mapa del mundo: camino Hollin–Prados y camino del sur (Albardón)
+/* v50 (Brian, 26/11: «hay muchos savepoints; que no sea tan fácil, salvo en ciudades o a la entrada de un dungeon»): quedan solo las esferas
+   de los pueblos y de las bocas de los tramos peligrosos (el bosque de los Sauces, el linde del pantano, el campamento de los carboneros y
+   la boca del Paso del Juncal). Se sacan las del campo abierto (Prados, sirga) y las del mapa del mundo; donde hay fogón o corral para
+   descansar (campamento del cap. 1, Albardón, granja vieja) se guarda ahí. */
+const ESF=[ // [zona, x, y]
+  ['sauces',230,258],['linde',144,132],['carboneros',144,126],['juncal',70,128]];
+const ESFG=[]; // mapa del mundo: sin esferas desde v50
 const CAMPS=[ // [zona, id de REST, x, y, need, arte]
   ['granja','oberen',300,250,'granja_lobos','pajar'],
   ['albardon','corral',610,176,G0=>(G0&&G0.chap)===4&&can('c4_robo'),'fogon'],
@@ -33879,7 +34031,14 @@ const PTIRO=(()=>{
   function arrow(c,x,y,a){ const dx=Math.sin(a), dy=-Math.cos(a); pxLine(c,x,y,x+dx*8,y+dy*8,1,'#5a4630'); c.fillStyle='#a7adb6'; c.fillRect(Math.round(x+dx*8-1),Math.round(y+dy*8-1),2,2); c.fillStyle='#d6dae0'; c.fillRect(Math.round(x+dx*9),Math.round(y+dy*9-1),1,1); }
   function drawDecor(c,L){ if(!D||!D.decor) return; for(const it of D.decor){ if((it.L||0)!==L) continue;
       if(it.k==='horse'){ const im=horseImg(it.alt); if(!im) continue; c.globalAlpha=0.35; ellipse(c,it.x,it.y-2,40,5,'#120a08'); c.globalAlpha=1; c.save(); c.translate(Math.round(it.x),Math.round(it.y)); if(it.flip) c.scale(-1,1); c.drawImage(im,-45,-31); c.restore(); }
-      else if(it.k==='body'){ const cv=bodySpr(it); if(!cv) continue; const f=it.face||1, sc=depthK(it.y), w=cv.width*sc, h=cv.height*sc*0.62;
+      else if(it.k==='body'){ /* v50 (Brian: «los muertos del puente parecen aplastados»): ya no se rota y se achata el cuadro de pie; se usa el
+           último cuadro de la caída ('ko') de cada hoja PixelLab, que es un cuerpo tendido de verdad, a escala por profundidad y sin achatar,
+           con un charco oscuro debajo. Si la hoja no tiene caída, queda el recorte de antes. */
+        const f=it.face||1, sc=depthK(it.y), id=sprId(it.spr), sh=SPR.sheet(id), hasKo=!!(sh&&sh.a&&sh.a.anims&&sh.a.anims.ko);
+        if(hasKo){ const bw=(sh.a.bw||sh.a.fw*0.6)*sc*1.25;
+          c.globalAlpha=0.42; ellipse(c,it.x,it.y-1,bw*0.62,3.2*sc,'#160a0a'); c.globalAlpha=0.3; ellipse(c,it.x+f*bw*0.12,it.y+1,bw*0.3,2.4*sc,'#4a0e12'); c.globalAlpha=1;
+          SPR.draw(c,id,it.x,it.y,{anim:'ko',t:999,face:f,scale:sc,shadow:false}); if(it.w) weapon(c,it.w,it.x+f*(bw*0.62+3),it.y,f); continue; }
+        const cv=bodySpr(it); if(!cv) continue; const w=cv.width*sc, h=cv.height*sc*0.8;
         c.globalAlpha=0.38; ellipse(c,it.x,it.y-1,w*0.5,2.6*sc,'#160a0a'); c.globalAlpha=0.26; ellipse(c,it.x+f*w*0.12,it.y,w*0.22,2*sc,'#3a0e10'); c.globalAlpha=1;
         c.save(); c.translate(Math.round(it.x),Math.round(it.y)); if(f<0) c.scale(-1,1); c.drawImage(cv,Math.round(-w/2),Math.round(-h),Math.round(w),Math.round(h)); c.restore();
         if(it.w) weapon(c,it.w,it.x+f*(w*0.5+3),it.y,f); }
@@ -34718,7 +34877,11 @@ async function start(data){
   if(pick&&await loadSlot(pick)) return;
   SAVES.fresh(); await fadeTo(1,400); runSafe('prologo');
 }
-window.__LDC={get G(){return G}, combateTest:(cfg)=>{ try{ if(!G||!G.party||!Object.keys(G.party).length) newGame(); }catch(e){ newGame(); } return battle(cfg); }, // v48: captura de combates por zona
+window.__LDC={get G(){return G},
+  // v50: pantallas de victoria y de botín para capturas (tools/verify, scratch)
+  victoriaTest:()=>{ try{ if(!G||!G.party||!Object.keys(G.party).length) newGame(); }catch(e){ newGame(); } const ids=Object.keys(G.party).slice(0,6); const recs=ids.map((id,i)=>{ const m=G.party[id]; const lv0=m.lvl; if(i%2===0) m.lvl++; return {id,m,gain:120+i*37,lv0}; });
+    try{ setScene({draw(c){ c.fillStyle='#2a3a22'; c.fillRect(0,0,W,H); }}); }catch(e){} return victoryScreen({},{oro:87,loot:[{kind:'item',id:'pocion'},{kind:'item',id:'pocion'},{kind:'gear',id:Object.keys(EQUIP.items).find(k=>EQUIP.items[k].slot==='accesorio')}],recs}); },
+  botinTest:()=>{ const c=lootCard([{kind:'item',id:'pocion',n:2,name:'Poción'},{kind:'oro',name:'Coronas',n:40},{kind:'gear',id:Object.keys(EQUIP.items).find(k=>EQUIP.items[k].slot==='accesorio'),n:1,name:'Accesorio de prueba'}],'Cofre'); return 'ok'; }, combateTest:(cfg)=>{ try{ if(!G||!G.party||!Object.keys(G.party).length) newGame(); }catch(e){ newGame(); } return battle(cfg); }, // v48: captura de combates por zona
   fondoTest:()=>({drawBG,ENV,AMBZ:(typeof AMBZ!=='undefined'?AMBZ:null),AMBI:(typeof AMBI!=='undefined'?AMBI:null),W,H}), // v48: fondos de combate (tools/verify/fondos.js)
   musicaTest:()=>({AU,playInst,MUS,MUS_BIBLIA,MUS_LIBRE,MUSBIB_ERR,renderOptions,OPTV}), // v45: render de los temas (tools/verify/musica.js)
   arteTest:()=>({SPR,troop:WAR._troop,ICONOS,artImage}), // v42: control del arte del lote (tools/verify/lote_arte.js)
