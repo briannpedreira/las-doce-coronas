@@ -11440,10 +11440,10 @@ const TX={
   riv_juncal_fin:[[null,'El Viejo del Juncal no se vuelve a levantar. El pantano queda en silencio, como si contuviera el aire.','o']],
   riv_juncal_lore:[[null,'Los juncaleros no cortan en este rincón. Dicen que el Viejo del Juncal ya era viejo cuando sus abuelos eran chicos.','t']],
   // --- bordes cerrados y deny ---
-  deny_hollin_contrato:[['maela','Primero el contrato, batidor. Después caminamos.','n']],
+  deny_hollin_contrato:[['maela','Primero el contrato, explorador. Después caminamos.','n']],
   deny_hollin_cerrado:[['maela','La paga corre desde que salimos. Hollin queda atrás.','n']],
   deny_hollin_guardia:[[null,'El puesto de guardia cerró el paso. Rumores de guerra.','n','Guardia']],
-  deny_c1:[['maela','Primero despejemos esto, batidor. Algo aúlla en la loma.','a']],
+  deny_c1:[['maela','Primero despejemos esto, explorador. Algo aúlla en la loma.','a']],
   deny_c2:[['maela','Ese vado no se cruza con arcos apuntándonos. Primero los sauces.','a']],
   deny_c3:[['maela','La pasarela no está limpia. Nadie avanza hasta que lo esté.','a']],
   deny_campamento_noche:[['maela','Ya es de noche. Nadie vuelve al pantano a oscuras.','n']],
@@ -11465,9 +11465,9 @@ const TX={
   npc_brezo_buhonera:[[null,'Vengo de Vesper. En el camino dicen que el príncipe de Corvaine viaja de incógnito.','n','Buhonera'],[null,'Yo no digo nada. Yo vendo hilo.','m','Buhonera']],
   pra_ex_piedra:[[null,'Una piedra de leva de Brenmoor: «A Hollin, dos leguas. A Vesper, treinta». Alguien rayó «y un poco más».','n']],
   pra_cartel_granja:[[null,'«Granja de los Oberen ↑ · Sauces →». El cartel de la granja está recién pintado.','n']],
-  pra_mojon:[[null,'Un mojón con el cuervo grabado. Los batidores dejan acá su marca.','n']],
-  // misiones MVP (Hermes · misiones-mvp-textos.md) · C-04 Las marcas del batidor
-  sq_pra_mojon:[[null,'Un mojón con el cuervo grabado. Debajo, a punta de cuchillo, una marca más chica: «H · I» y una flecha al este.','n'],['ilian','Marca de batidor. Vieja. Así nos enseñaron a dejarlas.','t'],['nach','¿Y la H?','o'],['ilian','Ni idea. Pero la flecha apunta a los sauces.','n']],
+  pra_mojon:[[null,'Un mojón con el cuervo grabado. Los exploradores dejan acá su marca.','n']],
+  // misiones MVP (Hermes · misiones-mvp-textos.md) · C-04 Las marcas del explorador
+  sq_pra_mojon:[[null,'Un mojón con el cuervo grabado. Debajo, a punta de cuchillo, una marca más chica: «H · I» y una flecha al este.','n'],['ilian','Marca de explorador. Vieja. Así nos enseñaron a dejarlas.','t'],['nach','¿Y la H?','o'],['ilian','Ni idea. Pero la flecha apunta a los sauces.','n']],
   sq_pra_mojon_again:[[null,'«H · I». La flecha apunta al este, hacia los sauces.','n']],
   // --- Granja ---
   npc_granja_oberen:[[null,'¿Mercenarios? Justo a tiempo. Dos lobos me rondan el corral hace tres noches.','o','Oberen'],[null,'Si me los sacan de encima, les pago. Quince coronas y un antídoto, que es lo que hay.','n','Oberen']],
@@ -11524,7 +11524,7 @@ const TX={
 // caravana: seis mercenarios con nombre (representan a los ~20 de la Etapa 12) + Maela, Bertram y Lina
 // GUION v2: nombres de la propuesta de Hermes (Ruy, Quina, Tomé, el Mudo, Garra, Ferro); los ids quedan como estaban
 const MERC=[
-  {id:'garrido',name:'Ruy',spr:'guardia',lines:{prados:'Diez años de escoltas y estas botas tienen más remiendo que bota.',sauces:'Los sauces me dan mala espina. Demasiado lindo para ser tranquilo.',linde:'Barro hasta las rodillas. Esto no lo pagan.',campamento:'Dormí con la espada, batidor. Siempre.'}},
+  {id:'garrido',name:'Ruy',spr:'guardia',lines:{prados:'Diez años de escoltas y estas botas tienen más remiendo que bota.',sauces:'Los sauces me dan mala espina. Demasiado lindo para ser tranquilo.',linde:'Barro hasta las rodillas. Esto no lo pagan.',campamento:'Dormí con la espada, explorador. Siempre.'}},
   {id:'osmunda',name:'Quina',spr:'aldeana',lines:{prados:'Mi ballesta pesa más que vos, chico.',sauces:'Si ves arqueros, avisá antes de que te vean a vos.',linde:'Las garzas se fueron. Las garzas saben cosas.',campamento:'Bertram ronca peor que un oso.'}},
   {id:'pell',name:'Tomé',spr:'aldeano',lines:{prados:'¿Es verdad que tu gato es ciego? ¿Y cómo te sigue?',sauces:'Apuesto dos de cobre a que Nach se cae al arroyo.',linde:'¡Perdí una bota! ¡Una bota entera!',campamento:'Esta noche me toca guardia. Si me duermo, no digas nada.'}},
   {id:'rurik',name:'Mudo',spr:'guardia',lines:{prados:'…',sauces:'Huele a humo.',linde:'Jabalí. Grande.',campamento:'El preso no duerme. Mira.'}},
@@ -11533,7 +11533,7 @@ const MERC=[
 ];
 MERC.forEach(m=>Object.keys(m.lines).forEach(z=>{ TX['merc_'+m.id+'_'+z]=[[null,m.lines[z],'n',m.name]]; }));
 Object.assign(TX,{
-  car_maela_prados:[['maela','No tardes, batidor. La paga no espera, pero yo sí.','n']], car_maela_sauces:[['maela','Adelante, batidor. La carreta espera acá.','n']], car_maela_linde:[['maela','Del otro lado de la pasarela acampamos. Si llegamos.','n']], car_maela_campamento:[['maela','Al amanecer, el puente. Descansá.','n']],
+  car_maela_prados:[['maela','No tardes, explorador. La paga no espera, pero yo sí.','n']], car_maela_sauces:[['maela','Adelante, explorador. La carreta espera acá.','n']], car_maela_linde:[['maela','Del otro lado de la pasarela acampamos. Si llegamos.','n']], car_maela_campamento:[['maela','Al amanecer, el puente. Descansá.','n']],
   car_bertram_prados:[['bertram','A mi edad, cada piedra del camino es personal.','h']], car_bertram_sauces:[['bertram','Esta niebla me moja los huesos, chicos.','s']], car_bertram_linde:[['bertram','Si veo otro mosquito le declaro la guerra.','a']], car_bertram_campamento:[['bertram','Nach, pasame el pan. No, el otro pan.','h']],
   car_lina_prados:[['lina','Si te cansás, te llevo en la carreta con el preso.','m']], car_lina_sauces:[['lina','Practico la estocada. No te pongas adelante.','n']], car_lina_linde:[['lina','El barro me encanta. Mentira.','m']], car_lina_campamento:[['lina','¿Viste los papeles del preso? Tienen un sello raro.','t']]
 });
@@ -13219,7 +13219,7 @@ const LINES = {
       ['narr','Desde abajo de la carreta de víveres grita una voz con acento de montaña: «¡El que toque mi eje lo engraso con su barba!».'],
       ['say','lina','Dov ya se levantó.','m'],
       ['gest','maela','point'], ['wait',400],
-      ['say','maela','Hasta Vesper, siete días. Batidor: vos y tu hermano van adelante. Despejan, vuelven, avisan.','n'],
+      ['say','maela','Hasta Vesper, siete días. Explorador: vos y tu hermano van adelante. Despejan, vuelven, avisan.','n'],
       ['say','maela','La caravana espera en cada parada. Nadie se separa de la carreta sellada. Nadie la abre.','a'],
       ['say','maela','Se cobra. Se cumple. Se vuelve.','d'],
       ['anim','bertram','idle'],
@@ -13227,7 +13227,7 @@ const LINES = {
       ['say','lina','Se vuelve.','d'],
       ['say','merc_ruy','¡Se vuelve!','h'],
       ['approach','maela','ilian',36],
-      ['whisper','maela','No tardes, batidor. La paga no espera, pero yo sí.','m'],
+      ['whisper','maela','No tardes, explorador. La paga no espera, pero yo sí.','m'],
       ['say','maela','Desde que pasamos esa puerta, corre la paga. No se vuelve al pueblo.','n'],
       ['narr','Ilian mira Hollin una vez. En la puerta de la taberna, Agnes levanta la mano. Olaf mira hacia la plaza, hacia donde se fue el peregrino.'],
       ['emote','olaf','...']
@@ -13336,7 +13336,7 @@ const LINES = {
 
     /* ---------- 5 · EL CAMPAMENTO ---------- */
     campamento_llegada: [
-      ['say','maela','Acá dormimos. Batidor, revisá el perímetro y después comé. En ese orden.','n'],
+      ['say','maela','Acá dormimos. Explorador, revisá el perímetro y después comé. En ese orden.','n'],
       ['narr','Podés hablar con todos. Cuando quieras descansar, sentate al fogón.']
     ],
     campamento: [
@@ -13962,7 +13962,7 @@ LINES.affChats=[
     ['ilian','No le digas a Maela. Te va a pedir que lo hagas con ella.','m']
   ]},
   { id:'af_teniente', pair:['ilian','maela'], lvl:1, title:'La teniente pregunta', after:'sauces', cast:['maela','ilian'], lines:[
-    ['maela','Batidor. Cuando hay sauces, mirás las ramas antes que el camino. ¿Quién te enseñó?','t'],
+    ['maela','Explorador. Cuando hay sauces, mirás las ramas antes que el camino. ¿Quién te enseñó?','t'],
     ['ilian','Nadie. Las ramas no mienten. El camino, a veces.','n'],
     ['maela','Eso lo dice alguien a quien le mintió un camino.','m'],
     ['?',[ {label:'Contarle de las ruinas',aff:3,lines:[['ilian','Una vez seguí un camino hasta unas ruinas. Salí con un gato ciego y un ojo de otro color.','s'],['maela','…Gracias por decirlo. No lo voy a repetir.','n']]},
@@ -14066,7 +14066,7 @@ LINES.noCierraOrden=['nc_ojo','nc_guantes','nc_peregrino','nc_fardo','nc_encap',
    TEXTOS DEL MUNDO (reemplazan los provisorios de zones.js; ZONES.text los lee de acá)
    Forma: [quién | null, texto, expr, nombre visible si no hay retrato]
    ============================================================ */
-LINES.world={ salida:'Batidor. La loma del centro. Si hay algo, está ahí.',
+LINES.world={ salida:'Explorador. La loma del centro. Si hay algo, está ahí.',
   // cofres cerrados (pedido de Brian, 23/10/2026): rótulo del botón A; con _<id> pisa el de un cofre puntual
   cofre_revisar:'Revisar el cofre', cofre_revisar_sau_cofre_aparejos:'Revisar la caja de aparejos' };
 LINES.zones={
@@ -14088,7 +14088,7 @@ LINES.zones={
   merc_pell_campamento:[[null,'Le pasé la cena por la rendija. Me dio las gracias como un señor. Los presos no agradecen.','t','Tomé']],
   merc_tana_campamento:[[null,'Cuando el Cuervo era el Cuervo, Hagen nos hacía cantar en estas marchas. Ahora cuidamos cajas.','s','Garra']],
   merc_rurik_campamento:[[null,'El Mudo afila un cuchillo. Te mira, mira la carreta, y se toca la boca con dos dedos: silencio.','n']],
-  merc_brannoc_campamento:[[null,'Mañana el Puente Viejo. Lo usan los contrabandistas. Y los que no quieren que los vean.','t','Ferro'],['ilian','¿Y nosotros qué somos?','m'],[null,'Las dos cosas, batidor.','m','Ferro']],
+  merc_brannoc_campamento:[[null,'Mañana el Puente Viejo. Lo usan los contrabandistas. Y los que no quieren que los vean.','t','Ferro'],['ilian','¿Y nosotros qué somos?','m'],[null,'Las dos cosas, explorador.','m','Ferro']],
   merc_rurik_prados:[[null,'El Mudo te saluda con la cabeza y sigue mirando el horizonte.','n']],
   merc_rurik_sauces:[[null,'El Mudo señala los sauces y se olfatea la manga: humo.','n']],
   merc_rurik_linde:[[null,'El Mudo dibuja un jabalí en el barro con la punta de la bota. Uno grande.','n']],
@@ -14247,7 +14247,7 @@ Object.assign(LINES.scenes, {
     ['walk','nach',110], ['hide','nach'],
     ['narr','Nach vuelve hacia la carreta contándose los dedos, por las dudas.'],
     ['faceTo','maela','ilian'],
-    ['say','maela','Batidor. Cuando hay sauces, mirás las ramas antes que el camino. ¿Quién te enseñó?','t'],
+    ['say','maela','Explorador. Cuando hay sauces, mirás las ramas antes que el camino. ¿Quién te enseñó?','t'],
     ['say','ilian','Nadie. Las ramas no mienten. El camino, a veces.','n'],
     ['say','maela','Eso lo dice alguien a quien le mintió un camino.','m'],
     ['?',[
@@ -14384,7 +14384,7 @@ Object.assign(LINES.scenes, {
     ['say','severo','A todo el que hoy pueda señalarlos a ustedes.','n'],
     ['say','ilian','O sea, a medio continente.','m'],
     ['say','severo','Aprendés rápido, Varre. Eso va a ser un problema.','h'],
-    ['say','maela','Dos horas, batidor. Después me toca a mí.','n'],
+    ['say','maela','Dos horas, explorador. Después me toca a mí.','n'],
     ['walk','maela',100], ['hide','maela'],
     ['wait',800],
     ['if',{flag:'guantes_hollin'},
@@ -14608,7 +14608,7 @@ LINES.viaje = {
   quedarse: 'Seguir a pie por el mapa',
   objetivo: 'Para acá va la historia',
   saltar:   'Tocá o apretá una tecla para saltar',
-  niega_cap1: ['maela','Por ahí no, batidor. El contrato queda para el otro lado.','n'],
+  niega_cap1: ['maela','Por ahí no, explorador. El contrato queda para el otro lado.','n'],
   opcion:  'Viajar en la carreta',
   llegada: 'Doña Rueda llega crujiendo, como siempre.',
   niega_persecucion: ['maela','Nos vienen pisando. Nada de carreta: a pie, y ahora.','a'],
@@ -14650,7 +14650,7 @@ LINES.caravana = {
     ilian:   [['ilian','Agnes contó y le faltó uno. No preguntó cuál. Ya sabía.','s']],
     nach:    [['nach','Agnes me sirvió guiso dos veces y no me anotó ninguna. Eso me preocupa.','t']],
     maela:   [['maela','Si alguien sube la escalera del altillo, lo quiero oír desde acá.','n']],
-    severo:  [['severo','Un patio con tres salidas y un perro. Dormí en celdas peores, batidor.','m']],
+    severo:  [['severo','Un patio con tres salidas y un perro. Dormí en celdas peores, explorador.','m']],
     simona:  [[null,'Simona duerme atravesada en la puerta del establo. Abre un ojo. Lo cierra.','n']],
     dov:     [['dov','El eje aguanta. La rueda, también. Yo no tanto: no me hablen hasta mañana.','a']],
     ysa:     [['ysa','Este patio tiene buena acústica. Para cantar, digo. No para esconderse.','m']],
@@ -14758,7 +14758,7 @@ LINES.charlasViaje = {
   c5: [
     [['nach','Ilian. Si el caballero negro vuelve…','t'],['ilian','Si vuelve, lo vemos venir.','n'],['nach','En el puente no lo vimos venir.','s'],['ilian','En el puente no lo estábamos mirando.','d']],
     [['dov','Doña Rueda no fue hecha para el barro.','a'],['maela','Nadie fue hecho para el barro.','n'],['dov','Las ranas.','m'],['maela','…Las ranas.','h']],
-    [['ilian','Gaspar. ¿De dónde sacás tantos carteles?','t'],['gaspar','De las puertas, batidor. Nadie los mira dos veces. Yo sí.','m']],
+    [['ilian','Gaspar. ¿De dónde sacás tantos carteles?','t'],['gaspar','De las puertas, explorador. Nadie los mira dos veces. Yo sí.','m']],
     [['severo','El edicto lo firmó el rey. El cartel, el Regente. Falta la firma del que pagó.','t'],['maela','Esa no se pone nunca.','n'],['severo','Se pone siempre, teniente. En otro papel.','s']]
   ]
 };
@@ -14911,7 +14911,7 @@ LINES.cap2 = {
       ['narr','Cuatro jinetes por el camino de sirga. Pasan de largo. Uno frena, mira el suelo y después mira los sauces.'],
       ['say','maela','Nuestras huellas, en la orilla. No las tapamos.','t'],
       ['say','ilian','No se veía nada.','a'],
-      ['say','maela','Ya sé, batidor. No te culpo. Te digo por qué nos encontraron.','n'],
+      ['say','maela','Ya sé, explorador. No te culpo. Te digo por qué nos encontraron.','n'],
       ['show','soldado'], ['walk','soldado',-80],
       ['narr','Los cuatro se dan vuelta y vienen abiertos en abanico, con las espadas afuera. Uno lleva un papel enrollado en la mano.'],
       ['approach','maela','ilian',26],
@@ -14993,7 +14993,7 @@ LINES.cap2 = {
       ['wait',900],
       ['narr','Debajo del pescante, la caja de la compañía: hierro, dos cerraduras. Una de Maela. La otra, de Hagen, con la llave todavía puesta.'],
       ['narr','Maela parte las coronas de la caja en diez bolsitas de tela, una por cada muerto del puente. Ata cada una con hilo. Nadie las toca.'],
-      ['say','maela','Batidor. El libro. Escribí a los del puente: nombre, día y lugar. Y la paga que les toca.','n'],
+      ['say','maela','Explorador. El libro. Escribí a los del puente: nombre, día y lugar. Y la paga que les toca.','n'],
       ['hook','libroCompania'],
       ['narr','Ilian abre el libro de Hagen sobre las rodillas. Para llegar a la página de las pagas tiene que pasar la lista de nombres.'],
       ['narr','«Ilian Varre, de las Marcas. Hijo de Aleida, cantora, y de Corlan Varre, escudero. Nacido el 1 de Aries de 2985.»'],
@@ -15096,7 +15096,7 @@ LINES.cap2 = {
       ['narr','En el salón a oscuras, en la mesa del rincón junto a la escalera, la de la lira, hay una vela. Y una mujer joven sentada sobre la mesa.'],
       ['show','ysa'],
       ['narr','Afina un laúd con la oreja pegada a la caja. Las orejas le terminan un poco más en punta que las de la gente. Una daga en la bota, sin esconder.'],
-      ['say','ysa','El batidor. El del ojo.','m'],
+      ['say','ysa','El explorador. El del ojo.','m'],
       ['say','ysa','No te asustes. Si quisiera venderte, ya me habría ido por la calle cuando golpearon la del patio.','h'],
       ['say','ysa','Dos golpes, una pausa, uno más. Es lindo. ¿Es de ustedes?','h'],
       ['say','ilian','¿Quién sos?','a'],
@@ -15112,7 +15112,7 @@ LINES.cap2 = {
       ['say','maela','¿Por qué?','t'],
       ['say','ysa','Porque me gusta mentir y casi nunca tengo un buen motivo. Y porque cobro.','m'],
       ['say','maela','¿Cuánto?','n'],
-      ['say','ysa','No en coronas. Una buena historia. Una sola. Verdadera. Del batidor.','m'],
+      ['say','ysa','No en coronas. Una buena historia. Una sola. Verdadera. Del explorador.','m'],
       ['anim','ilian','sit'],
       ['think','ilian','Todo lo que no voy a contar. Eso es casi todo.','t'],
       ['?',[
@@ -15141,16 +15141,16 @@ LINES.cap2 = {
       ['say','ysa','Pagaste. Te doy el vuelto.','n'],
       ['say','ysa','En la feria de Cáncer vino un pintor. De los que te hacen la cara por un cobre. Tres noches, ahí.','t'],
       ['say','ysa','Pintó a los del Cuervo. A un grandote que se reía con la boca llena. A una teniente, de espaldas.','t'],
-      ['say','ysa','Y a un batidor que tocaba la lira en ese rincón, de noche, sin mirar a nadie.','t'],
+      ['say','ysa','Y a un explorador que tocaba la lira en ese rincón, de noche, sin mirar a nadie.','t'],
       ['say','ilian','Yo no posé.','a'],
       ['say','ysa','No hacía falta. Vos tocabas. Él te miraba. Y no te miraba la lira.','n'],
-      ['say','ysa','Al batidor le salió un ojo de cada color. Uno que no viene en las cajas de feria. Lo mezcló él.','t'],
+      ['say','ysa','Al explorador le salió un ojo de cada color. Uno que no viene en las cajas de feria. Lo mezcló él.','t'],
       ['say','ysa','Le pregunté por qué gastaba dos colores en un mercenario. Me dijo que él pintaba lo que veía.','t'],
       ['say','ilian','¿Y los retratos?','o'],
       ['say','ysa','Se los llevó. Todos. No vendió ninguno. Se fue con la feria, para el este.','n'],
       ['say','maela','En Cáncer. Un mes antes del contrato.','t'],
       ['say','ysa','Ustedes preguntaron por qué los dibujaron tan bien. Ahora ya saben de cerca de quién.','n'],
-      ['think','ilian','Batidor del Cuervo Gris, el que ve antes que nadie. Tres noches. Y no lo vi mirar.','s'],
+      ['think','ilian','Explorador del Cuervo Gris, el que ve antes que nadie. Tres noches. Y no lo vi mirar.','s'],
       ['nota','nc_pintor'],
       ['say','ilian','¿Por qué me lo contás?','t'],
       ['say','ysa','Porque esta historia no terminó. Y yo quiero estar cuando termine.','s'],
@@ -15194,7 +15194,7 @@ LINES.cap2 = {
       ['think','ilian','Perdido. Como se escribe al lado de una oveja que no volvió al corral.','s'],
       ['think','ilian','Hagen mintió. Lo supe siempre. No sabía que la mentira había quedado escrita del otro lado.','s'],
       ['walk','ilian',90], ['faceTo','ilian','maela'],
-      ['narr','Maela está en la puerta del establo. Algo le ve en la cara, porque no le dice «batidor» ni «qué pasa».'],
+      ['narr','Maela está en la puerta del establo. Algo le ve en la cara, porque no le dice «explorador» ni «qué pasa».'],
       ['say','maela','Hablá.','n'],
       ['narr','Ilian le cuenta. Un valle de pinos, a los diez años. Las letras que se prendían. Una palabra leída en voz alta. El techo.'],
       ['narr','El capataz de guantes grises. Hagen vendándole los ojos: «el chico no sabe leer». La paga tirada. Y la línea de Severo, palabra por palabra.'],
@@ -15330,7 +15330,7 @@ LINES.cap2 = {
     car_ex_carbonera:[[null,'Una carbonera vieja con boca de piedra. Alrededor, tres hoyos de ceniza endurecida, hondos como un hombre agachado.','n']],
     car_ex_carbonera_again:[[null,'La ceniza del hoyo grande guarda la forma de siete personas, una perra y un gato.','n']],
     car_ex_tronco:[[null,'Un tronco atravesado, de los que no se saltan: se trepan.','n'],['nach','Severo, a la cuenta de tres. Uno…','h']],
-    merc_quina_carboneros:[[null,'La fiebre no baja. Caminá vos, batidor, que yo te sigo el ruido.','s','Quina']],
+    merc_quina_carboneros:[[null,'La fiebre no baja. Caminá vos, explorador, que yo te sigo el ruido.','s','Quina']],
     merc_ruy_carboneros:[[null,'Estas botas no aguantan otro tronco. Ni yo.','s','Ruy']],
     merc_mudo_carboneros:[[null,'El Mudo le pasa la cantimplora a Quina sin que ella la pida.','n']],
     // Orilla del Varne
@@ -15532,7 +15532,7 @@ LINES.cap2 = {
   codex: {
     enemies: {
       jefe_bandido:{tipo:'Bandidos del camino',zona:'Sauces y caminos del oeste',lore:'Capucha teñida de vino para que los suyos lo vean en la pelea. Antes de cargar les grita a sus hombres a quién robar primero.'},
-      sabueso_alfa:{tipo:'Jauría de la Rosa',zona:'Cacería del Cap. 5',lore:'Pelaje pizarra, canoso de tantas batidas, y un collar con herrajes de bronce. Cuando aúlla, la jauría entera se lanza con furia.'},
+      sabueso_alfa:{tipo:'Jauría de la Rosa',zona:'Cacería del Cap. 5',lore:'Pelaje pizarra, canoso de tantas cacerías, y un collar con herrajes de bronce. Cuando aúlla, la jauría entera se lanza con furia.'},
       capitan_rosa:{tipo:'Orden de la Rosa Ceniza',zona:'Prados y Sauces (desde el Cap. 4)',lore:'Encabeza las patrullas de lanceros: acero pavonado, penacho carmesí y tachas doradas. Antes de pelear manda cerrar filas, y la formación aguanta mientras él esté en pie.'},
       lancero:{tipo:'Orden de la Rosa Ceniza',zona:'Prados y Sauces · Pozo del Albardón · Plaza del edicto',lore:'Infantería de lanza larga, armadura negra lacada y ni un hilo de oro: la Rosa no gasta brillo en los que van adelante. Mantienen la distancia y entran con el cuerpo. Una estocada bien dada atraviesa la cota.'},
       jinete:{tipo:'Orden de la Rosa Ceniza',zona:'Senda de los carboneros · Orilla del Varne',lore:'Lanceros de la escolta del príncipe. El tratado les daba treinta lanzas envainadas; las desenvainaron. A pie pelean peor, pero cargan igual.'},
@@ -15584,7 +15584,7 @@ LINES.cap3 = {
       ['title','Capítulo 3 · Bastante pared','23 de Leo de 3012',1.8]
     ],
 
-    /* ---------- 2 · antes del alba: Ilian se va de batida ---------- */
+    /* ---------- 2 · antes del alba: Ilian se va de exploración ---------- */
     c3_batida: [
       ['title','El altillo de Agnes','23 de Leo · antes del alba',0.9], ['vig',0.4],
       ['anim','nach','sit'],
@@ -15956,7 +15956,7 @@ LINES.cap3 = {
       ['say','merc_quina','Ahora sí se las van a robar.','s'],
       ['say','nach','Que lo intenten.','d'],
       ['if',{flag:'sq_bota_dev'},
-        [['say','merc_quina','Tomé se fue con las dos puestas, batidor. Ruy también. Así se entierra un cuervo.','s']]],
+        [['say','merc_quina','Tomé se fue con las dos puestas, explorador. Ruy también. Así se entierra un cuervo.','s']]],
       ['if',{flag:'sq_bota_huerfana'},
         [['narr','Ilian deja al lado de la cruz la bota izquierda de Tomé, la del barro de la Linde. Que alguien la cuente.']]],
       ['narr','El Mudo se toca la boca con dos dedos y después la frente de Ruy, y se aparta.'],
@@ -16118,7 +16118,7 @@ LINES.cap3 = {
     hol_ex_cartel_c3:[[null,'El cartel de la capilla. Debajo, alguien escribió con carbón: «MENTIRA». Con letra de chico.','n'],['nach','Tessa.','m']],
     hol_ex_estandarte:[[null,'El estandarte gris del cuervo, junto al pozo, con barro en las alas. Nach lo levanta y lo dobla en cuatro.','n']],
     // vecinos y compañía en Hollin de día (c3)
-    tessa_c3:[['tessa','¿Viste el codo? Lo levanto como dijo Ilian. ¿Dónde está Ilian?','h'],['nach','De batida. Contando gente.','n']],
+    tessa_c3:[['tessa','¿Viste el codo? Lo levanto como dijo Ilian. ¿Dónde está Ilian?','h'],['nach','De exploración. Contando gente.','n']],
     agnes_c3:[['agnes','Ayer no te vi. Hoy tampoco. Mañana, tampoco. Comé y subí.','n']],
     odo_c3:[['odo','Un jinete clavó un papel en mi puerta. En mi puerta. Con mi martillo de clavar avisos.','a'],['odo','Le recé un rato. Al jinete, no al papel. El papel no tiene arreglo.','m']],
     ysa_c3:[['ysa','Si preguntan, sos el oso de la compañía de cómicos. Gruñí un poco. Ahí está.','m']],
@@ -16274,7 +16274,7 @@ LINES.cap3 = {
 
   diario: {
     chron: {
-      c3_batida:{h:'La batida',t:['Me fui al este con el Mudo, a contar a los que vienen. Le dejé a Olaf a Nach: el cascabel se oye a media legua. Sin él no sé dónde está.','Lo que sigue me lo contó Nach. Entero. Como cuenta él.']},
+      c3_batida:{h:'La exploración',t:['Me fui al este con el Mudo, a contar a los que vienen. Le dejé a Olaf a Nach: el cascabel se oye a media legua. Sin él no sé dónde está.','Lo que sigue me lo contó Nach. Entero. Como cuenta él.']},
       c3_jefe:{h:'Bastante pared', // pulido C05: se lee después del sargento (antes adelantaba el final del jefe)
         t:['Doce de la Rosa en la plaza. Ataron al viejo soldado al pozo, descalzo al sol. Nach se plantó en la calle angosta, entre el carro y la pared, y dijo que había decidido.','Bram salió con el martillo. Simona espantó el caballo del sargento. Nach lo tuvo debajo de Don Pico y lo dejó ir: «Le mintieron mejor que a nosotros».']},
       c3_ruy:{h:'Ruy',t:['Ruy corrió solo al callejón del patio para que no llegaran al altillo. No pasó nadie. Ruy tampoco volvió.','La mella número veinticinco es de esa calle.']},
@@ -16470,7 +16470,7 @@ LINES.cap4 = {
       ['if',{flag:'rec_odo'},
         [['say','odo','El barril. Era de casamientos. Era del bueno.','x']],
         [['say','dov','¡Y las cebollas! ¿Quién se roba unas cebollas? ¡Hay que tener hambre o maldad!','a']]],
-      ['say','merc_quina','No vi nada. No oí nada. Estuve despierta toda la guardia, batidor. Te lo juro por Ruy.','a'],
+      ['say','merc_quina','No vi nada. No oí nada. Estuve despierta toda la guardia, explorador. Te lo juro por Ruy.','a'],
       ['say','ilian','Te creo.','n'],
       ['say','maela','¿Y la perra? ¿Para qué tenemos una perra del tamaño de un ternero y un gato que le bufa a todo?','a'],
       ['narr','Simona, echada junto a la rueda, mira a Ilian con calma, sin culpa.'],
@@ -16602,7 +16602,7 @@ LINES.cap4 = {
          ['say','ysa','Menos mal que nadie me tomó la apuesta.','m']]],
       ['approach','ilian','zarpa',30],
       ['if',{flag:'carrera_limpia'},
-        [['say','zarpa','Ganaste limpio, batidor. Igual iba a perder. Pero ganaste limpio.','m'],
+        [['say','zarpa','Ganaste limpio, explorador. Igual iba a perder. Pero ganaste limpio.','m'],
          ['narr','Zarpa le saca a Petra un cascabel del arnés y se lo tira. Petra no protesta.'],
          ['hook','cascabelPetra']],
         [['say','zarpa','Se me plantó. Petra es así. Tiene carácter.','h'],
@@ -16685,7 +16685,7 @@ LINES.cap4 = {
       ['say','ilian','Por eso voy yo. A vos te dice que sí a cualquier cosa con tal de que comas.','n'], ['say','ilian','A mí me va a decir la verdad.','n'],
       ['narr','Nach abre la boca y la cierra. En la cara de su hermano, una paciencia nueva: la de quien sabe que tiene razón y puede esperar.'],
       ['say','ilian','Tenés razón. Vení conmigo hasta el portón.','n'], ['say','ilian','Si me dice que no a mí, entrás vos. A vos te cuesta más decirle que no.','n'],
-      ['say','nach','Eso es de batidor.','m'],
+      ['say','nach','Eso es de explorador.','m'],
       ['say','ilian','Es de hermano mayor. Es lo mismo.','m'],
       ['hook','explorar']
     ],
@@ -16814,7 +16814,7 @@ LINES.cap4 = {
       ['say','agnes','Le recomendó el Cuervo. Lo dijo dos veces.','t'], ['say','agnes','Que era la única compañía de la frontera que acepta el camino viejo sin preguntar.','t'],
       ['say','ilian','¿Cómo era?','o'],
       ['say','agnes','Curtido. Ni joven ni viejo. Una quemadura vieja en el dorso de la mano izquierda.','n'],
-      ['say','agnes','Y una cosa rara. Ya en la puerta, me preguntó si el gato del batidor seguía vivo.','t'],
+      ['say','agnes','Y una cosa rara. Ya en la puerta, me preguntó si el gato del explorador seguía vivo.','t'],
       ['emote','olaf','?'],
       ['say','ilian','¿Qué le dijiste?','o'],
       ['say','agnes','Que el gato estaba más vivo que él. Y se rio. ¿Lo conocés?','m'],
@@ -16845,7 +16845,7 @@ LINES.cap4 = {
       // v27: Zarpa invitado. zarpa_se_va = no peleó en el jefe de la taberna ni ganó la carrera limpia (B24). Sin la bandera, se queda (como hasta la v26)
       ['if',{flag:'zarpa_se_va'},
         [['narr','En la puerta del sur, Zarpa se para. Se rasca una oreja. Deja en la carreta lo que no es suyo, que es casi todo.'],
-         ['say','zarpa','Cuatro sacos. Un techo, una parra, un caballero sentado. Deuda paga, batidor.','n'],
+         ['say','zarpa','Cuatro sacos. Un techo, una parra, un caballero sentado. Deuda paga, explorador.','n'],
          ['say','ilian','¿Y el Imperio?','t'],
          ['say','zarpa','Queda lejos. Los chicos de la isla, cerca. Uno va adonde le queda algo.','s'],
          ['narr','Se va hacia el pantano, liviano, sin hacer ruido. Petra, la mula, lo sigue sin que la llame.'],
@@ -17134,7 +17134,7 @@ LINES.cap5 = {
       ['narr','Llueve desde el alba, una lluvia fina y tibia que no moja de golpe sino de a poco, como un fiado. Gaspar abrió la sombrilla sobre Ganancia.'],
       ['say','gaspar','Hay una granja donde el camino dobla hacia el agua.','n'], ['say','gaspar','El dueño se fue a Castel Brenn. Dijo que en el pantano no se vive.','n'],
       ['say','ilian','¿Por qué?','o'],
-      ['say','gaspar','Porque en el pantano no se vive, batidor. Es lo que dice todo el que se va.','m'],
+      ['say','gaspar','Porque en el pantano no se vive, explorador. Es lo que dice todo el que se va.','m'],
       ['narr','Una casa con el techo de paja medio caído, un corral vacío y un granero de piedra con el techo entero, que es lo único que importa.'],
       ['narr','Junto a la puerta del granero: botas pesadas, entrando. Una marca arrastrada del lado derecho. Y en una piedra, una gota espesa, apenas brillante.'],
       ['emote','olaf','sweat'],
@@ -17286,7 +17286,7 @@ LINES.cap5 = {
           ['wait',800],
           ['narr','Antes del alba vuelve Gaspar, empapado. Deja una bolsa en el suelo. Ciento cincuenta coronas. No sonríe con el diente de oro.'],
           ['say','gaspar','Veinte jinetes con perros. Y el caballero negro adelante. Vienen para acá.','o'],
-          ['say','gaspar','El papel grande no es el de ella, batidor. Es el de ustedes.','s']]}
+          ['say','gaspar','El papel grande no es el de ella, explorador. Es el de ustedes.','s']]}
       ],'Darra espera. Ya sabe cómo termina.'],
       ['bars',0]
     ],
@@ -17356,7 +17356,7 @@ LINES.cap5 = {
       ['say','anguilero','Treinta.','n'],
       ['narr','Gaspar le pone los diez que le quedan, con la cara de quien se saca una muela.'],
       ['say','ilian','Visión de negocio.','m'],
-      ['say','gaspar','Callate, batidor. Que me arrepiento.','a'],
+      ['say','gaspar','Callate, explorador. Que me arrepiento.','a'],
       ['hook','anguileroPago'],
       ['narr','Toda la tarde: descargar, sacar las ruedas, la caja y el eje en un viaje, las ruedas en otro, la carreta vacía atada a la balsa como un ataúd.'],
       ['narr','En el tercer viaje, con la luz dorada sobre los juncos, el anguilero habla sin que nadie le pregunte.'],
@@ -17509,7 +17509,7 @@ LINES.cap5 = {
         [['say','ilian','A los bandidos del vado alguien les dejó un papel con buena letra. Para que nos demoraran.','t']]],
       ['say','ilian','Hay cortafuegos de un mes en el Brezo.','t'], ['say','ilian','Y una columna con treinta y una carretas vacías, que ya cruzó por Molle.','t'],
       ['say','ilian','En Cáncer, uno de las Marcas con una quemadura en la mano le recomendó el Cuervo al encapuchado.','t'],
-      ['say','ilian','Antes de irse, preguntó si el gato del batidor seguía vivo.','s'],
+      ['say','ilian','Antes de irse, preguntó si el gato del explorador seguía vivo.','s'],
       ['say','olaf','Mrrr.','t'],
       ['say','maela','¿Y lo que no?','t'],
       ['say','ilian','No sabemos quién. Ni quién es el de las Marcas, ni quién pagó al pintor, ni quién robó el fardo.','n'],
@@ -17647,7 +17647,7 @@ LINES.cap5 = {
     af_lista: [
       ['title','Una lista de todo','La hondonada · última guardia',0.9], ['vig',0.45],
       ['narr','Cuando la luna pasa por encima de los alisos, Ilian va a relevar la guardia. Olaf se le sube al hombro sin que suene el cascabel.'],
-      ['say','merc_quina','Es temprano, batidor.','n'],
+      ['say','merc_quina','Es temprano, explorador.','n'],
       ['say','ilian','No me dormía.','s'],
       ['say','merc_quina','Nadie se duerme. Hacen como que duermen para no tener que hablar. ¿Contaste?','m'],
       // v27: la cuenta según los opcionales presentes (10 a 14)
@@ -18048,7 +18048,7 @@ LINES.sq = {
       ['ilian','¿Y por qué no la buscás vos?','t'],
       [null,'Porque si me meto, pierdo la otra. Y una compañía de descalzos no asusta a nadie.','m','Tomé']
     ],
-    tome_linde_again:[[null,'Junto al charco del sur, batidor. La izquierda. Tiene un remiendo en el talón.','s','Tomé']],
+    tome_linde_again:[[null,'Junto al charco del sur, explorador. La izquierda. Tiene un remiendo en el talón.','s','Tomé']],
     tome_linde_tiene:[[null,'¡Esa es! ¡Esa es mi bota! Dámela en el campamento, que acá me la vuelvo a perder.','h','Tomé']],
 
     // --- Linde: examinable «Algo en el barro» (prop nuevo junto al charco del sur del camino) ---
@@ -18075,7 +18075,7 @@ LINES.sq = {
       [null,'Tomá. Dos de cobre. La apuesta de los Sauces: Nach no se cayó al arroyo. Perdí.','m','Tomé'],
       [null,'Se los debía a vos o a él. Te elijo a vos. Él se los come.','m','Tomé'],
       ['nach','¡Eh!','o'],
-      ['maela','Te ocupás de los míos. Gracias, batidor.','n']
+      ['maela','Te ocupás de los míos. Gracias, explorador.','n']
     ],
     tome_campamento_dev:[[null,'Esta noche duermo con las dos puestas. Como un cuervo.','h','Tomé']],
 
@@ -18083,7 +18083,7 @@ LINES.sq = {
     // Cap. 1 · bosque_b (lines.js, reservada desde el MVP): con §f:sq_bota_dev
     bosque_b:['say','merc_quina','Tomé no llegó. Cayó con las dos botas puestas. Algo es algo.','s','§f:sq_bota_dev'],
     // Cap. 3 · c3_capilla (cap3_textos.js): con 'if' {flag:'sq_bota_dev'} / {flag:'sq_bota_huerfana'}
-    c3_capilla:['say','merc_quina','Tomé se fue con las dos puestas, batidor. Ruy también. Así se entierra un cuervo.','s'],
+    c3_capilla:['say','merc_quina','Tomé se fue con las dos puestas, explorador. Ruy también. Así se entierra un cuervo.','s'],
     c3_capilla_huerfana:['narr','Ilian deja al lado de la cruz la bota izquierda de Tomé, la del barro de la Linde. Que alguien la cuente.'],
     // Cap. 5 · af_lista (cap5_textos.js): con 'if' {flag:'sq_bota_dev'}
     af_lista:['say','nach','Bertram. Tomé, con sus dos botas. Ferro. Garra.','s'],
@@ -18233,7 +18233,7 @@ const MENUTXT = {
 
   profiles: {
     ilian: {
-      title: 'Batidor',
+      title: 'Explorador',
       epithet: 'El del ojo violeta',
       bio: 'Huérfano criado por Hagen en la Compañía del Cuervo Gris. De chico sobrevivió a un derrumbe que le volvió violeta el ojo izquierdo y dejó ciego a Olaf. Observador e irónico, desconfía de las banderas y es leal a muerte con los suyos.',
       likes: 'Su lira, Olaf en el hombro y los contratos claros.',
@@ -18475,7 +18475,7 @@ const FICHAS = {
 
   // ---------- Protagonistas ----------
   ilian: {
-    numero: 1, nombre: 'Ilian Varre', edad: '27', raza: 'Humano', clase: 'Batidor',
+    numero: 1, nombre: 'Ilian Varre', edad: '27', raza: 'Humano', clase: 'Explorador',
     faccion: 'Compañía del Cuervo Gris',
     cita: 'Nadie se hace el héroe. Nach.',
     nota: 'Cita de menu-text.js. Ojo derecho verde, izquierdo violeta. Nombre editable por el jugador.'
@@ -19561,7 +19561,7 @@ def('whiteout',{d:0.3,lay:'screen',draw(c,e,p,a){ if(red()) return; c.globalAlph
 PAL.pluma=['#ffffff','#d6d9de','#a4a9b1','#5c616b','#2a2d33'];
 // La Seña (Maela + Ilian): verde de cobre #2B5C5E con brillos verde agua; sin dorado ni ceniza (docs/unisonos-diseno.md §2)
 PAL.sena=['#effffb','#9fe8dc','#4fb3a8','#2b5c5e','#102628'];
-// emblema del corte de La Seña: la seña de batidor de Hagen (punta abierta y dos rayas cortas), 28×21 como el del cuervo
+// emblema del corte de La Seña: la seña de explorador de Hagen (punta abierta y dos rayas cortas), 28×21 como el del cuervo
 const SENA=[
 '............................','............................',
 '..........##................','..........###...............','...........###..............','............###.............',
@@ -20773,7 +20773,7 @@ const SPR={
   sheet(id){ id=sprVar(id); const a=artEntry('sprite:'+id); if(!a||!a.src) return null; const im=artImage(a.src); return im?{a,im}:null; },
   draw(c,id,x,y,o){ o=o||{};
     // B18 (provisorio hasta el arte de Brian): Olaf ya no va pintado en el hombro (se leía como un papel blanco); camina o se sienta
-    // al lado de Ilian con su sprite de gato, como en combate. Con Ilian de batida (Cap. 3) no se dibuja.
+    // al lado de Ilian con su sprite de gato, como en combate. Con Ilian de exploración (Cap. 3) no se dibuja.
     if(id==='ilian'&&o.olaf){ const fc=o.face==null?-1:(o.face<0?-1:1), off=!(G&&G.away&&G.away.ilian); o=Object.assign({},o,{olaf:false});
       // arte de Brian (21/10/2026): Olaf de pie (PixelLab) camina al lado; quieto, se sienta (el Olaf sentado de siempre)
       if(off&&!(o.anim==='ko')){ const mv=o.anim==='walk'||o.anim==='run', oa=mv?'walk':(o.dir==='n'||o.dir==='s'?'idle':'sit'); try{ SPR.draw(c,'olaf',Math.round(x-fc*(o.dir==='n'||o.dir==='s'?13:17)),Math.round(y+(o.dir==='n'?-3:2)),{anim:oa,face:fc,t:o.t,alpha:o.alpha,dir:o.dir}); }catch(e){} } }
@@ -23391,7 +23391,8 @@ function mkStage(zone,name,opt){
   // Reemplaza a la silueta de ENV (404,24), que dejaba el yelmo fuera de cuadro; con el acercamiento ×2 la hoja se ve a su resolución propia.
   const fig=zone==='puente'?{spr:'valdris',id:'valdris',x:FIGPUENTE.x,y:FIGPUENTE.y,k:0.5,face:-1,ph:0,base:null,at:0}:null;
   st.figura=id=>id==='valdris'&&fig&&ENV.flags.valdris&&!st.actors.valdris&&!ROOMSTAGE[zone]?fig:null;
-  const am=ROOMSTAGE[zone]?null:ambStage(st);
+  const RS=!!(ROOMSTAGE[zone]||(opt.room&&roomStageOff(zone))); // v50.2: opt.room → el cuarto de Hollin con el mismo dibujo que al explorarlo
+  const am=RS?null:ambStage(st);
   st.draw=(c,dt)=>{ const K=st.cam; camStep(K,dt); const zc=K.z!==1||K.x!==W/2||K.y!==H/2; if(zc){ c.save(); c.translate(W/2,H/2); c.scale(K.z,K.z); c.translate(-K.x,-K.y); }
     const fv=st.figura('valdris'); if(fv){ ENV.flags.valdris=false; drawBG(c,st.zone,dt); ENV.flags.valdris=true; drawFigura(c,fv); } else drawBG(c,st.zone,dt); if(st.under) st.under(c,dt); if(am) am.under(c);
     const vis=st.list.filter(a=>!a.hidden); vis.forEach(a=>moveActor(a,dt)); vis.sort((a,b)=>a.y-b.y).forEach(a=>{ const k=a.k||1; if(k===1){ drawActor(c,a); return; } c.save(); c.translate(a.x,a.y); c.scale(k,k); c.translate(-a.x,-a.y); drawActor(c,a); c.restore(); }); // v27.7: a.k achica o agranda la figura desde los pies
@@ -23399,7 +23400,7 @@ function mkStage(zone,name,opt){
     if(st.olafProxy) drawProxy(c,st.olafProxy);
     if(st.mark) drawHeadMark(c,st.mark.x,st.mark.y,'#ffe9a8');
     if(st.over) st.over(c,dt); if(am) am.over(c,dt); drawOnos(c,st); if(zc) c.restore(); ambDraw(c,st.zone,dt); drawDirOver(c,st,dt); };
-  if(ROOMSTAGE[zone]) roomStageDraw(st);
+  if(RS) roomStageDraw(st);
   return st;
 }
 // v24 · escenario sobre un interior de Hollin («pieza»: la pieza de arriba de la taberna). El cuarto se dibuja centrado, igual que al explorarlo,
@@ -23662,10 +23663,31 @@ async function playEscena(id,opt){ opt=opt||{}; const E=escenaMeta(id); if(!E||!
   const sayS=CUR.sayStage, sayG=CUR.sayGet; ESC_CUR=id;
   const vista=()=>{ (G.flags.chats||(G.flags.chats={}))[id]=true; const P=E.pair; if(P){ const e=affEntry(P[0],P[1]); if(e&&!e.seen.includes(id)) e.seen.push(id); } }; // antes de volver a explorar: la figura y el «!» ya no se rearman
   try{
-    if(E.stage){ const bg=(E.stage==='pieza'&&!((ENV.town&&ENV.town.rooms||[]).includes('pieza')||(ENV.zones||[]).includes('pieza')))?'taberna':E.stage; const st=await stageIn(bg,id,500); await playScene(id,{get:st.get,hooks:{},noAff}); vista(); hideDialog(); await PFXI.cover('C9',400); /* pixelfx: cierre de escena con iris */ }
+    if(E.stage){ const bg=(E.stage==='pieza'&&!((ENV.town&&ENV.town.rooms||[]).includes('pieza')||(ENV.zones||[]).includes('pieza')))?'taberna':E.stage; const st=await stageIn(bg,id,500,{room:!!(E.where&&E.where.zone==='hollin'&&['taberna','herreria','capilla','casa','pieza'].includes(bg))}); await playScene(id,{get:st.get,hooks:{},noAff}); vista(); hideDialog(); await PFXI.cover('C9',400); /* pixelfx: cierre de escena con iris */ }
     else { const at=ESCAT[id]||opt.at||null; const st=await WORLD.sceneIn(id,{at,ms:400,music:opt.music}); await playScene(id,{get:st.get,hooks:{},noAff}); vista(); hideDialog();
       if(opt.keep) await fadeTo(1,300); else await WORLD.back(st); }
   } finally { vista(); ESC_CUR=null; if(E.stage){ CUR.sayStage=sayS; CUR.sayGet=sayG; } }
+  return true; }
+// v50.2 (Brian: «escenas muy random, que te mueven de un aspecto a otro cuando hablás»): una escena de afinidad que se dispara
+// explorando Hollin (calle o cuarto) se juega ahí mismo, con el dibujo de explorar, en vez de fundir a un escenario pintado de otro lugar
+// (Dov en la carreta caía en un claro del bosque de noche; el yunque de Bram, en la taberna). El elenco que no está en el lugar entra
+// al lado del grupo y se va al terminar. api = la del pueblo (townExplore0 · TAPI).
+async function playEscenaAqui(id,api,anchor){ const E=escenaMeta(id); if(!E||!LINES.scenes[id]||escenaSeen(id)) return false;
+  const S=api.S, A=api.actors, P=api.P, F=api.F, noAff=!!(G.flags.escParcial&&G.flags.escParcial[id]);
+  const vista=()=>{ (G.flags.chats||(G.flags.chats={}))[id]=true; const Q=E.pair; if(Q){ const e=affEntry(Q[0],Q[1]); if(e&&!e.seen.includes(id)) e.seen.push(id); } };
+  const ax=anchor?anchor.x:P.x, ay=anchor?anchor.y:P.y; const tmp=[]; let k=0;
+  const quien=findCast(id).filter(c=>c!=='olaf'&&c!=='olafNino');
+  quien.forEach(c=>{ const a=A[c]; if(a&&!a.hidden&&(a.place==='*'||a.place===S.place)) return; const dx=k===0?0:(k%2?1:-1)*(64+20*((k-1)>>1)); k++;
+    const n=a||api.mk(c,ax+dx,ay+10,{face:dx<0?1:-1,label:null}); if(a){ n._was={x:a.x,y:a.y,place:a.place,hidden:a.hidden}; n.x=ax+dx; n.y=ay+10; } n.place=S.place; n.hidden=false; n.esc=true; tmp.push(n); });
+  const prev={busy:S.busy,ss:CUR.sayStage,sg:CUR.sayGet}; S.busy=true; S.target=null; UI.pad.hidden=true; clearBubs(); hideDialog();
+  P.walking=false; if(F) F.walking=false; const near=(a,dx)=>{ if(!a) return null; const tx=ax+dx, ty=ay+14; if(Math.abs(a.x-tx)<10&&Math.abs(a.y-ty)<8) return null; a.face=dx<0?1:-1; return tweenTo(a,tx,ty,Math.min(700,180+Math.hypot(a.x-tx,a.y-ty)*4)); };
+  if(anchor) await Promise.all([near(P,-34),near(F,34)].filter(Boolean));
+  const others=quien.map(c=>A[c]).filter(Boolean); others.forEach(a=>{ const o=others.filter(b=>b!==a); if(o.length&&!a.noTurn){ const mx=o.reduce((s0,b)=>s0+b.x,0)/o.length; a.face=mx>=a.x?1:-1; } });
+  ESC_CUR=id; CUR.sayStage=S; CUR.sayGet=c=>A[c]||null;
+  try{ await playScene(id,{get:c=>A[c]||null,hooks:{},noAff}); vista(); }
+  finally { vista(); ESC_CUR=null; hideDialog();
+    tmp.forEach(n=>{ n.esc=false; if(n._was){ Object.assign(n,n._was); n._was=null; } else { n.hidden=true; n.label=null; n.onTalk=null; n.place='-'; } });
+    CUR.sayStage=prev.ss; CUR.sayGet=prev.sg; S.busy=prev.busy; if(!S.busy&&!S.ended) UI.pad.hidden=false; }
   return true; }
 // ancla propia de las escenas de paso del borde norte (verificación A1): la escena se arma más abajo, donde el cuadro de diálogo no tapa a nadie
 // codigo: el barro del tramo noreste del Linde, antes del claro · ojo: el cerco de los caballos (postes 860,196 y 900,186) del claro
@@ -23771,7 +23793,7 @@ function townExplore0(cfg){ cfg=cfg||null;
       if(LINES.npc[id]){ a.label='Hablar con '+({aldeano:'el aldeano',aldeana:'la aldeana',anciano:'el anciano',nino:'el niño'}[id]||id); a.onTalk=async(n)=>{ await npcTalk(n); }; } return a; });
     const talkers=npcs.concat(wanderers.filter(w=>w.onTalk),things);
     const actors={[P.id]:P,[F.id]:F,peregrino:pere}; npcs.forEach(n=>{ if(!actors[n.id]) actors[n.id]=n; }); wanderers.forEach(w=>{ if(!actors[w.id]) actors[w.id]=w; });
-    const TAPI={S,HF,ROOMS,sp,actors,playLines:L=>playLines(L),persist:()=>persist(),examine:k=>examine(k),end:()=>{ S.ended=true; res(); },
+    const TAPI={S,HF,ROOMS,sp,actors,P,F,playLines:L=>playLines(L),persist:()=>persist(),examine:k=>examine(k),end:()=>{ S.ended=true; res(); },
       mk:(id,x,y,o)=>{ const a=mkActor(id,x,y,Object.assign({label:'Hablar con '+nameOf(id),place:'town'},o||{})); a.home=a.face; npcs.push(a); talkers.push(a); if(!actors[id]) actors[id]=a; return a; },
       thing:(place,x,y,label,act,o)=>{ const t=thing(place,x,y,label,act,o); talkers.push(t); return t; },
       prop:(place,x,y,draw)=>{ const q={place,x,y,_ent:{y,draw}}; PROPS.push(q); return q; },
@@ -24307,7 +24329,8 @@ const GRUPO_TRAMOS=[
 ];
 function grupoHas(k){ try{ return typeof ARC!=='undefined'&&ARC.has?ARC.has(k):!!(G.flags&&G.flags[k]); }catch(e){ return false; } }
 function grupoTramos(){ if(!G) return []; return GRUPO_TRAMOS.filter(t=>{ try{ return !!t.si(); }catch(e){ return false; } }); }
-const GRUPO={ canSwap(){ if(PZ.mode==='esfera') return !GRUPO.fijo(); return ['posada','campamento','formacion','castillo'].includes(PZ.mode); },
+// v50.2 (Brian: «poco intuitivo cuándo podés cambiar de reclutas»): el grupo se cambia desde el menú en cualquier momento, salvo los tramos que fija la historia
+const GRUPO={ canSwap(){ if(PZ.mode==='fijo') return false; return !GRUPO.fijo(); },
   fijo(){ const t=grupoTramos().find(t=>t.fijo); return t?t.fijo:null; },
   lock(id){ if(id===GRUPO.prot()) return nameOf(id)+': '+GRUPO.txt('protagonista','va siempre en el grupo.'); if(GRUPO.guest(id)) return GRUPO.txt('invitada','Va como invitada: no se cambia.');
     const t=grupoTramos().find(t=>t.oblig&&t.oblig.includes(id)); return t?(nameOf(id)+': '+(t.motivo||'la historia lo necesita ahora.')):null; },
@@ -24329,7 +24352,7 @@ window.registerMenuTab=registerMenuTab;
 const TABNAME=t=>{ const d=TABDEF[t]||{}; const lb=d.label; if(typeof lb==='function') return lb(); if(lb) return (!WIDE&&d.short)?d.short:lb; return UIT.tabs[t]||t; };
 function pauseBlock(){
   if(PZ.open) return null;
-  if(!G||['prologo','titulo'].includes(G.cp)||!(G.party.ilian||(G.away&&G.away.ilian))) return 'El menú se habilita en Hollin.'; // Arco I: con Ilian de batida (Cap. 3) el menú sigue con Nach de líder
+  if(!G||['prologo','titulo'].includes(G.cp)||!(G.party.ilian||(G.away&&G.away.ilian))) return 'El menú se habilita en Hollin.'; // Arco I: con Ilian de exploración (Cap. 3) el menú sigue con Nach de líder
   if(scene&&scene.battle) return 'En combate no se puede abrir el menú.';
   if(scene&&scene.guide) return 'Ahora no: seguí el cascabel.';
   if(advanceFn) return 'Terminá el diálogo para abrir el menú.';
@@ -24550,30 +24573,34 @@ function tabGrupo(B){
   if(PZ.mode!=='libre'){ const ML={posada:'Posada',campamento:'Campamento',formacion:'Formación',fijo:'Formación',castillo:'Castillo',esfera:'Esfera de guardado'}; cap.appendChild(el('span','gp-mode',ML[PZ.mode]||PZ.mode)); } main.appendChild(cap);
   if(fixed) main.appendChild(el('p','pz-hint gp-lockhint',GRUPO.txt('bloqueado','Quién pelea lo decide la historia; las filas, vos.')));
   else if(PZ.mode==='formacion') main.appendChild(el('p','pz-hint',GRUPO.txt('abrir','Elegí quién pelea y en qué fila.')));
-  if(big&&!swap) main.appendChild(el('p','pz-hint gp-lockhint',(PZ.mode==='esfera'&&GRUPO.fijo())||GRUPO.txt('candado','El grupo se cambia en posadas, campamentos, esferas de guardado y puntos de formación.')));
-  else if(big&&PZ.mode==='esfera'){ const ob=partyIds().slice(0,N).filter(id=>id!==prot&&!GRUPO.guest(id)&&GRUPO.lock(id)); if(ob.length) main.appendChild(el('p','pz-hint gp-lockhint','Con candado por la historia: '+ob.map(nameOf).join(', ')+'.')); }
+  if(big&&!swap) main.appendChild(el('p','pz-hint gp-lockhint',GRUPO.fijo()||GRUPO.txt('fijo','En este capítulo, quién pelea lo decide la historia')));
+  else if(big&&PZ.swapSel){ const a=PZ.swapSel, ia=partyIds().indexOf(a); const h=el('div','gp-swaphint'); h.appendChild(el('span',null,'Cambiar a ')); h.appendChild(el('b',null,nameOf(a))); h.appendChild(el('span',null,ia<N?': tocá a quién de la caravana entra en su lugar.':': tocá a quién de los que pelean reemplaza.'));
+    h.appendChild(btn('pz-swapx','Cancelar',()=>{ PZ.swapSel=null; renderPause(); },{label:'Cancelar el cambio'})); main.appendChild(h); }
+  else if(big&&swap) main.appendChild(el('p','pz-hint','Pelean los 5 de arriba. Tocá «Cambiar» en uno y después en otro para intercambiarlos.'));
+  if(big&&swap&&!PZ.swapSel){ const ob=partyIds().slice(0,N).filter(id=>id!==prot&&!GRUPO.guest(id)&&GRUPO.lock(id)); if(ob.length) main.appendChild(el('p','pz-hint gp-lockhint','Con candado por la historia: '+ob.map(nameOf).join(', ')+'.')); }
   const grid=el('div','gp-cards');
   const doSwap=(a,b)=>{ const o=partyIds(); const i1=o.indexOf(a), i2=o.indexOf(b); if(i1<0||i2<0) return;
     const cross=(i1<N)!==(i2<N); if(cross){ const la=i1<N?GRUPO.lock(a):(GRUPO.guest(a)?GRUPO.lock(a):null), lb=i2<N?GRUPO.lock(b):(GRUPO.guest(b)?GRUPO.lock(b):null); if(la||lb){ toast(la||lb,2400); return; } } /* v28: candados por historia */
     [o[i1],o[i2]]=[o[i2],o[i1]]; G.order=o; sfx('heal'); };
   ids.forEach((id,i)=>{ const m=G.party[id], s=stats(m), nx=expInfo(m), [stc,stt]=statusOf(m,s);
-    if(big&&i===N){ const sep=el('div','gp-sep',GRUPO.txt('caravana','En la caravana')); grid.appendChild(sep); }
+    if(big&&i===0) grid.appendChild(el('div','gp-sep fight',GRUPO.txt('en_combate','En combate')+' · '+N));
+    if(big&&i===N){ const sep=el('div','gp-sep',GRUPO.txt('caravana','En la caravana')+' · '+(ids.length-N)); grid.appendChild(sep); }
     const bench=big&&i>=N;
-    const c=el('article','gp-card'+(i===0?' lead':'')+(m.row==='front'?' f':' b')+(bench?' bench':'')+(PZ.swapSel===id?' swapsel':'')); c.setAttribute('aria-label',CHAR[id].name+', nivel '+m.lvl+', '+stt+(bench?', en la caravana':''));
+    const c=el('article','gp-card'+(i===0?' lead':'')+(m.row==='front'?' f':' b')+(bench?' bench':'')+(PZ.swapSel===id?' swapsel':'')+(PZ.swapSel&&PZ.swapSel!==id&&((partyIds().indexOf(PZ.swapSel)<N)!==(i<N))?' swaptgt':'')); c.setAttribute('aria-label',CHAR[id].name+', nivel '+m.lvl+', '+stt+(bench?', en la caravana':''));
     const pic=btn('gp-pic',null,()=>{ PZ.sel=id; PZ.tab='fichas'; renderPause(true); },{label:'Ver la ficha de '+CHAR[id].name}); { const hc=headCanvas(id,128,60); panimBind(hc,id,'head'); pic.appendChild(hc); } pic.appendChild(el('span','gp-ord',String(i+1))); if(i===0) pic.appendChild(el('span','gp-lead','Líder')); c.appendChild(pic);
     const hd=el('div','gp-hd'); const nm=el('div','gp-nm'); nm.appendChild(el('b',null,CHAR[id].name)); const lv=el('span','gp-lv'); lv.appendChild(el('small',null,UIT.nivelCorto+' ')); lv.appendChild(el('b',null,String(m.lvl))); nm.appendChild(lv); hd.appendChild(nm);
     const sub=el('div','gp-sub'); sub.appendChild(el('span','gp-cls',classOf(id))); sub.appendChild(el('span','gp-st '+stc,stt)); hd.appendChild(sub); c.appendChild(hd);
-    // ▲▼: reordenar. Sin posada no se cruza el 5.º lugar (candado); en la posada, el protagonista no baja a la caravana
+    // ▲▼: reordenar. El 5.º lugar se cruza siempre que la historia no fije el grupo (v50.2); el protagonista no baja a la caravana
     const lockDn=big&&i===N-1&&(!swap||!!GRUPO.lock(id)), lockUp=big&&i===N&&(!swap||GRUPO.guest(id)||!!GRUPO.lock(ids[N-1]));
-    const mv=(d)=>{ if((d>0&&lockDn)||(d<0&&lockUp)){ toast(GRUPO.txt('candado','El grupo se cambia en posadas, campamentos y puntos de formación.'),2200); return; } const o=partyIds(); const j=i+d; if(j<0||j>=o.length) return; [o[i],o[j]]=[o[j],o[i]]; G.order=o; renderPause(); const f=PZ.body.querySelectorAll(d<0?'.pz-up':'.pz-dn')[j]; const g2=f&&!f.disabled?f:PZ.body.querySelectorAll(d<0?'.pz-dn':'.pz-up')[j]; if(g2) g2.focus({preventScroll:true}); };
+    const mv=(d)=>{ if((d>0&&lockDn)||(d<0&&lockUp)){ toast((d>0?GRUPO.lock(id):(GRUPO.lock(id)||GRUPO.lock(ids[N-1])))||GRUPO.fijo()||GRUPO.txt('candado','En este tramo, quién pelea lo decide la historia'),2400); return; } const o=partyIds(); const j=i+d; if(j<0||j>=o.length) return; [o[i],o[j]]=[o[j],o[i]]; G.order=o; renderPause(); const f=PZ.body.querySelectorAll(d<0?'.pz-up':'.pz-dn')[j]; const g2=f&&!f.disabled?f:PZ.body.querySelectorAll(d<0?'.pz-dn':'.pz-up')[j]; if(g2) g2.focus({preventScroll:true}); };
     const ord=el('div','gp-ordb'); const bu=btn('pz-up'+(lockUp?' locked':''),'▲',()=>mv(-1),{disabled:!!fixed||i===0||lockUp,label:'Subir a '+CHAR[id].name}); const bd=btn('pz-dn'+(lockDn?' locked':''),'▼',()=>mv(1),{disabled:!!fixed||i===ids.length-1||lockDn,label:'Bajar a '+CHAR[id].name});
-    if(lockUp||lockDn){ (lockUp?bu:bd).title=GRUPO.txt('candado','El grupo se cambia en posadas, campamentos y puntos de formación.'); } ord.appendChild(bu); ord.appendChild(bd); c.appendChild(ord);
+    if(lockUp||lockDn){ (lockUp?bu:bd).title=(lockDn?GRUPO.lock(id):(GRUPO.lock(id)||GRUPO.lock(ids[N-1])))||GRUPO.fijo()||GRUPO.txt('candado','En este tramo, quién pelea lo decide la historia'); } ord.appendChild(bu); ord.appendChild(bd); c.appendChild(ord);
     const bars=el('div','gp-bars'); bars.appendChild(meter('pv','PV',m.pv,s.pv)); bars.appendChild(meter('pm','PM',m.pm,s.pm));
     const ex=el('div','gp-m ex'); ex.appendChild(el('small',null,'Exp')); const eb=el('span','gp-bar'); const ei=el('i'); ei.style.width=(nx.f*100)+'%'; eb.appendChild(ei); ex.appendChild(eb); ex.appendChild(el('b',null,nx.next==null?UIT.nivelMax:('faltan '+nx.next))); bars.appendChild(ex); c.appendChild(bars);
     const ft=el('div','gp-ft'); const af=bestAff(id); const al=el('span','gp-aff'); al.appendChild(el('i','gp-heart'));
     if(af){ al.appendChild(el('span',null,(nameOf(af.other)||af.other)+' · ')); al.appendChild(el('b',null,af.name)); al.title='Afinidad más alta'; } else al.appendChild(el('span','gp-dim','Sin afinidad todavía')); hd.appendChild(al);
     // «Cambiar» (posada, campamento, punto de formación, castillo): se toca uno y después el otro
-    if(swap&&big){ const on=PZ.swapSel===id; const sw=btn('pz-swap'+(on?' on':''),on?'Cancelar':GRUPO.txt('cambiar','Cambiar'),()=>{ const a=PZ.swapSel; if(!a||a===id){ PZ.swapSel=on?null:id; } else { doSwap(a,id); PZ.swapSel=null; } renderPause(); const f=[...PZ.body.querySelectorAll('.gp-card')].find(x=>x.querySelector('.pz-swap.on'))||PZ.body.querySelectorAll('.gp-card')[partyIds().indexOf(id)]; const fb=f&&f.querySelector('.pz-swap'); if(fb) fb.focus({preventScroll:true}); },{label:(on?'Cancelar el cambio de ':'Cambiar a ')+CHAR[id].name,disabled:(id===prot&&!PZ.swapSel)});
+    if(swap&&big){ const on=PZ.swapSel===id, otro=!!PZ.swapSel&&!on&&((partyIds().indexOf(PZ.swapSel)<N)!==(i<N)); const sw=btn('pz-swap'+(on?' on':'')+(otro?' tgt':''),on?'Cancelar':(otro?(i<N?'Sale este':'Entra este'):GRUPO.txt('cambiar','Cambiar')),()=>{ const a=PZ.swapSel; if(!a||a===id||!otro){ PZ.swapSel=on?null:id; } else { doSwap(a,id); PZ.swapSel=null; } renderPause(); const f=[...PZ.body.querySelectorAll('.gp-card')].find(x=>x.querySelector('.pz-swap.on'))||PZ.body.querySelectorAll('.gp-card')[partyIds().indexOf(id)]; const fb=f&&f.querySelector('.pz-swap'); if(fb) fb.focus({preventScroll:true}); },{label:(on?'Cancelar el cambio de ':'Cambiar a ')+CHAR[id].name,disabled:(id===prot&&!PZ.swapSel)});
       if(id===prot) sw.title=GRUPO.txt('protagonista','Va siempre en el grupo'); ft.appendChild(sw); }
     const rb=btn('pz-rowb '+(m.row==='front'?'f':'b'),m.row==='front'?UIT.primeraLinea:UIT.segundaLinea,()=>{ m.row=m.row==='front'?'back':'front'; renderPause(); const f=PZ.body.querySelectorAll('.pz-rowb')[i]; if(f) f.focus({preventScroll:true}); },{label:UIT.cambiarLinea+': '+CHAR[id].name});
     rb.title=UIT.cambiarLinea; if(i===0) rb.dataset.focus='1'; ft.appendChild(rb); c.appendChild(ft);
@@ -25061,7 +25088,7 @@ const CXT={
   rooms:{taberna:'Posada, sopa caliente y el reservado donde se cierran los contratos.',herreria:'Fragua, yunque y la cuerda que Bram jura cambiar.',capilla:'Velas, un vitral y Fray Odo, que cura sin preguntar.',casa:'La casa del viejo soldado, con un estandarte viejo en la pared.',pieza:'La pieza de arriba de la taberna: dos catres, una ventana chica y una almohada que Olaf considera suya.'},
   // ---------- Diario: personajes (nota corta en voz de Ilian; la ficha completa está en el Libro) ----------
   people:{
-    ilian:'Yo. Batidor del Cuervo Gris. Lo del ojo lo explico otro día.',
+    ilian:'Yo. Explorador del Cuervo Gris. Lo del ojo lo explico otro día.',
     nach:'Mi hermano. Grande y ruidoso. Se hace el tonto para que yo me ría; no lo es.',
     simona:'Apareció herida bajo la carreta. Le gruñe a todos menos a Nach.',
     olaf:'Mi gato. No ve, pero siempre sabe dónde estoy. Y a quién bufarle.',
@@ -25087,7 +25114,7 @@ const CXT={
     contrato:{n:'El contrato',pre:'Nach dice que hay trabajo. Hay que ir a la taberna.',on:'Escoltar la carreta del prisionero hasta el puerto de Vesper.',off:'La carreta volcó en el puente. El contrato ya no existe: ahora los buscados somos nosotros.'},
     astilla:{n:'El pedido de Sir Astilla',pedido:'Un nene de Hollin perdió a Sir Astilla, su caballero de madera. Dice que lo dejó en lo del abuelo.',hallado:'Encontramos a Sir Astilla. Falta devolvérselo al nene.',hallado0:'Encontramos un caballerito de madera en la casa del viejo soldado. Alguien lo debe extrañar.',hecho:'Sir Astilla volvió con su dueño. Me pagó con una poción de Fray Odo y me nombró caballero.',tarde:'El nene sigue buscando. Queda para cuando volvamos a Hollin.'},
     // misiones MVP (Hermes · misiones-mvp-textos.md)
-    mojones:{n:'Las marcas del batidor',on1:'Debajo del cuervo de un mojón hay una marca vieja de batidor, con una letra y una flecha. Hay más.',
+    mojones:{n:'Las marcas del explorador',on1:'Debajo del cuervo de un mojón hay una marca vieja de explorador, con una letra y una flecha. Hay más.',
       list:{moj1:'«H · I», en los Prados: al este.',moj2:'«H · II», en los Sauces: al sur.',moj3:'«H · III», en la Linde: a las raíces.'},
       listo:'Las tres marcas dicen lo mismo: algo quedó guardado en la Linde, entre las raíces.',
       hecho:'En el hueco de la Linde había coronas viejas, una pluma y una nota firmada «H.». Hagen anduvo por acá.',
@@ -27157,7 +27184,7 @@ const TESTZ={
     objs:[{t:'oak',x:1010,y:84,r:26,v:1},{t:'rock',x:640,y:96,r:9},{t:'rock',x:770,y:210,r:7,v:2},{t:'rock',x:300,y:236,r:6,v:3},{t:'bush',x:1080,y:100,r:8},{t:'post',x:60,y:132}],
     scatter:[{t:'oak|pine',n:22,area:[0,4,300,26],r:[11,16]},{t:'oak|pine',n:18,area:[1100,4,340,26],r:[11,16]},{t:'oak|pine',n:12,area:[0,282,200,20],r:[10,15]},{t:'oak|pine',n:14,area:[1200,282,240,20],r:[10,15]},{t:'rock|bush',n:26,area:[0,30,1440,250],r:[5,9],pad:20},{t:'oak',n:6,area:[100,200,1200,70],r:[12,16],pad:30}],
     keep:[[1046,62,18],[500,206,16],[200,200,50]],
-    exits:[{id:'w',x:0,y:118,w:6,h:76,to:'hollin',need:'never',deny:['maela','La paga corre desde que salimos, batidor. Hollin queda atrás hasta que volvamos.','m']},
+    exits:[{id:'w',x:0,y:118,w:6,h:76,to:'hollin',need:'never',deny:['maela','La paga corre desde que salimos, explorador. Hollin queda atrás hasta que volvamos.','m']},
       {id:'e',x:1434,y:98,w:6,h:86,to:'sauces',spawn:{x:16,y:272,face:1}},
       {id:'n',x:300,y:0,w:800,h:6,to:MAPA,spawn:{x:392,y:404}},{id:'s',x:200,y:298,w:1000,h:6,to:MAPA,spawn:{x:372,y:474}}],
     mapIn:[{x:700,y:16},{x:700,y:286}],
@@ -27175,7 +27202,7 @@ const TESTZ={
     mapIn:[{x:250,y:16}],
     triggers:[{id:'c2',x:420,y:300,w:140,h:130}], marks:{c2:{x:480,y:360}},
     props:[{id:'sau_c1',kind:'cofre',x:760,y:520,items:{antidoto:1},oro:10},{id:'sau_m',kind:'mojon',x:200,y:330},
-      {id:'gruta',kind:'examinable',x:860,y:116,label:'Entrar a la Gruta del Remanso',lines:[['ilian','Las huellas de los arqueros del vado se meten en la cueva... Huele a humo viejo.','t'],['maela','Hoy no, batidor. La caravana no espera a los curiosos.','m']],before:'c2',beforeLines:[['ilian','Primero el vado. Después vemos qué hay ahí adentro.','n']]},
+      {id:'gruta',kind:'examinable',x:860,y:116,label:'Entrar a la Gruta del Remanso',lines:[['ilian','Las huellas de los arqueros del vado se meten en la cueva... Huele a humo viejo.','t'],['maela','Hoy no, explorador. La caravana no espera a los curiosos.','m']],before:'c2',beforeLines:[['ilian','Primero el vado. Después vemos qué hay ahí adentro.','n']]},
       {id:'zorro',kind:'examinable',x:600,y:590,label:'Examinar la grieta',lines:[['ilian','Una grieta angosta entre las rocas. En el barro hay una huella, como de zorro grande.','t'],['ilian','Por acá no pasa nadie sin buen olfato.','m']]}],
     caravan:{x:140,y:330}},
   linde:{id:'linde',name:'Linde del pantano',sub:'Camino del Brezo',lvl:4,w:960,h:304,biome:'pantano',hour:'tarde',bgZone:'pantano',ambient:'pantano',music:'hollin',danger:4,need:'c2',
@@ -27228,14 +27255,14 @@ const TESTZ={
     scatter:[{t:'oak|pine',n:22,area:[0,0,480,36],r:[11,15]},{t:'oak',n:6,area:[400,160,80,120],r:[10,13]}],
     exits:[{id:'s',x:120,y:298,w:240,h:6,to:MAPA,spawn:{x:480,y:352}}],
     mapIn:[{x:240,y:288}],
-    npcs:[{id:'granjero',spr:'aldeano',name:'Granjero Oberen',x:176,y:150,face:1,talk:[['granjero','Lobos, batidor. Dos, flacos como el hambre. Rondan el corral desde hace tres noches.','s']],after:'granja_lobos',afterTalk:[['granjero','Que el Cuervo los guarde. Las ovejas duermen tranquilas otra vez.','h']]},
+    npcs:[{id:'granjero',spr:'aldeano',name:'Granjero Oberen',x:176,y:150,face:1,talk:[['granjero','Lobos, explorador. Dos, flacos como el hambre. Rondan el corral desde hace tres noches.','s']],after:'granja_lobos',afterTalk:[['granjero','Que el Cuervo los guarde. Las ovejas duermen tranquilas otra vez.','h']]},
       {id:'hija',spr:'nino',name:'Hija del granjero',x:204,y:160,face:1,talk:[['hija','¿Ustedes son los del Cuervo Gris? ¡Mi papá dice que pelean por plata!','h']]}],
     fixed:[{id:'granja_lobos',x:306,y:296,enemies:['lobo','lobo'],place:'granja',reward:{oro:15,items:{antidoto:1}},
       pre:[['granjero','¡Ahí están! ¡Entre el corral y el bosque!','o'],['ilian','Dos lobos. Tranquilo, don. Esto es trabajo.','a']],
       post:[['granjero','Tomen: quince coronas y un antídoto. No es mucho, pero es honesto.','h']]}]}
 };
 const TESTG={id:'global',name:'Brenmoor del Sur',sub:'Mapa de la región',kind:'global',w:1440,h:900,
-  nodes:[{id:'hollin',x:168,y:576,label:'Burgo de Hollin',type:'pueblo',closed:['maela','Hollin queda atrás hasta que volvamos, batidor.','m']},
+  nodes:[{id:'hollin',x:168,y:576,label:'Burgo de Hollin',type:'pueblo',closed:['maela','Hollin queda atrás hasta que volvamos, explorador.','m']},
     {id:'prados',x:360,y:438,label:'Prados del Brezo',type:'zona',zone:'prados',lvl:2},
     {id:'torre',x:330,y:240,label:'Torre de vigía del Brezo',type:'torre',closed:['ilian','La puerta está trabada por dentro. Otro día.','t']},
     {id:'granja',x:480,y:330,label:'Granja de los Oberen',type:'granja',zone:'granja',lvl:2},
@@ -27529,7 +27556,7 @@ function inExit(ex,x,y){ return x>=ex.x-1&&x<=ex.x+ex.w+1&&y>=ex.y-1&&y<=ex.y+ex
 function edgeOf(ex,Z){ const E={W:[-1,0],E:[1,0],N:[0,-1],S:[0,1]}; if(ex.edge&&E[ex.edge]) return E[ex.edge]; if(ex.kind==='door') return null; if(ex.x<=2) return [-1,0]; if(ex.x+ex.w>=Z.w-2) return [1,0]; if(ex.y<=2) return [0,-1]; if(ex.y+ex.h>=Z.h-2) return [0,1]; return null; }
 async function deny(ex,why){ const Z=S.Z; const e=edgeOf(ex,Z)||[0,0]; S.P.x-=e[0]*12; S.P.y-=e[1]*12; if(!e[0]&&!e[1]) S.P.y+=12; S.target=null; S.P.walking=false;
   const k=ex.id||ex.to; const t=nowS(); if(S.bump[k]&&t-S.bump[k]<2.5) return; S.bump[k]=t;
-  const L=linesOf(why)||linesOf(ex.deny)||linesOf(zone(ex.to)&&zone(ex.to).deny)||[['maela',WL('borde','Por ahí no, batidor. La caravana va para el otro lado.'),'n']];
+  const L=linesOf(why)||linesOf(ex.deny)||linesOf(zone(ex.to)&&zone(ex.to).deny)||[['maela',WL('borde','Por ahí no, explorador. La caravana va para el otro lado.'),'n']];
   if(AUTO) return; await talkLines(L); }
 async function talkLines(L){ S.busy=true; S.P.walking=false; try{ for(const ln of (L||[])){ if(ln) await sayL(ln); } } finally{ hideDialog(); S.busy=false; } }
 async function tryExit(ex){ const Z=S.Z; if(ex.hideUntil&&!can(ex.hideUntil)) return; /* pulido A13: cerrada y sin marca: no se avisa nada */ const to=(ex.to===MAPA)?'global':ex.to; const tz=zone(to);
@@ -27643,12 +27670,12 @@ async function useNpc(a){ const n=a.def||{}, w=ensure(); S.busy=true; S.P.walkin
     if(a.car&&chatsAvail().length){ S.busy=false; await chatMenu(); return; }
     if(n.sceneId&&LINES.scenes[n.sceneId]){ await playScene(n.sceneId,{get:sayGet,hooks:n.hooks||{}}); }
     else { const k='npc:'+n.id; let L=linesOf(n.talk)||[]; if((n.after&&can(n.after))||(n.doneIf&&can(n.doneIf))) L=linesOf(n.afterTalk||n.talkDone)||L; if(w.seen[k]&&n.again) L=linesOf(n.again)||L;
-      if(!n.id&&a.car){ L=w.seen.car1?[[a.id,WL('caravana2','Acá esperamos. Adelante está lo que te toca batir.'),'n']]:[['maela',WL('caravana','No tardes, batidor. La paga no espera, pero yo sí.'),'m']]; w.seen.car1=1; }
+      if(!n.id&&a.car){ L=w.seen.car1?[[a.id,WL('caravana2','Acá esperamos. Adelante está lo que te toca batir.'),'n']]:[['maela',WL('caravana','No tardes, explorador. La paga no espera, pero yo sí.'),'m']]; w.seen.car1=1; }
       const sid=npcSid(a,n); // fix27 A1 · v26-fix: lo que no se ve (Severo en la carreta sellada) habla como narración, sin nombre crudo ni retrato
       w.seen[k]=1; for(const l of L){ const [who,text,ex,name]=l; await sayL([who||(name?null:sid),text,ex,name||(who||!sid?null:n.name)]); } }
     if(n.run) await n.run(apiFor()); }
   finally{ a.talking=false; hideDialog(); if(!meta) S.busy=false; } }
-async function useFollower(f){ if(chatsAvail().length) return chatMenu(); const L=linesOf('car_'+f.id+'_'+S.Z.id)||[[f.id,WL('seguidor_'+f.id,WL('seguidor','Te sigo, batidor.')),'n']]; await talkLines(L); }
+async function useFollower(f){ if(chatsAvail().length) return chatMenu(); const L=linesOf('car_'+f.id+'_'+S.Z.id)||[[f.id,WL('seguidor_'+f.id,WL('seguidor','Te sigo, explorador.')),'n']]; await talkLines(L); }
 async function useNode(n){ S.busy=true; try{ const goalN=VM.isGoal&&VM.isGoal(n); // v28: el destino de la historia se abre aunque el nodo figure cerrado
     if((n.closed&&!goalN)||!n.zone||n.viaZone||(!can(n.need)&&!goalN)){ const L=linesOf(n.deny)||linesOf(n.closedLines)||(Array.isArray(n.closed)?[n.closed]:null)||[['ilian',WL('nodoCerrado','Por ahora no hay nada que hacer ahí.'),'t']]; for(const l of L) await sayL(l); return; }
     const Z=zone(n.zone); if(!Z||!can(Z.need)) return;
@@ -27960,7 +27987,7 @@ async function go(step){ const sd=STORY[step]; if(!sd) return null; resetIfNewGa
   if(S.Z.music) try{ playMusic(musUbic('zona',S.Z.id,S.Z.music)); }catch(e){}
   prewarm([zid0]);
   const p=new Promise(r=>{ S.goalRes=r; }); S.busy=false; await fadeTo(0,SP(300));
-  if(!S.firstLine&&step==='prados'&&!w.seen.salida){ w.seen.salida=1; S.firstLine=true; const m=S.F.find(f=>f.id==='maela')||S.F[0]; if(m&&!AUTO) bubble(WL('salida','La paga corre desde que salimos. Hollin queda atrás, batidor.'),()=>scene===S?{x:m.x-S.cam.x,y:m.y-actorH(m)-4-S.cam.y}:null,3200,'amb'); }
+  if(!S.firstLine&&step==='prados'&&!w.seen.salida){ w.seen.salida=1; S.firstLine=true; const m=S.F.find(f=>f.id==='maela')||S.F[0]; if(m&&!AUTO) bubble(WL('salida','La paga corre desde que salimos. Hollin queda atrás, explorador.'),()=>scene===S?{x:m.x-S.cam.x,y:m.y-actorH(m)-4-S.cam.y}:null,3200,'amb'); }
   return await p; }
 function caravan(z){ const w=ensure(); w.caravan=z; }
 function mark(name){ const Z=S.Z; return Z&&Z.marks&&Z.marks[name]&&Z.marks[name].x!=null?{x:Z.marks[name].x,y:Z.marks[name].y}:null; }
@@ -28056,7 +28083,7 @@ const ENC=(()=>{
   function rate(z,road){
     let p=z.p*(road?(z.roadK!=null?z.roadK:ROAD_K):1);
     if(G.enc&&G.enc.ruda>0) p*=RUDA_K;           // Ramito de ruda
-    if(batidor()) p*=BATIDOR_K;                  // aptitud de Batidor (Ilian, desde el Cap. 2)
+    if(batidor()) p*=BATIDOR_K;                  // aptitud de Explorador (Ilian, desde el Cap. 2)
     if(chapter()>=2&&avgLvl()>=z.danger+3) p*=OVER_K; // grupo muy por encima de la zona (desde el Cap. 2)
     return p;
   }
@@ -28599,7 +28626,7 @@ const ARC_SPEC={
 const ARC_TUNE={
   // Cap. 2 · el cabo de jinetes tumbaba a uno (KO 1 en 2 de 3 semillas; objetivo 0): menos golpe y menos críticos
   c2_jefe:{mod:{cabo_jinetes:{atk:0.91,cri:-6},jinete:{atk:0.91,cri:-6}}},
-  // Cap. 3 · el grupo llegaba al sargento en 8,8 (objetivo 9–9,7): más EXP en C3-1 y C3-2 (y la reserva también para Ilian de batida, p3_logic.js)
+  // Cap. 3 · el grupo llegaba al sargento en 8,8 (objetivo 9–9,7): más EXP en C3-1 y C3-2 (y la reserva también para Ilian de exploración, p3_logic.js)
   c3_patrulla:{mod:{'*':{exp:1.35}}}, c3_callejon:{mod:{'*':{exp:1.35}}}, c3_jefe:{mod:{sargento:{atk:0.98}}},
   // Cap. 4 · salía en 10,8 (objetivo 11) y el cabo no apretaba (PV mínimo 51–63 %; objetivo 15–45 %)
   c4_edicto:{mod:{'*':{exp:1.5}}}, c4_patio:{mod:{'*':{exp:1.5}}},
@@ -28704,7 +28731,7 @@ function merge(n){ const L=T(n); if(!L.scenes) return;
   Object.keys(L.keyItems||{}).forEach(k=>{ KEYS[k]=L.keyItems[k]; });
   Object.keys(L.items||{}).forEach(k=>{ const it=EQUIP.items[k], M=MENUTXT.equip[k]; if(it&&M){ M.name=L.items[k].n; M.desc=Object.keys(it.stats).map(q=>q.toUpperCase()+' +'+it.stats[q]).join(', ')+(Object.keys(it.stats).length?'. ':'')+L.items[k].d; } });
 }
-const STAGE_AF={af_otravez:'noche',af_mella:'taberna',af_cicatrices:'taberna',af_lista:'pantano'};
+const STAGE_AF={af_otravez:'noche',af_mella:'herreria',af_cicatrices:'taberna',af_lista:'pantano'};
 const KEYS={};
 function mergeAll(){ [2,3,4,5].forEach(n=>{ try{ merge(n); }catch(e){ console.error('[arco1] textos cap '+n,e); } });
   try{ const S=LINES.sq||{}; if(S.bota&&S.bota.keyItems) Object.assign(KEYS,S.bota.keyItems); }catch(e){} }
@@ -28744,8 +28771,10 @@ function hooks(extra){ const H={
 const CAPMIN={2:7,3:9,4:10,5:11};
 async function stage(bg,name,hk,opt){ opt=opt||{}; if(opt.music) playMusic(musUbic('escena',name,opt.music)); const st=await stageIn(bg,name,opt.ms||600,opt); await playScene(name,stageCtx(st,hooks(hk))); hideDialog(); if(!opt.keep) await PFXI.cover('C9',opt.out||400); /* pixelfx: cierre de escena con iris */ return st; }
 async function world(name,at,hk,opt){ opt=opt||{}; const st=await WORLD.sceneIn(name,{at,ms:opt.ms||400,music:opt.music}); await playScene(name,stageCtx(st,hooks(hk))); hideDialog(); if(opt.keep) return st; await WORLD.back(st); return st; }
+// v50.2 (Brian: «te mueven de un aspecto a otro cuando hablás»): en un cuarto de Hollin la escena usa el mismo cuarto que se explora, no el fondo pintado
+const TOWNROOMS=['taberna','herreria','capilla','casa','pieza'];
 // escena pintada desde el pueblo (charla con un vecino en su interior) y vuelta a explorar Hollin donde estaba
-async function townScene(api,bg,name,hk,opt){ hideDialog(); await fadeTo(1,300); await stage(bg,name,hk,Object.assign({keep:true},opt||{})); await fadeTo(1,300);
+async function townScene(api,bg,name,hk,opt){ hideDialog(); await fadeTo(1,300); await stage(bg,name,hk,Object.assign({keep:true,room:TOWNROOMS.includes(bg)},opt||{})); await fadeTo(1,300);
   setScene(api.S); CUR.sayStage=api.S; CUR.sayGet=id=>api.actors[id]||null; hideDialog(); await fadeTo(0,300); }
 // combate en el lugar: el escenario de la escena vuelve armado después
 async function fightIn(st,cfg){ await PFXI.cover('C8',300); /* pixelfx: la pantalla se quema (el combate la abre) */ const B=await arcFight(cfg); await fadeTo(1,150); setScene(st); CUR.sayStage=st; CUR.sayGet=st.get; hideDialog(); st.cam.tbars=0; await fadeTo(0,350); return B; }
@@ -29118,7 +29147,7 @@ LINES.posada = {
         again:[['maela','Elegí rápido. La Rosa también está eligiendo.','t']] },
       // F5a · Cap. 5 · Granja abandonada, en el corral, antes del granero (C5-1, la cacería) · completo
       f5a:{ quien:'severo', lugar:'Granja abandonada · el corral',
-        llamada:[['severo','Batidor. Un momento.','t']],
+        llamada:[['severo','Explorador. Un momento.','t']],
         linea:[['severo','Si vienen, vienen por la granja. Pongamos adelante a los que no se asustan del ruido.','t']],
         listo:[['severo','Razonable. Los sabuesos no leen, pero huelen el miedo. Que adelante no haya.','n']],
         again:[['severo','¿Lo pensaste mejor? Hacés bien. El que piensa dos veces, entierra menos.','t']] },
@@ -29134,7 +29163,7 @@ LINES.posada = {
   /* ---------- Menú › Grupo (6.1: LINES.grupo.*) ---------- */
   grupo: {
     en_combate:'En combate', caravana:'En la caravana', cambiar:'Cambiar',
-    candado:'El grupo se cambia en posadas, campamentos y puntos de formación',
+    candado:'En este tramo, quién pelea lo decide la historia',
     protagonista:'Va siempre en el grupo',
     fijo:'En este capítulo, quién pelea lo decide la historia',
     suma_caravana:'%s se suma a la caravana'   // %s = nombre del recluta (B lo reemplaza; si no, sin nombre: «Se suma a la caravana»)
@@ -29157,8 +29186,8 @@ LINES.pf = Object.assign({ menu:LINES.posada.formacion.menu, fijo:LINES.posada.f
 
 /* avisos de primera vez (tutAviso): solo los que faltan, sin pisar LINES.tut.caravana */
 if(LINES.tut){
-  if(!LINES.tut.posada) LINES.tut.posada = ['En las posadas se duerme, se cambia el grupo y se guarda la partida.',
-                                            'Fuera de ellas, el grupo se ordena pero no se cambia. Cargar, se carga en cualquier lado.'];
+  if(!LINES.tut.posada) LINES.tut.posada = ['En las posadas se duerme y se guarda la partida.',
+                                            'El grupo se cambia desde el menú (Grupo) cuando quieras, salvo si la historia lo fija. Cargar, se carga en cualquier lado.'];
   if(!LINES.tut.formacion) LINES.tut.formacion = ['Antes de algunas peleas, alguien te para para armar la formación.',
                                                   'Ahí se cambia quién pelea, en qué fila y con qué equipo.'];
 }
@@ -29221,7 +29250,7 @@ LINES.unisono = {
     desc: 'Flechas y un barrido de viento contra todos; rompe barreras. El resto del grupo adelanta su turno y pierde el Miedo.',
     // Arco I: versión neutra (en el Tomo 1 nadie comenta la seña).
     corte: [
-      ['maela','Batidor.'],
+      ['maela','Explorador.'],
       ['ilian','Ya sé.']
     ],
     // Arco II en adelante, si Brian aprueba abrir la siembra (C12 del doc):
@@ -29864,8 +29893,8 @@ function hollinC2(){ const H=L2().hollin||{}; const tag='c2';
     afterTalk:async(id)=>{ if(id!=='agnes') return; const v=await choose([{label:'Comprar',value:1,cls:'primary',icon:'potion'},{label:'Volver',value:0,auto:true,icon:'back'}]); hideDialog(); if(v) await ARC.shop('agnes_c2'); },
     onExam:async(k)=>{ if(k==='pizarra'){ ARC.set('ex_pizarra_c2'); await ARC.fiadoC2(); } },
     extra(api){ const sp=api.sp;
-      api.mk('severo',sp.maela.x+10,sp.maela.y+4,{face:-1,label:'Hablar con Severo',onTalk:async()=>{ await say('severo','Batidor. ¿Tenés un momento? A solas.','n'); const v=await choose([{label:'Ir con Severo',value:1,cls:'primary',auto:true,icon:'go'},{label:'Todavía no',value:0,icon:'back'}]); if(v) api.end(); }});
-      const dv=api.mk('dov',sp.carreta.x-24,sp.carreta.y+4,{face:1,label:'Hablar con Dov',onTalk:async()=>{ if(escenaAvail('af_otravez')){ await playEscena('af_otravez'); setScene(api.S); CUR.sayStage=api.S; await fadeTo(0,300); return; } await api.playLines((L2().zones||{}).dov_hollin_c2); }});
+      api.mk('severo',sp.maela.x+10,sp.maela.y+4,{face:-1,label:'Hablar con Severo',onTalk:async()=>{ await say('severo','Explorador. ¿Tenés un momento? A solas.','n'); const v=await choose([{label:'Ir con Severo',value:1,cls:'primary',auto:true,icon:'go'},{label:'Todavía no',value:0,icon:'back'}]); if(v) api.end(); }});
+      const dv=api.mk('dov',sp.carreta.x-24,sp.carreta.y+4,{face:1,label:'Hablar con Dov',onTalk:async()=>{ if(escenaAvail('af_otravez')){ await playEscenaAqui('af_otravez',api,{x:dv.x+58,y:dv.y}); return; } /* v50.2: en el patio, no en un claro del bosque */ await api.playLines((L2().zones||{}).dov_hollin_c2); }});
       Object.defineProperty(dv,'label',{get:()=>escenaAvail('af_otravez')?((LINES.escenaLabels||{}).af_otravez||'Acercarse a la carreta'):'Hablar con Dov',configurable:true}); dv.escena='af_otravez';
       const RT=api.ROOMS.taberna, ry=RT&&(RT.spots.reservado||RT.spots.hogar)||{x:sp.agnes.x-30,y:sp.agnes.y+6};
       api.mk('ysa',ry.x+14,ry.y+8,{face:-1,place:RT?'taberna':'town',label:'Hablar con Ysa',onTalk:async()=>{ await say('ysa',ARC.has('ysa_canas')?'Las canas de un hombre dormido. Ya tengo el primer verso.':'Un banquito de tres patas. Ya tengo el primer verso.','h'); }});
@@ -29924,7 +29953,7 @@ ARC.cap(2,{
 /* ==================== MÓDULO arco1/cap3_mundo.js ==================== */
 /* ============================================================
    ARCO I · CAPÍTULO 3 · «Bastante pared» (Nach al mando) · plan 2.2 · guion LINES.cap3
-   Sin zonas nuevas: Hollin de día (reusado) con Nach de líder e Ilian de batida (S7). Maela, con fiebre en el altillo (decisión de Zeus):
+   Sin zonas nuevas: Hollin de día (reusado) con Nach de líder e Ilian de exploración (S7). Maela, con fiebre en el altillo (decisión de Zeus):
    Ysa la reemplaza en los grupos fijos. Olaf se queda con Nach.
    Combates: C3-1 (3 jinetes Nv 7; Nach, Simona, Ysa, Severo, Dov), C3-2 (2 soldados Nv 8; Nach, Bram, Simona, Ysa, Dov),
    jefe: Sargento de la Rosa Nv 10, solo (carga de lanzas al 60 %, Furia al 30 %, fin por guion al 15 %). Reclutas: Bram, Odo, Tessa.
@@ -29965,16 +29994,16 @@ function hollinC3b(){ const tag='c3b';
       if(!v) return; }
     await ARC.townScene(api,ARC.has('c3_barril')?'capilla':'noche','c3_capilla',{joinOdo:async()=>{ ARC.join('odo',9); }}); ARC.set('c3_capilla'); api.end(); };
   // v27: «Otra vuelta de faja» (Tiene Casa): Simona duerme contra la puerta del establo de Agnes
-  const faja=async api=>{ if(!escenaAvail('af_faja')) return; await playEscena('af_faja'); setScene(api.S); CUR.sayStage=api.S; CUR.sayGet=id=>api.actors[id]||null; await fadeTo(0,300); };
+  const faja=async (api,at)=>{ if(!escenaAvail('af_faja')) return; await playEscenaAqui('af_faja',api,at); }; // v50.2: frente al establo, donde se mira
   const agnes=async api=>{ if(ARC.has('c3_recado')&&!ARC.has('c3_barril')){ await ARC.townScene(api,'taberna','c3_barril',{barrilCapilla:async()=>{ ARC.set('c3_barril'); ARC.give({pluma:1},(L3().toasts||{}).pluma); }}); return; } await api.playLines(Z3().agnes_c3); };
   const abuelo=async api=>{ if(ARC.has('c3_botas')){ await api.playLines(Z3().anciano_c3_post); return; } await ARC.townScene(api,'casa','c3_botas',{keyBotas:async()=>{ ARC.key('botas_abuelo'); }}); ARC.set('c3_botas'); };
-  const mella=async api=>{ if(escenaAvail('af_mella')){ await playEscena('af_mella'); setScene(api.S); CUR.sayStage=api.S; CUR.sayGet=id=>api.actors[id]||null; await fadeTo(0,300); return; } const B=(H3().npc||{}).bram_c3; await api.playLines(B?B.again[0]:[]); };
+  const mella=async api=>{ if(escenaAvail('af_mella')){ await playEscenaAqui('af_mella',api); return; } /* v50.2: en la herrería misma */ const B=(H3().npc||{}).bram_c3; await api.playLines(B?B.again[0]:[]); };
   return {tag,lead:'ilian',fol:'nach',npcs:['agnes','odo','anciano','bram','tessa'],tint:'rgba(10,14,44,.6)',wander:[['gato_pueblo',4,20]],
     lines:{tessa:ln('tessa_c3'),bram:(H3().npc||{}).bram_c3},
     talk:{odo:async api=>odo(api),agnes:async api=>agnes(api),anciano:async api=>abuelo(api)},
     label:{odo:()=>ARC.has('c3_barril')?'Entregar el barril a Fray Odo':'Hablar con Fray Odo',agnes:()=>ARC.has('c3_recado')&&!ARC.has('c3_barril')?'Pedirle el barril a Agnes':'Hablar con Agnes'},
     ex:{vitral:H3().ex&&H3().ex.vitral_c3},
-    extra(api){ { const sp=api.sp, x=sp.taberna_puerta.x+70, y=sp.taberna_puerta.y+18; const t=api.thing('town',x,y,(LINES.escenaLabels||{}).af_faja||'Mirar a Simona',async()=>faja(api),{mx:x,my:y-28}); t.bangFn=()=>escenaAvail('af_faja'); t.escena='af_faja'; }
+    extra(api){ { const sp=api.sp, x=sp.taberna_puerta.x+70, y=sp.taberna_puerta.y+18; const t=api.thing('town',x,y,(LINES.escenaLabels||{}).af_faja||'Mirar a Simona',async()=>faja(api,{x,y}),{mx:x,my:y-28}); t.bangFn=()=>escenaAvail('af_faja'); t.escena='af_faja'; }
       const R=api.ROOMS.herreria; if(R){ const p=R.spots.fragua||R.spots.armas||R.exit; const t=api.thing('herreria',p.x,p.y+6,(LINES.escenaLabels||{}).af_mella||'Mirar el yunque',async()=>mella(api)); t.escena='af_mella'; } },
     goal:api=>!ARC.has('c3_botas')?api.actors.anciano:!ARC.has('c3_recado')?api.actors.odo:!ARC.has('c3_barril')?api.actors.agnes:api.actors.odo, // A02: el recado del barril, paso a paso
     afterTalk:async id=>{ if(id==='tessa') ARC.set('tessa_c3'); },
@@ -30552,6 +30581,13 @@ try{ const css=`.gp-sep{grid-column:1/-1;display:flex;align-items:center;gap:8px
 .pzb.locked{opacity:.55}.pzb.locked::after{content:'';display:inline-block;width:6px;height:5px;margin-left:2px;border:1px solid currentColor;border-radius:1px;vertical-align:-1px}
 .gp-mode{margin-left:8px;padding:1px 8px;border:1px solid rgba(143,208,255,.6);border-radius:9px;color:#cfe6ff;font-size:12px}
 .gp-lockhint{color:#e6cf9a}
+.gp-sep.fight{margin-top:0;color:#f0d79a}
+.gp-card.swaptgt{border-color:rgba(143,208,255,.75);box-shadow:0 0 0 1px rgba(143,208,255,.35)}.gp-card.bench.swaptgt{opacity:1;filter:none}
+.gp-ft .pz-swap.tgt{background:#1f3a55;border-color:#8fd0ff;color:#fff;animation:gpPulse 1.4s ease-in-out infinite}
+@keyframes gpPulse{50%{box-shadow:0 0 0 3px rgba(143,208,255,.35)}}
+@media (prefers-reduced-motion:reduce){.gp-ft .pz-swap.tgt{animation:none}}
+.gp-swaphint{display:flex;align-items:center;flex-wrap:wrap;gap:4px 6px;margin:4px 0 8px;padding:8px 10px;border:1px solid rgba(143,208,255,.6);border-radius:8px;background:rgba(20,36,52,.85);color:#cfe6ff;font-size:14px}.gp-swaphint b{color:#fff}
+.gp-swaphint .pz-swapx{margin-left:auto;min-height:32px;padding:0 10px;border:1px solid #4a6a8a;border-radius:6px;background:#14202c;color:#cfe6ff}
 .sv-b.sv-save[disabled]{opacity:.45}`; const st=document.createElement('style'); st.id='posadas-css'; st.textContent=css; document.head.appendChild(st); }catch(e){}
 
 return {miniHalo,afterSleep:f=>AFTER.push(f),mojon,REST,PF,restOpen,restSleep,esferaOpen,pfOpen,pfUsed,pfCovered,pickOff,town,zoneEnts,globalItems,drawGlobal,miniDot,lines,speak,PT,ESF,ESFG,CAMPS,PFZ};
@@ -31246,7 +31282,7 @@ LINES.cap6 = {
       ['narr','Esa noche hay niebla en el muelle del Bastión, la poca piedra que queda de un embarcadero viejo. Ilian hace guardia solo, porque no puede dormir.'],
       ['narr','Del agua sale una barca sin remos. Adelante, un hombre de capa carmesí con forro de seda, de pie, como si la barca lo llevara por respeto.'],
       ['show','casimir'],
-      ['say','casimir','Ilian Varre. El batidor del ojo de dos colores. Tardé nueve días en encontrarte, y eso que soy muy bueno encontrando.','n'],
+      ['say','casimir','Ilian Varre. El explorador del ojo de dos colores. Tardé nueve días en encontrarte, y eso que soy muy bueno encontrando.','n'],
       ['say','ilian','¿Quién te manda?','t'],
       ['say','casimir','El Regente de Corvaine. Mil coronas por tu cabeza, y otras mil si la cabeza conserva el ojo. Casimir Vey, para servirte. Bueno, para servir al Regente.','h'],
       ['narr','En la mano izquierda le crece una llama roja. En la derecha, el estoque se cubre de escarcha.'],
@@ -31477,7 +31513,7 @@ const SKILL={
   sobrecarga:{n:'Sobrecarga',d:'Ataque ×1,9; el turno siguiente la división queda quieta',r:1},
   ola:{n:'Ola Umbría',d:'Daña a todas las divisiones enemigas pegadas; cuesta 10 % de la tropa propia',r:1} };
 // oficio (clase de la ficha) → habilidad y subtipo natural
-const CLS=[ [/batidor/i,'ojo'],[/escudero|guardi[aá]n/i,'cubrir'],[/caballero oscuro/i,'ola'],[/caballero|palad/i,'muro'],[/lancer|dragoon|valkiria/i,'atravesar'],
+const CLS=[ [/batidor|explorador/i,'ojo'],[/escudero|guardi[aá]n/i,'cubrir'],[/caballero oscuro/i,'ola'],[/caballero|palad/i,'muro'],[/lancer|dragoon|valkiria/i,'atravesar'],
   [/arquer|cazador|francotir|pistoler/i,'lluvia'],[/mago blanco|cl[eé]rigo|sacerdot|druida/i,'sanar'],[/mago|hechic|brujo/i,'fuego'],[/invocador/i,'invocar'],
   [/guerrer|espadach|berserk|gladiad|samur|duelist/i,'tajo'],[/monje|p[uú]gil|shaolin/i,'rafaga'],[/ladr|ninja|asesin/i,'sabotaje'],[/alquim/i,'bomba'],[/ingenier|artific/i,'torreta'],
   [/juez/i,'decreto'],[/exo|aut[oó]mata|coloso/i,'sobrecarga'],[/bardo|lirist|danzar/i,'canto'] ];
@@ -31496,7 +31532,7 @@ const RAZA={ humano:{n:'Adaptables',d:'+10 % contra divisiones humanas; recupera
 function razaKey(r){ r=String(r||''); if(/semielf/i.test(r)) return 'semielfo'; if(/elf/i.test(r)) return 'elfo'; if(/enan/i.test(r)) return 'enano'; if(/bestial/i.test(r)) return 'bestial';
   if(/injert/i.test(r)) return 'injertado'; if(/constru|aut[oó]mat/i.test(r)) return 'constructo'; if(/criatur|perr|gato/i.test(r)) return 'criatura'; return 'humano'; }
 // comandantes conocidos (raza y oficio de sus fichas); si falta, se lee la ficha del juego
-const CMD={ ilian:['Humano','Batidor'],nach:['Humano','Escudero de Guerra'],maela:['Humana','Lancero'],ewald:['Humano','Caballero'],mirena:['Humana','Cazador'],
+const CMD={ ilian:['Humano','Explorador'],nach:['Humano','Escudero de Guerra'],maela:['Humana','Lancero'],ewald:['Humano','Caballero'],mirena:['Humana','Cazador'],
   hedda:['Humana','Mago blanco'],casimir:['Humano','Mago rojo'],bram:['Humano','Guerrero'],tessa:['Humana','Arquero'],odo:['Humano','Clérigo'],zarpa:['Bestial (felino leve)','Ladrón'],
   gaspar:['Humano','Alquimista'],agnes:['Humana','Monje'],darra:['Humana (injertada)','Exo-Infante'],kett:['Constructo asterii','Autómata de Guerra'],teo:['Humano','Ingeniero'],
   lamar:['Humano','Bardo'],ismena:['Humana','Invocador'],rocio:['Humana','Púgil'],nilo:['Enano de las Marcas','Guerrero'],bertram:['Enano (Durmhold)','Arquero (ballesta)'],
@@ -31537,7 +31573,7 @@ const isCmd=id=>!!WCMD[id];
 // SUBCOMANDANTES: hasta 2 por comandante. Sin habilidades en guerra; suben Ataque, Defensa y Moral según su AFINIDAD con el ejército:
 // Alta si su oficio comanda esa misma tropa (Etapa 5, §8), Media si es afín, Baja si no; +1 nivel si es de la raza del comandante o tienen vínculo.
 const RELS=[['bram','tessa'],['ilian','nach'],['maela','nach'],['ilian','maela'],['ewald','hedda'],['nilo','bertram'],['mirena','tessa'],['odo','agnes'],['gaspar','zarpa']];
-function troopOfClass(c){ c=c||''; if(/caballero|palad/i.test(c)) return 'cab'; if(/arquer|cazador|pistol|francot|ingenier|artific|batidor/i.test(c)) return 'arco';
+function troopOfClass(c){ c=c||''; if(/caballero|palad/i.test(c)) return 'cab'; if(/arquer|cazador|pistol|francot|ingenier|artific|explorador/i.test(c)) return 'arco';
   if(/mago|hechic|brujo|invoc|alquim/i.test(c)) return 'magia'; if(/cl[eé]rigo|sacerd|bardo|lirist|druida/i.test(c)) return 'sacro'; if(/ladr|ninja|asesin|danzar/i.test(c)) return 'ligera';
   if(/exo|aut[oó]mat|constru/i.test(c)) return 'constructo'; return 'inf'; }
 const ROLE=c=>/caballero|guardi|escudero|juez|exo|aut[oó]mat|guerrero/i.test(c||'')?'def':/cl[eé]rigo|sacerd|bardo|monje|lirist|druida|mago blanco/i.test(c||'')?'mor':'atk';
@@ -32789,7 +32825,7 @@ Object.assign(L.scenes,{
       [['show','casimir'],
        ['say','casimir','Permítanme: las fechas son mi única virtud. Saln firma en Kael-Varn el mismo mes en que ustedes volvieron de allá. Y firma otra vez en Brenmoor, dos semanas antes del contrato del encapuchado.','n']],
       [['say','severo','Saln firma en Kael-Varn el mismo mes en que ustedes volvieron de allá. Y otra vez en Brenmoor, dos semanas antes del contrato del encapuchado.','n']]],
-    ['say','severo','Entonces el hilo es este. Saln estuvo en Kael-Varn. Vio al batidor del Cuervo leer lo que no había que leer. Se lo vendió a los guantes grises.','d'],
+    ['say','severo','Entonces el hilo es este. Saln estuvo en Kael-Varn. Vio al explorador del Cuervo leer lo que no había que leer. Se lo vendió a los guantes grises.','d'],
     ['say','severo','Y después le recomendó el Cuervo al encapuchado. No los eligieron por buenos. Los eligieron por el chico del ojo.','s'],
     ['say','ilian','Por mí.','s'],
     ['say','maela','Por quien te vendió. No es lo mismo.','d'],
@@ -32849,7 +32885,7 @@ Object.assign(L.scenes,{
   ],
   c8_d19_cruzar: [
     ['title','Día 19 · Orilla sur','3 de Escorpio',1.2], ['vig',0.25],
-    ['narr','Un batidor vuelve del vado con barro hasta el pecho: la columna de Corvaine baja hacia el vado de Holgar. Y al norte del valle se ven humos de fogón. Muchos.'],
+    ['narr','Un explorador vuelve del vado con barro hasta el pecho: la columna de Corvaine baja hacia el vado de Holgar. Y al norte del valle se ven humos de fogón. Muchos.'],
     ['say','ilian','Es Nach.','d'],
     ['say','maela','O es la Rosa.','a'],
     ['say','ilian','La Rosa no prende fogones para cocinar. Nach sí. Voy a cruzar.','d'],
@@ -33784,7 +33820,7 @@ function dests(){ const gn=goalNode(), why=blocked(); if(why) return gn&&nodeOk(
   const pv=I.placesView(), pl=I.ensure().places||{}; const L=glob().nodes.filter(n=>nodeOk(n)&&!n.sub&&!n.closed&&((pv[n.id]||0)>=1||(pl[n.id]||0)>=2)&&n!==gn); /* visto en el mapa, o visitado (aunque la niebla lo tape) */ if(gn&&nodeOk(gn)) L.unshift(gn); return L; }
 function allowNode(n){ if(!blocked()) return true; const w=I.ensure(); return isGoal(n)||!!(w.mapFrom&&n.zone===w.mapFrom.zone); }
 function denyNode(n){ const why=blocked(); if(!why) return; if(why!=='cap1'){ WORLD.viaje.deny(why); return; }
-  let t=VT('niega_cap1'); if(Array.isArray(t)) t=Array.isArray(t[0])?t[0][1]:t[1]; if(!t){ try{ t=(LINES.world&&LINES.world.borde)||''; }catch(e){} } if(!t) t='Por ahí no, batidor. La caravana va para el otro lado.';
+  let t=VT('niega_cap1'); if(Array.isArray(t)) t=Array.isArray(t[0])?t[0][1]:t[1]; if(!t){ try{ t=(LINES.world&&LINES.world.borde)||''; }catch(e){} } if(!t) t='Por ahí no, explorador. La caravana va para el otro lado.';
   const P=S.P; bubble(t,()=>{ if(scene!==S) return null; const zm=I.gZoom(); return {x:(P.x-S.cam.x)*zm,y:(P.y-30-S.cam.y)*zm}; },2600,'amb'); }
 // llegada a la zona elegida: por el lado de la vecina de la que se salió (como si se hubiera caminado), o por la salida que se usó si se vuelve
 function entryFor(n,Z){ const w=I.ensure(), mf=w.mapFrom; if(!mf) return null;
@@ -34887,8 +34923,10 @@ window.__LDC={get G(){return G},
   arteTest:()=>({SPR,troop:WAR._troop,ICONOS,artImage}), // v42: control del arte del lote (tools/verify/lote_arte.js)
   miniTest:()=>({miniReal,miniDraw,town:ENV.town,zones:ZONES}), get skip(){ return {on:SKIP.on,ok:SKIP.ok,fast:FASTTXT,auto:AUTO,txt:TXTMODE}; }, cerrarDialogo:()=>hideDialog(), sceneProbe:(cmds,hooks,name)=>{ const nm=name||'__probe'; LINES.scenes[nm]=cmds; return playScene(nm,{get:()=>null,hooks:hooks||{},noAff:true}).then(()=>{ hideDialog(); return 'ok'; }); }, // v44.3: control del salteo (tools/verify/salteo.js) // v43: capturas del minimapa (tools/verify/minimapa.js)
   // stageTest: reproduce una escena suelta (para capturas y pruebas de puesta)
-  chatTest:async(ni,id)=>escenaTest(id||'af_hermanos'), escenaTest:(id,zone)=>escenaTest(id,zone), get town(){ return CUR.town; }, esc:{avail:escenaAvail,pend:escenasPendientes,meta:escenaMeta,lost:escenaLost,seen:escenaSeen,play:playEscena,affKey}, migrar:()=>{ migrarEscenas(); return {chats:Object.keys(G.flags.chats||{}),parcial:G.flags.escParcial||{},choice:G.flags.escChoice||{}}; },
-  stageTest:async(zone,name,flags)=>{ Object.assign(ENV.flags,flags||{}); const pz=name==='campamento'?presoPuesta():null; const st=await stageIn(zone,name,200); if(name==='emboscada_post'){ PTIRO.dress(st); await PTIRO.tiro(st); } else if(zone==='puente'&&name==='puente') PTIRO.dress(st,'puente'); await playScene(name,stageCtx(st,Object.assign({valdrisVisible:async()=>{ ENV.flags.valdris=true; },silencio:async()=>{},partyChange:async()=>{},battle:async()=>{},derrumbe:async()=>{ await PTIRO.derrumbe(st); }},pz?pz.hooks(st):{}))); hideDialog(); return 'ok'; }, get scene(){return scene}, get B(){return CUR.B}, get bossTurns(){return CUR.bossTurns}, get ended(){return (CUR.endCount||0)>0}, get bossLog(){return CUR.bossLog||[]},
+  chatTest:async(ni,id)=>escenaTest(id||'af_hermanos'), escenaTest:(id,zone)=>escenaTest(id,zone), get town(){ return CUR.town; }, esc:{all:()=>LINES.escenas||[],avail:escenaAvail,pend:escenasPendientes,meta:escenaMeta,lost:escenaLost,seen:escenaSeen,play:playEscena,affKey}, migrar:()=>{ migrarEscenas(); return {chats:Object.keys(G.flags.chats||{}),parcial:G.flags.escParcial||{},choice:G.flags.escChoice||{}}; },
+  stageTest:async(zone,name,flags)=>{ Object.assign(ENV.flags,flags||{}); const pz=name==='campamento'?presoPuesta():null; const st=await stageIn(zone,name,200,(flags&&flags.__room)?{room:true}:undefined); if(name==='emboscada_post'){ PTIRO.dress(st); await PTIRO.tiro(st); } else if(zone==='puente'&&name==='puente') PTIRO.dress(st,'puente'); await playScene(name,stageCtx(st,Object.assign({valdrisVisible:async()=>{ ENV.flags.valdris=true; },silencio:async()=>{},partyChange:async()=>{},battle:async()=>{},derrumbe:async()=>{ await PTIRO.derrumbe(st); }},pz?pz.hooks(st):{}))); hideDialog(); return 'ok'; }, get scene(){return scene}, get B(){return CUR.B}, get bossTurns(){return CUR.bossTurns}, get ended(){return (CUR.endCount||0)>0}, get bossLog(){return CUR.bossLog||[]},
+  pausaTest:(tab,mode)=>{ openPause(tab||'grupo',mode?{mode}:{}); return PZ.mode; }, swapSel:(id)=>{ PZ.swapSel=id; renderPause(); },
+  townTest:(o)=>{ o=Object.assign({lead:'ilian',fol:'nach',npcs:['agnes','bram'],tint:'rgba(10,14,44,.6)'},o||{}); const ex=o.extra; o.extra=api=>{ window.__tapi=api; if(ex) ex(api); }; townExplore(o); return 'ok'; }, escAqui:(id,at)=>playEscenaAqui(id,window.__tapi,at), // v50.2: probar escenas en el pueblo
   openShop:(k)=>openShop(k||'hollin'), say:(w,t,e)=>say(w,t,e), tutTest:(l,ms)=>toast(l,ms||3600,'tut'), get tutQ(){ return TUTQ.map(q=>q.k); }, // fix27 A2: capturas y medidas de los carteles
   /* auditoría de hablantes (docs/retratos-menu.md): recorre LINES, los textos de zona y los NPC de todas las zonas; por cada id que habla
      devuelve el nombre visible y de dónde sale el retrato: px (PixelLab) · ill (lámina) · npc (modelo NPC) · pxp (retrato pintado por código) · spr (reducción del sprite: no debería quedar) */
