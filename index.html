@@ -943,6 +943,40 @@ body:not(.wide) .loot-card{bottom:auto;top:30%}
 #menuBox.cmdx .mi.imp:not([disabled]) .ic{animation:impIc 1s ease-in-out infinite alternate}
 @keyframes impIc{to{filter:drop-shadow(0 0 5px rgba(255,160,50,1))}}
 #menuBox.cmdx #mhelp{border-color:var(--au-lo)!important;background:rgba(14,9,6,.92)!important;color:#efe2c4}
+/* v51.1 · medallones de comando (SVG) */
+#menuBox.cmdx .cmi{flex:0 0 auto;width:30px;height:30px;display:grid;place-items:center;border-radius:50%;position:relative;
+  background:radial-gradient(circle at 35% 30%,color-mix(in srgb,var(--h) 55%,#fff 0%) 0%,color-mix(in srgb,var(--h) 35%,#000) 70%,#120c06 100%);
+  box-shadow:inset 0 0 0 1.5px color-mix(in srgb,var(--h) 70%,#000),inset 0 2px 3px rgba(255,255,255,.25),0 1px 2px rgba(0,0,0,.6);transition:transform .18s cubic-bezier(.2,1.4,.4,1),box-shadow .18s}
+#menuBox.cmdx .cmi::before{content:"";position:absolute;inset:-3px;border-radius:50%;border:1px solid color-mix(in srgb,var(--h) 60%,transparent);opacity:0;transform:scale(.8);transition:opacity .2s,transform .2s}
+#menuBox.cmdx .cmi svg{width:22px;height:22px;overflow:visible;filter:drop-shadow(0 1px 0 rgba(0,0,0,.55))}
+#menuBox.cmdx .mi[disabled] .cmi{filter:grayscale(1) brightness(.6)}
+#menuBox.cmdx .mi.sel .cmi,#menuBox.cmdx .mi:hover:not([disabled]) .cmi{transform:scale(1.16) rotate(-6deg);box-shadow:inset 0 0 0 1.5px var(--h),inset 0 2px 3px rgba(255,255,255,.35),0 0 12px color-mix(in srgb,var(--h) 80%,transparent)}
+#menuBox.cmdx .mi.sel .cmi::before{opacity:1;transform:scale(1);animation:cmiRing 1.4s ease-out infinite}
+@keyframes cmiRing{0%{transform:scale(.9);opacity:.9}100%{transform:scale(1.45);opacity:0}}
+#menuBox.cmdx .mi.sel{background:linear-gradient(90deg,color-mix(in srgb,var(--h,#c9a35a) 40%,transparent),rgba(201,163,90,.06))}
+#menuBox.cmdx .mi.sel .ml{text-shadow:0 0 8px color-mix(in srgb,var(--h,#c9a35a) 70%,transparent)}
+.cmi .cx-sw,.cmi .cx-bw,.cmi .cx-fl,.cmi .cx-st,.cmi .cx-du,.cmi .cx-tg,.cmi .cx-sp,.cmi .cx-rw{transform-box:fill-box;transform-origin:50% 50%}
+.mi.sel .cmi .cx-sw{transform-origin:20% 80%;animation:cxSwing 1.1s cubic-bezier(.5,0,.2,1) infinite}
+@keyframes cxSwing{0%,55%,100%{transform:rotate(0)}20%{transform:rotate(-28deg)}35%{transform:rotate(14deg)}}
+.mi.sel .cmi .cx-bw{animation:cxDraw 1.2s ease-in-out infinite}@keyframes cxDraw{0%,100%{transform:translate(0,0)}50%{transform:translate(-1.2px,1.2px) scale(.96)}}
+.mi.sel .cmi .cx-fl,.mi.imp:not([disabled]) .cmi .cx-fl{transform-origin:50% 90%;animation:cxFlick .45s ease-in-out infinite alternate}@keyframes cxFlick{0%{transform:scale(1,1) skewX(0)}100%{transform:scale(.92,1.1) skewX(-4deg)}}
+.mi.sel .cmi .cx-st{animation:cxTw 2.4s linear infinite}@keyframes cxTw{0%{transform:rotate(0) scale(1)}50%{transform:rotate(45deg) scale(1.12)}100%{transform:rotate(90deg) scale(1)}}
+.mi.sel .cmi .cx-du{animation:cxClash .9s ease-in-out infinite}.mi.sel .cmi .cx-spark{animation:cxSpark .9s ease-in-out infinite;transform-box:fill-box;transform-origin:center}
+@keyframes cxClash{0%,100%{transform:scale(1)}40%{transform:scale(1.08)}}@keyframes cxSpark{0%,30%{opacity:0;transform:scale(.2)}45%{opacity:1;transform:scale(1.4)}100%{opacity:0;transform:scale(.6)}}
+.mi.sel .cmi .cx-shine{animation:cxShine 1.6s ease-in-out infinite}@keyframes cxShine{0%{transform:skewX(-20deg) translateX(0)}60%,100%{transform:skewX(-20deg) translateX(34px)}}
+.cmi .cx-b1,.cmi .cx-b2{opacity:0}.mi.sel .cmi .cx-b1{animation:cxBub 1.4s ease-in infinite}.mi.sel .cmi .cx-b2{animation:cxBub 1.4s .6s ease-in infinite}
+@keyframes cxBub{0%{opacity:0;transform:translateY(0)}20%{opacity:1}100%{opacity:0;transform:translateY(-6px)}}
+.mi.sel .cmi .cx-tg{animation:cxScan 1.6s ease-in-out infinite}@keyframes cxScan{0%,100%{transform:translate(0,0)}25%{transform:translate(1.5px,-1px)}50%{transform:translate(-1px,1.5px)}75%{transform:translate(-1.5px,-1px)}}
+.mi.sel .cmi .cx-sp{animation:cxSpin 1.8s cubic-bezier(.6,0,.3,1) infinite}@keyframes cxSpin{0%,30%{transform:rotate(0)}70%,100%{transform:rotate(180deg)}}
+.mi.sel .cmi .cx-rw{animation:cxRow 1.2s ease-in-out infinite}@keyframes cxRow{0%,100%{transform:translateY(0)}50%{transform:translateY(-1.5px)}}
+#menuBox.cmdx .mi:has(.cmi){grid-template-columns:34px minmax(0,1fr) auto;column-gap:11px;min-height:39px;padding-top:2px;padding-bottom:2px;padding-left:8px;border-left:3px solid color-mix(in srgb,var(--h,#c9a35a) 55%,transparent)}
+#menuBox.cmdx .cmi{width:34px;height:34px}#menuBox.cmdx .cmi svg{width:25px;height:25px}
+#menuBox.cmdx .mi:has(.cmi) .ml{font-size:15.5px;letter-spacing:.02em}
+#menuBox.cmdx .mi:has(.cmi) .mc:not(:empty){padding:1px 8px;border-radius:10px;background:rgba(0,0,0,.35);border:1px solid color-mix(in srgb,var(--h,#c9a35a) 45%,transparent);font-size:12.5px;color:#efe2c4}
+#menuBox.cmdx .mi.sel:has(.cmi){border-left-color:var(--h);transform:translateX(-6px)}
+#menuBox.cmdx .mi:has(.cmi):active:not([disabled]){transform:translateX(-6px) scale(.97)}
+body.land.battle #menuBox.cmdx .cmi{width:26px;height:26px}body.land.battle #menuBox.cmdx .cmi svg{width:19px;height:19px}body.land.battle #menuBox.cmdx .mi:has(.cmi){min-height:0;grid-template-columns:26px minmax(0,1fr) auto;column-gap:7px}
+@media (prefers-reduced-motion:reduce){#menuBox.cmdx .cmi *,#menuBox.cmdx .cmi::before{animation:none!important}}
 @media (prefers-reduced-motion:reduce){#menuBox.cmdx .mi,#menuBox.cmdx.cmdx-in,#menuBox.cmdx .mi.sel::after{animation:none!important}}
 
 /* v50 · apertura de Unísono (estilo «unite»): franjas, dos paneles en diagonal que chocan, destello y nombre grande */
