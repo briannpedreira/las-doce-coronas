@@ -23443,6 +23443,36 @@ function runWanted(){ if(AUTO) return false; const pad=(typeof PAD!=='undefined'
 function runK(moving){ RUN.on=!!moving&&runWanted(); return RUN.on?RUN.k:1; }
 function runAnim(list,dt,k){ for(const a of list){ if(!a) continue; a.wt=(a.wt!=null&&T-a.wtT<0.2?a.wt:T)+dt*k; a.wtT=T; } }
 const walkT=a=>(a.wt!=null&&T-a.wtT<0.2)?a.wt:T;
+/* v51 · movimiento con inercia (Brian, revisión integral: «personajes que se traban o no son dinámicos al caminar o correr»).
+   locoStep: arranque y frenado suaves (velocidad en px/s que se acerca a la deseada), giro brusco sin patinar, llegada suave al
+   destino de un toque, y deslizamiento en esquinas: si el paso choca contra una pared pero hay hueco a pocos px de costado, el
+   personaje se corre hacia el hueco en vez de clavarse. En las pruebas automáticas (AUTO) el paso es el de siempre (mismas huellas). */
+/* v51 · polvo al correr: nubecitas a los pies que se abren y se desvanecen (mundo y pueblo; se dibujan en coordenadas del mundo) */
+const STEPFX={ L:[], dust(S,P){ const n=(nowMs()/1000); if(n-(P._dustT||0)<0.12) return; P._dustT=n; this.L.push({x:P.x-(P.face||1)*5+(Math.random()-0.5)*5,y:P.y-1+(Math.random()-0.5)*2,t0:n,S,dx:-(P.face||1)*(6+Math.random()*6)}); if(this.L.length>36) this.L.shift(); },
+  draw(c,S,ox,oy){ if(!this.L.length) return; const n=(nowMs()/1000); c.save(); for(let i=this.L.length-1;i>=0;i--){ const d=this.L[i]; const p=(n-d.t0)/0.5; if(p>=1||d.S!==S){ if(p>=1) this.L.splice(i,1); continue; }
+    const e=1-(1-p)*(1-p), r=1.6+e*5.5; c.globalAlpha=0.38*(1-p); c.fillStyle='#d9cbb0'; c.beginPath(); c.ellipse(Math.round(d.x+d.dx*e-ox),Math.round(d.y-e*4-oy),r,r*0.62,0,0,6.2832); c.fill(); } c.restore(); } };
+/* v51 · cámara que acompaña (antes iba clavada al personaje): sigue con un leve retraso y se adelanta un poco hacia donde camina,
+   así el movimiento respira. snap = encuadre instantáneo (entrar a una zona, escenas). En AUTO, siempre instantánea. */
+function camFollow(st,P,tx,ty,snap){ const n=(nowMs()/1000), dt=Math.min(0.05,Math.max(0,n-(st._cft||n))); st._cft=n;
+  if(snap||AUTO||st._cfx==null||Math.abs(tx-st._cfx)>W*0.6||Math.abs(ty-st._cfy)>H*0.6){ st._cfx=tx; st._cfy=ty; st._lax=0; st._lay=0; return [Math.round(tx),Math.round(ty)]; }
+  const lk=1-Math.exp(-2.6*dt); st._lax+=(clamp((P.mvx||0)*0.32,-34,34)-st._lax)*lk; st._lay+=(clamp((P.mvy||0)*0.2,-18,18)-st._lay)*lk;
+  const k=1-Math.exp(-7.5*dt); st._cfx+=(tx+st._lax-st._cfx)*k; st._cfy+=(ty+st._lay-st._cfy)*k; return [Math.round(st._cfx),Math.round(st._cfy)]; }
+const LOCO={ACC:15,DEC:20,SLIDE:[2,4,6,8,10]};
+function locoStep(P,vx,vy,vmax,dt,solid,arrive){
+  const len=Math.hypot(vx,vy); let vm=vmax; if(arrive!=null&&arrive<14) vm*=Math.max(0.35,arrive/14);
+  const tx=len?vx/len*vm:0, ty=len?vy/len*vm:0;
+  if(AUTO){ P.mvx=tx; P.mvy=ty; }
+  else { P.mvx=P.mvx||0; P.mvy=P.mvy||0; if(len&&(P.mvx*tx+P.mvy*ty)<0){ P.mvx*=0.35; P.mvy*=0.35; }
+    const k=1-Math.exp(-(len?LOCO.ACC:LOCO.DEC)*dt); P.mvx+=(tx-P.mvx)*k; P.mvy+=(ty-P.mvy)*k;
+    if(!len&&Math.hypot(P.mvx,P.mvy)<6){ P.mvx=0; P.mvy=0; } }
+  const ox=P.x, oy=P.y, sx=P.mvx*dt, sy=P.mvy*dt; let bx=false, by=false;
+  const slide=(ax)=>{ if(AUTO) return; const step=Math.max(0.6,vm*dt*0.85);
+    for(const d of LOCO.SLIDE) for(const sg of [1,-1]){ if(ax==='x'){ if(!solid(P.x+sx,P.y+sg*d)&&!solid(P.x,P.y+sg*Math.min(d,step))){ P.y+=sg*Math.min(d,step); return; } }
+      else { if(!solid(P.x+sg*d,P.y+sy)&&!solid(P.x+sg*Math.min(d,step),P.y)){ P.x+=sg*Math.min(d,step); return; } } } };
+  if(sx){ if(!solid(P.x+sx,P.y)) P.x+=sx; else { bx=true; if(Math.abs(vy)<0.2) slide('x'); P.mvx*=0.25; } }
+  if(sy){ if(!solid(P.x,P.y+sy)) P.y+=sy; else { by=true; if(Math.abs(vx)<0.2) slide('y'); P.mvy*=0.25; } }
+  const d=Math.hypot(P.x-ox,P.y-oy); P.spd=dt>0?d/dt:0; return {moved:d>0.01,d,bx,by,spd:P.spd}; }
+
 function actorAnim(a){
   if(a.walking) return ['walk',walkT(a)+a.ph];
   if(a.act){ const el=T-a.act.t0; if(el<a.act.len+0.05) return [a.act.anim,el]; a.act=null; }
@@ -23780,7 +23810,7 @@ function townExplore0(cfg){ cfg=cfg||null;
         try{ await playEscena('af_hermanos'); } catch(e){ console.error(e); }
         const rm=ROOMS.pieza, sp=rm.spots; S.room=rm; S.place='pieza'; HF.en_pieza=true; P.x=sp.ilian.x; P.y=sp.ilian.y; P.face=-1; F.x=sp.nach.x; F.y=sp.nach.y; F.face=1; P.walking=false; F.walking=false;
         S.trail.length=0; for(let i=0;i<18;i++) S.trail.push({x:F.x,y:F.y}); S.near=null; UI.act.disabled=true; UI.act.textContent='Acercate a alguien';
-        hideDialog(); setScene(S); CUR.sayStage=S; CUR.sayGet=id=>actors[id]||(id==='olaf'?olafProxy:null); updCam(); persist(); await fadeTo(0,300);
+        hideDialog(); setScene(S); CUR.sayStage=S; CUR.sayGet=id=>actors[id]||(id==='olaf'?olafProxy:null); updCam(true); persist(); await fadeTo(0,300);
         S.busy=false; S.trans=false; if(!S.ended) UI.pad.hidden=false; }; } }
     if(ROOMS.taberna&&LH.secret.tabla){ const p=ROOMS.taberna.spots.tabla; things.push(thing('taberna',p.x,p.y,LH.secret.tabla.label,()=>openSecret('tabla'),{my:p.y-26})); }
     if(LH.secret.fardos&&sp.fardos_cofre){ const p=sp.fardos_cofre; things.push(thing('town',p.x,p.y+12,LH.secret.fardos.label,()=>openSecret('fardos'),{mx:p.x,my:p.y-20})); }
@@ -23855,7 +23885,7 @@ function townExplore0(cfg){ cfg=cfg||null;
       if(rid&&ROOMS[rid]){ const rm=ROOMS[rid], at=(d&&d.at)||rm.spawn; S.room=rm; S.place=rid; P.x=at.x; P.y=at.y; HF['en_'+rid]=true; }
       else { S.room=null; S.place='town'; if(d){ P.x=d.x; P.y=d.y+10; } }
       { const cl=(x,y)=>S.room?S.room.collide(x,y):TW.collide(x,y); const opts=[[-32,-2],[32,-2],[-30,6],[30,6],[0,16]]; const o=opts.find(([dx,dy])=>!cl(P.x+dx,P.y+dy))||[0,14]; F.x=P.x+o[0]; F.y=P.y+o[1]; } F.face=P.face;
-      S.trail.length=0; for(let i=0;i<18;i++) S.trail.push({x:F.x,y:F.y}); S.near=null; UI.act.disabled=true; UI.act.textContent='Acercate a alguien'; updCam();
+      S.trail.length=0; for(let i=0;i<18;i++) S.trail.push({x:F.x,y:F.y}); S.near=null; UI.act.disabled=true; UI.act.textContent='Acercate a alguien'; updCam(true);
       sfx('blip'); await fadeTo(0,150); S.busy=false; S.trans=false; if(!S.ended) UI.pad.hidden=false;
       S.title=rid&&LH.rooms[rid]?{text:LH.rooms[rid].name,t0:T}:null; if(!rid) persist(); }
     const persist=()=>{ try{ save(G.cp); }catch(e){} }; // guarda lo hecho en Hollin (cofres, pedido, charlas) sin cambiar el punto de «Continuar»
@@ -23878,8 +23908,9 @@ function townExplore0(cfg){ cfg=cfg||null;
       let vx=(keys.right?1:0)-(keys.left?1:0), vy=(keys.down?1:0)-(keys.up?1:0);
       if(!vx&&!vy&&S.target){ const dx=S.target.x-P.x, dy=S.target.y-P.y; const d=Math.hypot(dx,dy); if(d<3) S.target=null; else { vx=dx/d; vy=dy/d; } }
       else if(vx||vy) S.target=null;
-      const len=Math.hypot(vx,vy)||1; const rk=runK(vx||vy); const spd=78*rk*dt; P.walking=!!(vx||vy); runAnim([P,F],dt,rk);
-      if(vx||vy){ const nx=P.x+vx/len*spd, ny=P.y+vy/len*spd; let moved=false; if(!coll(nx,P.y)){P.x=nx;moved=true;} if(!coll(P.x,ny)){P.y=ny;moved=true;} if(!moved){ S.target=null; P.walking=false; } if(Math.abs(vx)>0.2) P.face=vx>0?1:-1; S.trail.push({x:P.x,y:P.y}); const cap=rk>1?11:18; if(S.trail.length>cap) S.trail.shift(); if(S.trail.length>cap) S.trail.shift(); }
+      const len=Math.hypot(vx,vy)||1; const rk=runK(vx||vy); const tgD=S.target?Math.hypot(S.target.x-P.x,S.target.y-P.y):null;
+      const R=locoStep(P,vx,vy,78*rk,dt,coll,tgD); P.walking=R.spd>9; runAnim([P,F],dt,AUTO?rk:Math.max(0.4,R.spd/78)); // v51: inercia y deslizamiento
+      if(vx||vy||R.moved){ if((vx||vy)&&!R.moved){ S.target=null; P.walking=false; } if(Math.abs(vx)>0.2) P.face=vx>0?1:-1; if(R.moved){ S.trail.push({x:P.x,y:P.y}); const cap=rk>1?11:18; if(S.trail.length>cap) S.trail.shift(); if(S.trail.length>cap) S.trail.shift(); if(rk>1&&R.spd>100) STEPFX.dust(S,P); } }
       const f=S.trail[0]; const fd=Math.hypot(f.x-F.x,f.y-F.y); if(fd>0.4){ if(Math.abs(f.x-F.x)>0.3) F.face=f.x>F.x?1:-1; F.x=f.x; F.y=f.y; F.walking=true; } else F.walking=false;
       updCam();
       // umbrales: caminar hacia la puerta entra; caminar hacia abajo en la salida sale
@@ -23892,7 +23923,7 @@ function townExplore0(cfg){ cfg=cfg||null;
       // globos de ambiente
       S.ambT-=dt; if(S.ambT<=0){ S.ambT=rnd(3.2,5.8); ambient(); }
     };
-    function updCam(){ if(S.room){ S.cam.x=-Math.round((W-S.room.w)/2); S.cam.y=-Math.round((H-S.room.h)/2); return; } S.cam.x=Math.round(clamp(P.x-W/2,0,TW.w-W)); S.cam.y=Math.round(clamp(P.y-H/2-10,0,TW.h-H)); }
+    function updCam(snap){ if(S.room){ S.cam.x=-Math.round((W-S.room.w)/2); S.cam.y=-Math.round((H-S.room.h)/2); S._cfx=null; return; } const [cx,cy]=camFollow(S,P,P.x-W/2,P.y-H/2-10,snap); S.cam.x=Math.round(clamp(cx,0,TW.w-W)); S.cam.y=Math.round(clamp(cy,0,TW.h-H)); }
     function ambient(){ const c=S.cam; const pool=npcs.concat(wanderers).filter(n=>!n.hidden&&!n.nosprite&&here(n)&&LINES.ambient[n.id]&&n.x>c.x+20&&n.x<c.x+W-20&&n.y>c.y+50&&n.y<c.y+H-10);
       if(Math.random()<0.18) pool.push(F); if(Math.random()<0.12) pool.push(olafProxy);
       if(!pool.length) return; const n=pick(pool); const key=n.olafOn?'olaf':n.id; const L=LINES.ambient[key]; if(!L) return;
@@ -23921,7 +23952,7 @@ function townExplore0(cfg){ cfg=cfg||null;
       if(!S.room) for(const g of PATROL){ if(g.hidden) continue; const ce=g._cone||(g._cone={y:0,draw:cc=>{ const f=g.face, x0=g.x+f*6, y0=g.y-4; const gr=cc.createRadialGradient(x0,y0,2,x0,y0,70); gr.addColorStop(0,'rgba(255,214,140,.32)'); gr.addColorStop(1,'rgba(255,200,120,0)'); cc.fillStyle=gr; cc.beginPath(); cc.moveTo(x0,y0); cc.lineTo(x0+f*68,y0-24); cc.lineTo(x0+f*68,y0+26); cc.closePath(); cc.fill(); }}); ce.y=g.y-30; ents.push(ce); }
       for(const q of PROPS){ if(here(q)&&q.x>cm.x-60&&q.x<cm.x+W+60&&q.y>cm.y-10&&q.y<cm.y+H+60) ents.push(q._ent); }
       if(!S.room) for(const w of wanderers) add(w);
-      add(F); add(P);
+      add(F); add(P); if(STEPFX.L.length){ const de=S._dustE||(S._dustE={y:0,draw:cc=>STEPFX.draw(cc,S,0,0)}); de.y=P.y-0.5; ents.push(de); }
       const nn=S.near; if(nn&&nn.nosprite&&here(nn)) ents.push(markEnt);
       if(!S.busy&&!advanceFn) for(const g of goalPts()){ if(g.n.escena&&!g.via&&escenaAvail(g.n.escena)) continue; const n=g.n; const be=n._gbang||(n._gbang={y:9996,g:null,draw:cc=>{ const q=be.g; if(q) drawBang(cc,Math.round(q.bx),Math.round(q.by)); }}); be.g=g; ents.push(be); }
       for(const t of talkers){ if(!t.bangFn||t.hidden||!here(t)||!t.bangFn()) continue; const bt=t._pbang||(t._pbang={y:9997,draw:cc=>PFXI.bangFx('hollin:'+S.place,'t:'+(t.id||t.label),t.x,t.y,t.nosprite?16:actorH(t),P.x,P.y)||drawBang(cc,Math.round(t.mx!=null?t.mx:t.x),Math.round(t.nosprite?(t.my!=null?t.my-6:t.y-30):t.y-actorH(t)-(S.near===t?18:8)))}); ents.push(bt); } // posadas: «!» de los puntos de formación
@@ -23938,7 +23969,7 @@ function townExplore0(cfg){ cfg=cfg||null;
     S.onAction=async()=>{ if(S.busy||S.trans||!S.near||advanceFn) return; const n=S.near; if(n.door||n.exit){ await n.onTalk(n); return; } S.busy=true; UI.pad.hidden=true; S.target=null; P.walking=false;
       if(!n.nosprite){ n.talking=true; const pf=n.face; if(Math.abs(P.x-n.x)>2&&n.base!=='sit') n.face=P.x>n.x?1:-1; P.face=n.x>P.x?1:-1; n._pf=pf; } else if(Math.abs(n.x-P.x)>3) P.face=n.x>P.x?1:-1;
       try{ await n.onTalk(n); } finally { n.talking=false; S.busy=false; if(!S.ended){ UI.pad.hidden=false; hideDialog(); } S.near=null; } };
-    updCam(); setScene(S); fadeTo(0,500); UI.pad.hidden=false; UI.act.disabled=true; UI.act.textContent='Acercate a alguien';
+    updCam(true); setScene(S); fadeTo(0,500); UI.pad.hidden=false; UI.act.disabled=true; UI.act.textContent='Acercate a alguien';
     CUR.sayStage=S; CUR.sayGet=id=>actors[id]||(id==='olaf'?olafProxy:null);
     if(cfg&&!cfg.cap1) S.tapi=TAPI; // fix27 M6: el Hollin del Cap. 1 lleva cfg solo por la meta; sigue siendo el de siempre
     CUR.town=S; S.P=P; S.go=goRoom; S.doors=DOORS; S.talkers=talkers; S.coll=coll; S.TW=TW; S.goalPts=goalPts; S.lampsLit=()=>cfg&&cfg.tint?LIT:0; // para pruebas automáticas (arco-colision.js camina con S.coll)
@@ -27569,7 +27600,8 @@ const gZoom=()=>S.global&&!WIDE?1.5:1;
 function updCam(snap){ const Z=S.Z, P=S.P; if(!Z||!P) return; const zm=gZoom(); const vw=W/zm, vh=H/zm; S.cam.vw=vw; S.cam.vh=vh; S.cam.zoom=zm;
   if(S.global){ let cx=S.cam.x, cy=S.cam.y; if(snap){ cx=P.x-vw/2; cy=P.y-vh/2; } else { const px=P.x-cx, py=P.y-cy; if(px<vw/2-24) cx=P.x-(vw/2-24); if(px>vw/2+24) cx=P.x-(vw/2+24); if(py<vh/2-16) cy=P.y-(vh/2-16); if(py>vh/2+16) cy=P.y-(vh/2+16); }
     S.cam.x=clamp(cx,0,Z.w-vw); S.cam.y=clamp(cy,0,Z.h-vh); return; }
-  S.cam.x=Z.w<=W?-Math.round((W-Z.w)/2):Math.round(clamp(P.x-W/2,0,Z.w-W)); S.cam.y=Z.h<=H?-Math.round((H-Z.h)/2):Math.round(clamp(P.y-H/2-10,0,Z.h-H)); }
+  const [fx,fy]=camFollow(S,P,P.x-W/2,P.y-H/2-10,snap||S._camZ!==Z); S._camZ=Z; // v51: cámara que acompaña
+  S.cam.x=Z.w<=W?-Math.round((W-Z.w)/2):Math.round(clamp(fx,0,Z.w-W)); S.cam.y=Z.h<=H?-Math.round((H-Z.h)/2):Math.round(clamp(fy,0,Z.h-H)); }
 
 /* ---------- niebla del mapa global (90 × 57 celdas de 16 px, base64) ---------- */
 const FW=90, FH=57; let FOG=null, FOGC=null, fogDirty=true, fogVer=0;
@@ -27648,10 +27680,12 @@ async function sideBattle(cfg,viaEnc){ const sv=SAVES.st; SAVES.st={cp:null,idx:
   try{ if(!AUTO&&!viaEnc){ sfx('blip'); await PFXI.cover('C8',200); } // pixelfx: la pantalla se quema (battle la abre)
     if(viaEnc) await viaEnc(); else { const bz=(cfg&&cfg.zone)||(Z&&Z.bgZone)||'prados'; await battle(Object.assign({party:battleParty(),music:'batalla'},cfg,{zone:ENV.zones.includes(bz)?bz:(bz==='prados_m'?'prados':bz)})); } }
   finally{ SAVES.st=sv; } await back(); S.busy=false; S.encGrace=nowS(); }
-async function back(st){ if(st&&st.wcam){ const il=st.actors[S.P.id]; if(il&&!il.hidden){ const nx=il.x+st.wcam.x, ny=il.y+st.wcam.y; if(S.Z&&!S.Z.solid(nx,ny)){ S.P.x=nx; S.P.y=ny; } } }
+async function back(st){ const seam=!!(st&&st.wcam&&!S.global&&await seamOut(st)); if(st&&st.wcam){ const il=st.actors[S.P.id]; if(il&&!il.hidden){ const nx=il.x+st.wcam.x, ny=il.y+st.wcam.y; if(S.Z&&!S.Z.solid(nx,ny)){ S.P.x=nx; S.P.y=ny; } } }
   if(S.Z&&S.P&&!S.global&&!okPos(S.Z,S.P.x,S.P.y)){ const f=nearestOk(S.Z,S.P.x,S.P.y); S.P.x=f.x; S.P.y=f.y; } if(S.Z&&!S.global) checkPos(st&&st.name?'escena:'+st.name:'combate');
   if(S.Z&&!S.global){ if(!S.P||S.P.id!==leaderId()){ const x=S.P?S.P.x:0,y=S.P?S.P.y:0; mkLeader(x,y,1); } arcCaravanStop(); resetFollowers(); buildActors(S.Z); buildCaravan(S.Z); }
-  hideDialog(); updCam(true); setScene(S); CUR.sayStage=S; CUR.sayGet=sayGet; UI.pad.hidden=false; UI.act.disabled=true; UI.act.textContent=WL('acercate','Acercate a algo');
+  if(seam&&S.F&&S.F.length){ S.F.forEach(f=>{ const sa=st.actors[f.id]; if(sa&&!sa.hidden){ const nx=sa.x+st.wcam.x, ny=sa.y+st.wcam.y; if(S.Z&&!S.Z.solid(nx,ny)&&Math.hypot(nx-S.P.x,ny-S.P.y)<140){ f.x=nx; f.y=ny; } } }); }
+  if(seam){ S._cfx=st.wcam.x; S._cfy=st.wcam.y; S._camZ=S.Z; S._cft=nowMs()/1000; S.P.mvx=S.P.mvy=0; updCam(false); } else updCam(true);
+  hideDialog(); setScene(S); CUR.sayStage=S; CUR.sayGet=sayGet; UI.pad.hidden=false; UI.act.disabled=true; UI.act.textContent=WL('acercate','Acercate a algo');
   if(S.Z&&S.Z.music) try{ playMusic(musUbic('zona',S.Z.id,S.Z.music)); }catch(e){} await fadeTo(0,SP(250)); }
 
 /* ---------- interacción ---------- */
@@ -27761,9 +27795,10 @@ S.update=(dt)=>{ const P=S.P, Z=S.Z; if(!P||!Z) return; dt=Math.min(dt,0.05);
   if(S.auto){ const g=autoTarget(); vx=vy=0; if(g){ const dx=g.x-P.x, dy=g.y-P.y, d=Math.hypot(dx,dy); if(d<2){ if(g.act){ const it=interactables().find(n=>n.prop&&n.prop.id===g.act); if(it){ S.near=it; S.onAction(); return; } } if(g.node){ useNode(g.node); return; } } else { let tx=g.x, ty=g.y; if(!AUTO){ const key=Math.round(g.x)+','+Math.round(g.y)+','+Z.id; if(S.pkey!==key||!S.path||(S.pstuck||0)>0.6){ S.pkey=key; S.path=pathTo(Z,P.x,P.y,g.x,g.y)||[{x:g.x,y:g.y}]; S.pstuck=0; } while(S.path.length>1&&Math.hypot(S.path[0].x-P.x,S.path[0].y-P.y)<2) S.path.shift(); tx=S.path[0].x; ty=S.path[0].y; }
       const ddx=tx-P.x, ddy=ty-P.y, dd=Math.hypot(ddx,ddy)||1; const st=Math.min(dd,AUTO?26:(S.autoSpd||2.2)); const nx=P.x+ddx/dd*st, ny=P.y+ddy/dd*st; const ox=P.x, oy=P.y; if(AUTO||!Z.solid(nx,ny)){ P.x=nx; P.y=ny; } else if(!Z.solid(nx,P.y)) P.x=nx; else if(!Z.solid(P.x,ny)) P.y=ny; if(!AUTO){ if(Math.hypot(P.x-ox,P.y-oy)<0.2) S.pstuck=(S.pstuck||0)+dt; else S.pstuck=0; } P.face=dx>0.3?1:(dx<-0.3?-1:P.face); P.walking=true; pushTrail(); } } else P.walking=false; }
   else { if(!vx&&!vy&&S.target){ const dx=S.target.x-P.x, dy=S.target.y-P.y, d=Math.hypot(dx,dy); if(d<3){ const a=S.target.auto; S.target=null; if(a){ S.near=a; S.onAction(); return; } } else { vx=dx/d; vy=dy/d; } } else if(vx||vy) S.target=null;
-    const len=Math.hypot(vx,vy)||1; const spd=(S.global?(Z.speed&&typeof Z.speed==='number'?Z.speed:56)*(Z.speedF?Z.speedF(P.x,P.y):(typeof Z.speed==='function'?Z.speed(P.x,P.y):1)):78)*dt*runK(vx||vy); P.walking=!!(vx||vy); runAnim([P].concat(S.F),dt,RUN.on?RUN.k:1);
-    if(vx||vy){ const ox=P.x, oy=P.y; const nx=P.x+vx/len*spd, ny=P.y+vy/len*spd; let moved=false; if(!Z.solid(nx,P.y)){ P.x=nx; moved=true; } if(!Z.solid(P.x,ny)){ P.y=ny; moved=true; }
-      if(!moved){ S.target=null; P.walking=false; if(S.global) bumpGlobal(nx,ny); else bumpWall(nx,ny); } if(Math.abs(vx)>0.2) P.face=vx>0?1:-1; if(moved){ pushTrail(); onWalk(Math.hypot(P.x-ox,P.y-oy)); } } }
+    const base=(S.global?(Z.speed&&typeof Z.speed==='number'?Z.speed:56)*(Z.speedF?Z.speedF(P.x,P.y):(typeof Z.speed==='function'?Z.speed(P.x,P.y):1)):78), rk=runK(vx||vy);
+    const tgD=S.target?Math.hypot(S.target.x-P.x,S.target.y-P.y):null; const R=locoStep(P,vx,vy,base*rk,dt,(x,y)=>Z.solid(x,y),tgD); // v51: inercia y deslizamiento en esquinas
+    P.walking=R.spd>(S.global?6:9); runAnim([P].concat(S.F),dt,AUTO?(RUN.on?RUN.k:1):Math.max(0.4,R.spd/base));
+    if(vx||vy||R.moved){ if((vx||vy)&&!R.moved){ S.target=null; P.walking=false; if(S.global) bumpGlobal(P.x+Math.sign(vx)*4,P.y+Math.sign(vy)*4); else bumpWall(P.x+Math.sign(vx)*4,P.y+Math.sign(vy)*4); } if(Math.abs(vx)>0.2) P.face=vx>0?1:-1; if(R.moved){ pushTrail(); onWalk(R.d); if(!S.global&&rk>1&&R.spd>100) STEPFX.dust(S,P); } } }
   S.idleT=P.walking?0:(S.idleT||0)+dt;
   // seguidores (rastro por distancia: un punto cada 2 px, búfer de 64; el k-ésimo en el punto k×9; Simona al costado de Nach)
   // B6 (v26-fix): cada seguidor toma, sobre el rastro, el primer punto a ≥ 18 px (en línea recta) del anterior de la fila; al dar la vuelta
@@ -27843,6 +27878,7 @@ function drawWorld(c,dt){ const Z=S.Z, P=S.P, cam=S.cam; if(!Z||!P) return;
   const w=ensure();
   const FH=S.figHide||new Set(); for(const a of list()){ if(a.hidden||a.noDraw||!vis(a.x,a.y)) continue; if(FH.size&&FH.has(a.id)&&!a.escena&&!a.fig&&a!==P) continue; ents.push(actorEnt(a)); }
   S.fixed.forEach(f=>f.as.forEach(a=>{ if(vis(a.x,a.y)) ents.push(actorEnt(a)); }));
+  if(!S.global&&STEPFX.L.length){ const de=S._dustE||(S._dustE={y:0,draw:cc=>STEPFX.draw(cc,S,0,0)}); de.y=P.y-0.5; ents.push(de); } // v51: polvo al correr, detrás de los pies
   S.rivals.forEach(r=>{ if(vis(r.a.x,r.a.y)){ const e=actorEnt(r.a); if(!e._aura){ e._aura=true; const d0=e.draw; const rk=r.def.rank==='secreto'?'rgba(170,120,230,.55)':'rgba(240,200,90,.55)'; e.draw=cc=>{ cc.globalAlpha=0.5+0.2*Math.sin(T*3); ellipse(cc,r.a.x,r.a.y,16,5,rk); cc.globalAlpha=1; d0(cc); }; } ents.push(e); } });
   try{ POSADAS.zoneEnts(Z,ents,vis); }catch(e){} // posadas: esferas de guardado y campamentos
   PFXI.chestEnts(ents); // pixelfx C1: el cofre que se abre, ordenado con las figuras
@@ -27987,11 +28023,15 @@ function stage(name,opt){ opt=opt||{}; const Z=S.Z; const st=mkStage(Z.bgZone===
   const mv=Z.marks&&(Z.marks.cornisa_valdris||Z.marks.cornisa);
   const figV=()=>{ if(!ENV.flags.valdris||!mv||st.actors.valdris) return null; if(!valdris.home){ valdris.x=mv.x-cam.x; valdris.y=mv.y-cam.y; valdris.home={x:valdris.x,y:valdris.y}; } return valdris; };
   st.figura=id=>id==='valdris'?figV():null;
+  // v51 · escenas sin cortes: la cámara del mundo de la escena se puede panear (los actores conservan su lugar en el mundo) y
+  // los vecinos que no son del elenco quedan dibujados donde estaban (st.extras: actores del mundo, en coordenadas del mundo)
+  st.extras=[]; st.panCam=(x,y)=>{ const dx=x-cam.x, dy=y-cam.y; if(!dx&&!dy) return; cam.x=x; cam.y=y; AX.ox=x; AX.oy=y; st.list.forEach(a=>{ a.x-=dx; a.y-=dy; if(a.tw){ a.tw.x0-=dx; a.tw.x1-=dx; a.tw.y0-=dy; a.tw.y1-=dy; } }); if(valdris.home){ valdris.x-=dx; valdris.y-=dy; valdris.home.x-=dx; valdris.home.y-=dy; } };
   // escenarios (js/ambiente.js): la escena en el lugar lleva la ambientación de su zona (mismas coordenadas del mundo que al explorar)
   const ak=(()=>{ try{ if(typeof AMBI==='undefined'||!Z._z) return null; const k=(Z.hour==='noche'&&AMBI.has(Z.id+'_noche'))?Z.id+'_noche':Z.id; return AMBI.has(k)?k:null; }catch(e){ return null; } })(), AP=[];
   const AX={ox:cam.x,oy:cam.y,P:null,actors:()=>AP,near:null,coll:(x,y)=>Z.solid(x,y),objs:Z._objs||null,room:null,ww:Z.w,wh:Z.h,z:1,tx:0,ty:0};
   st.draw=(c,dt)=>{ const K=st.cam; camStep(K,dt); const zc=K.z!==1||K.x!==W/2||K.y!==H/2; if(zc){ c.save(); c.translate(W/2,H/2); c.scale(K.z,K.z); c.translate(-K.x,-K.y); }
     ENT2.length=0; const vis=st.list.filter(a=>!a.hidden); vis.forEach(a=>{ moveActor(a,dt); ENT2.push(vEnt(a)); });
+    for(const b of st.extras){ if(b.hidden||b.noDraw) continue; const e=b._xent||(b._xent={draw:cc=>drawActor(cc,b)}); e.x=b.x; e.y=b.y; const ah=actorH(b); e.bx=Math.round(b.x)-22; e.by=Math.round(b.y)-ah-30; e.bw=44; e.bh=ah+36; ENT2.push(e); }
     if(figV()){ moveActor(valdris,dt); ENT2.push(vEnt(valdris,true)); }
     if(ak){ AP.length=0; vis.forEach(a=>{ const q=a._wsa||(a._wsa={}); q.x=a.x+cam.x; q.y=a.y+cam.y; AP.push(q); }); try{ AMBI.ents(ENT2,ak,AX); }catch(e){} }
     if(Z._z){ if(Z.id==='hondo'||Z.dark){ const il=st.actors.ilian||vis[0]; if(il) Z.light={x:il.x+cam.x,y:il.y+cam.y-18}; } ENT2.sort((a,b)=>a.y-b.y); Z.draw(c,cam,dt,ENT2); if(st.under) st.under(c,dt); }
@@ -28003,8 +28043,33 @@ function stage(name,opt){ opt=opt||{}; const Z=S.Z; const st=mkStage(Z.bgZone===
     if(ak){ try{ const z=K.z||1; AX.z=z; AX.tx=W/2-K.x*z; AX.ty=H/2-K.y*z; AX.barH=K.bars>0.01?Math.round(24*K.bars):0; AMBI.over(c,ak,dt,AX); }catch(e){} if(zc){ c.save(); c.translate(W/2,H/2); c.scale(K.z,K.z); c.translate(-K.x,-K.y); } drawOnos(c,st); if(zc) c.restore(); } // las onomatopeyas, sobre la ambientación
     if(!Z._z){ S.stageCam=cam; const il=st.actors.ilian||st.list[0]; hourTint(c,Z,il?il.x:W/2,il?il.y-18:H/2); S.stageCam=null; ambDraw(c,st.zone,dt); } drawDirOver(c,st,dt); };
   return st; }
-async function sceneIn(name,opt){ opt=opt||{}; hideDialog(); clearBubs(); UI.pad.hidden=true; const st=stage(name,opt); warmArt(null,st.list.map(a=>a.spr)); setScene(st);
+async function sceneIn(name,opt){ opt=opt||{}; hideDialog(); clearBubs(); UI.pad.hidden=true; const seam=seamOk(opt); const st=stage(name,opt); warmArt(null,st.list.map(a=>a.spr));
+  if(seam){ if(opt.music) try{ playMusic(musUbic('escena',name,opt.music)); }catch(e){} st.cam.tvig=st.cam.vigBase=0.25; await seamIn(st); return st; }
+  setScene(st);
   if(opt.music) try{ playMusic(musUbic('escena',name,opt.music)); }catch(e){} st.cam.tvig=st.cam.vigBase=0.25; await fadeTo(0,SP(opt.ms||200)); return st; }
+/* v51 · fase 2 (Brian, revisión integral: «la escena se corta y te lleva a otro punto del mapa»): la escena en el lugar ya no corta.
+   seamIn: la cámara viaja desde donde estabas hasta el encuadre de la escena, el grupo y los del elenco que están a la vista caminan
+   hasta su marca, los que no estaban aparecen con un fundido suave, los vecinos quedan donde estaban y entran las barras de cine.
+   seamOut (en back): las barras salen, la cámara de dirección vuelve a neutro y el control vuelve sin fundido; la cámara del mundo
+   arranca desde el encuadre de la escena y va sola hasta el personaje. Solo si se viene del mundo, sin pantalla en negro; nunca en AUTO. */
+function seamOk(opt){ try{ return !AUTO&&!opt.cut&&scene===S&&!S.global&&S.Z&&S.P&&!S.slide&&!(fade&&fade.a>0.05); }catch(e){ return false; } }
+function seamIn(st){ const cam=st.wcam, T0={x:cam.x,y:cam.y}, C0={x:S.cam.x,y:S.cam.y}; const ez=p=>p<0.5?4*p*p*p:1-Math.pow(-2*p+2,3)/2;
+  const wl=list().filter(a=>a&&!a.hidden&&!a.noDraw); const used=new Set(); const plan=[];
+  st.list.forEach(a=>{ const t={x:a.x+cam.x,y:a.y+cam.y,face:a.face}; const w=a.hidden?null:wl.find(b=>b.id===a.id&&!used.has(b)); let s0=null; if(w){ used.add(w); if(Math.hypot(w.x-t.x,w.y-t.y)<300) s0={x:w.x,y:w.y,face:w.face}; } plan.push({a,t,s:s0,al:a.alpha==null?1:a.alpha}); });
+  st.extras=wl.filter(b=>!used.has(b)&&!st.actors[b.id]); st.extras.forEach(b=>{ b.walking=false; b.tw=null; });
+  const dist=Math.hypot(T0.x-C0.x,T0.y-C0.y); let far=0; plan.forEach(q=>{ if(q.s) far=Math.max(far,Math.hypot(q.t.x-q.s.x,q.t.y-q.s.y)); });
+  const D=clamp(Math.max(dist*2.4,far/95*1000,520),520,1500)*(REDUCED?0.5:1);
+  st.panCam(C0.x,C0.y); plan.forEach(q=>{ const a=q.a; if(q.s){ a.x=q.s.x-cam.x; a.y=q.s.y-cam.y; if(Math.abs(q.t.x-q.s.x)>3) a.face=q.t.x>q.s.x?1:-1; } else if(!a.hidden){ a.x=q.t.x-cam.x; a.y=q.t.y-cam.y; a.alpha=0; } });
+  st.cam.bars=0; st.cam.tbars=1; setScene(st);
+  return new Promise(res=>{ const t0=nowMs(); const step=()=>{ if(scene!==st){ res(); return; } const p=clamp((nowMs()-t0)/D,0,1), e=ez(p);
+      st.panCam(Math.round(C0.x+(T0.x-C0.x)*e),Math.round(C0.y+(T0.y-C0.y)*e));
+      plan.forEach(q=>{ const a=q.a; if(q.s){ const dd=Math.hypot(q.t.x-q.s.x,q.t.y-q.s.y), Da=Math.min(D,Math.max(1,dd/95*1000)), u=clamp(p*D/Da,0,1), uw=u<1?u*(2-u)*0.5+u*0.5:1;
+          a.x=q.s.x+(q.t.x-q.s.x)*uw-cam.x; a.y=q.s.y+(q.t.y-q.s.y)*uw-cam.y; a.walking=u<1&&dd>3; if(u>=1){ a.face=q.t.face; } }
+        else if(!a.hidden) a.alpha=q.al*e; });
+      if(p<1) requestAnimationFrame(step); else { plan.forEach(q=>{ q.a.walking=false; q.a.face=q.t.face; q.a.alpha=q.al===1?null:q.al; q.a.x=q.t.x-cam.x; q.a.y=q.t.y-cam.y; }); res(); } };
+    requestAnimationFrame(step); }); }
+function seamOut(st){ if(!st||!st.cam||AUTO||scene!==st) return Promise.resolve(false); const K=st.cam; K.tbars=0; K.lock=false; camNeutral(K);
+  return new Promise(res=>{ const t0=nowMs(); const step=()=>{ const done=(K.bars<0.03&&Math.abs(K.z-1)<0.01)||nowMs()-t0>700||scene!==st; if(done) res(true); else requestAnimationFrame(step); }; requestAnimationFrame(step); }); }
 
 /* ---------- historia: explorar hasta el disparador del paso ---------- */
 function startState(){ const w=ensure(); if(!w.zone){ w.zone=zid('prados'); w.x=24; w.y=156; w.face=1; w.caravan=w.caravan||'prados'; } }
@@ -34980,6 +35045,7 @@ window.__LDC={get G(){return G},
   chatTest:async(ni,id)=>escenaTest(id||'af_hermanos'), escenaTest:(id,zone)=>escenaTest(id,zone), get town(){ return CUR.town; }, esc:{all:()=>LINES.escenas||[],avail:escenaAvail,pend:escenasPendientes,meta:escenaMeta,lost:escenaLost,seen:escenaSeen,play:playEscena,affKey}, migrar:()=>{ migrarEscenas(); return {chats:Object.keys(G.flags.chats||{}),parcial:G.flags.escParcial||{},choice:G.flags.escChoice||{}}; },
   stageTest:async(zone,name,flags)=>{ Object.assign(ENV.flags,flags||{}); const pz=name==='campamento'?presoPuesta():null; const st=await stageIn(zone,name,200,(flags&&flags.__room)?{room:true}:undefined); if(name==='emboscada_post'){ PTIRO.dress(st); await PTIRO.tiro(st); } else if(zone==='puente'&&name==='puente') PTIRO.dress(st,'puente'); await playScene(name,stageCtx(st,Object.assign({valdrisVisible:async()=>{ ENV.flags.valdris=true; },silencio:async()=>{},partyChange:async()=>{},battle:async()=>{},derrumbe:async()=>{ await PTIRO.derrumbe(st); }},pz?pz.hooks(st):{}))); hideDialog(); return 'ok'; }, get scene(){return scene}, get B(){return CUR.B}, get bossTurns(){return CUR.bossTurns}, get ended(){return (CUR.endCount||0)>0}, get bossLog(){return CUR.bossLog||[]},
   pausaTest:(tab,mode)=>{ openPause(tab||'grupo',mode?{mode}:{}); return PZ.mode; }, swapSel:(id)=>{ PZ.swapSel=id; renderPause(); },
+  worldTest:async(z,x,y)=>{ newGame(); G.cp='c2_sauces'; await WORLD.enter(WORLD.zid(z),{x,y,face:1}); setScene(WORLD.scene); return WORLD.scene.Z&&WORLD.scene.Z.id; }, seamTest:async(name,at)=>{ window.__st=await WORLD.sceneIn(name,{at}); return !!window.__st; }, seamBack:()=>WORLD.back(window.__st), // v51: probar escenas sin cortes
   townTest:(o)=>{ o=Object.assign({lead:'ilian',fol:'nach',npcs:['agnes','bram'],tint:'rgba(10,14,44,.6)'},o||{}); const ex=o.extra; o.extra=api=>{ window.__tapi=api; if(ex) ex(api); }; townExplore(o); return 'ok'; }, escAqui:(id,at)=>playEscenaAqui(id,window.__tapi,at), // v50.2: probar escenas en el pueblo
   openShop:(k)=>openShop(k||'hollin'), say:(w,t,e)=>say(w,t,e), tutTest:(l,ms)=>toast(l,ms||3600,'tut'), get tutQ(){ return TUTQ.map(q=>q.k); }, // fix27 A2: capturas y medidas de los carteles
   /* auditoría de hablantes (docs/retratos-menu.md): recorre LINES, los textos de zona y los NPC de todas las zonas; por cada id que habla
