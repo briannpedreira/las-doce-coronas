@@ -24329,8 +24329,7 @@ const GRUPO_TRAMOS=[
 ];
 function grupoHas(k){ try{ return typeof ARC!=='undefined'&&ARC.has?ARC.has(k):!!(G.flags&&G.flags[k]); }catch(e){ return false; } }
 function grupoTramos(){ if(!G) return []; return GRUPO_TRAMOS.filter(t=>{ try{ return !!t.si(); }catch(e){ return false; } }); }
-// v50.2 (Brian: «poco intuitivo cuándo podés cambiar de reclutas»): el grupo se cambia desde el menú en cualquier momento, salvo los tramos que fija la historia
-const GRUPO={ canSwap(){ if(PZ.mode==='fijo') return false; return !GRUPO.fijo(); },
+const GRUPO={ canSwap(){ if(PZ.mode==='esfera') return !GRUPO.fijo(); return ['posada','campamento','formacion','castillo'].includes(PZ.mode); },
   fijo(){ const t=grupoTramos().find(t=>t.fijo); return t?t.fijo:null; },
   lock(id){ if(id===GRUPO.prot()) return nameOf(id)+': '+GRUPO.txt('protagonista','va siempre en el grupo.'); if(GRUPO.guest(id)) return GRUPO.txt('invitada','Va como invitada: no se cambia.');
     const t=grupoTramos().find(t=>t.oblig&&t.oblig.includes(id)); return t?(nameOf(id)+': '+(t.motivo||'la historia lo necesita ahora.')):null; },
@@ -24566,6 +24565,46 @@ function formationDraw(g,v){ const ids=PZ.mode==='fijo'&&PZ.fixed?PZ.fixed.filte
   if(B){ B.units.slice().sort((a,b)=>a.hy-b.hy).forEach(u=>{ const o={anim:'idle',face:-1,t:T+u.hx*0.03}; if(u.id==='ilian'){ o.weapon=G.party.ilian.weapon; } SPR.draw(g,u.id,Math.round(u.hx-ox),Math.round(u.hy-oy),o); });
     const ol=B.olafAt||{x:396,y:238}; SPR.draw(g,'olaf',ol.x-ox,ol.y-oy,{anim:'sit',face:-1}); }
   g.restore(); }
+/* v50.3 · cambio de grupo estilo Suikoden (Brian, 27/11): a la izquierda los 5 que pelean, a la derecha los retratos de la caravana.
+   Se toca un lugar del grupo y después a quién entra (o al revés). Tocar dos lugares del grupo los intercambia (orden y líder).
+   Solo en posadas, campamentos, esferas de guardado, puntos de formación y castillo (GRUPO.canSwap). */
+function grupoReemplazo(main,doSwap,N,prot){
+  const o=partyIds(), act=o.slice(0,N), res=o.slice(N), sel=PZ.swapSel&&o.includes(PZ.swapSel)?PZ.swapSel:null, selAct=sel&&act.includes(sel);
+  const lockOf=id=>id===prot?GRUPO.lock(id):(GRUPO.guest(id)?GRUPO.lock(id):(act.includes(id)?GRUPO.lock(id):null));
+  const focusId=id=>{ const f=PZ.body.querySelector('[data-gid="'+id+'"]'); if(f) f.focus({preventScroll:true}); };
+  const pick=id=>{ const cur=PZ.swapSel; if(!cur||cur===id){ PZ.swapSel=cur===id?null:id; renderPause(); focusId(id); return; }
+    const a=act.includes(cur), b=act.includes(id);
+    if(a===b&&!a){ PZ.swapSel=id; renderPause(); focusId(id); return; } // dos de la caravana: cambia la elección
+    if(a!==b){ const L=lockOf(a?cur:id); if(L){ toast(L,2400); return; } }
+    doSwap(cur,id); PZ.swapSel=null; renderPause(); focusId(id); };
+  const head=el('div','gr-hint'); const L0=sel?nameOf(sel):null;
+  if(!sel) head.appendChild(el('span',null,'Tocá a quién sacar del grupo y después a quién entra de la caravana.'));
+  else { head.appendChild(el('span',null,selAct?'Sale ':'Entra ')); head.appendChild(el('b',null,L0)); head.appendChild(el('span',null,selAct?': elegí quién entra en su lugar.':': elegí a quién reemplaza.'));
+    head.appendChild(btn('gr-x','Cancelar',()=>{ PZ.swapSel=null; renderPause(); },{label:'Cancelar el cambio'})); }
+  main.appendChild(head);
+  const wrap=el('div','gr-wrap'+(sel?(selAct?' pick-res':' pick-act'):''));
+  // grupo actual
+  const colA=el('div','gr-act'); colA.appendChild(el('div','gr-cap',GRUPO.txt('en_combate','En combate')+' · '+act.length+' / '+N));
+  act.forEach((id,i)=>{ const m=G.party[id], s=stats(m), lk=lockOf(id);
+    const b=btn('gr-slot'+(i===0?' lead':'')+(sel===id?' on':'')+(sel&&!selAct?' tgt':'')+(lk?' lock':''),null,()=>pick(id),{label:(i+1)+'. '+CHAR[id].name+', nivel '+m.lvl+(lk?' (con candado)':'')}); b.dataset.gid=id; b.dataset.nav='1'; if(i===0&&!sel) b.dataset.focus='1';
+    const pic=el('span','gr-pic'); const hc=headCanvas(id,56,56); pic.appendChild(hc); b.appendChild(pic);
+    const tx=el('span','gr-tx'); const nm=el('span','gr-nm'); nm.appendChild(el('b',null,CHAR[id].name)); nm.appendChild(el('small',null,' '+UIT.nivelCorto+' '+m.lvl)); tx.appendChild(nm);
+    tx.appendChild(el('span','gr-cls',classOf(id)+' · '+(m.row==='front'?'1.ª línea':'2.ª línea'))); const pv=el('span','gr-pv'); const bi=el('i'); bi.style.width=Math.round(100*m.pv/Math.max(1,s.pv))+'%'; pv.appendChild(bi); tx.appendChild(pv); b.appendChild(tx);
+    b.appendChild(el('span','gr-ord',i===0?'Líder':String(i+1))); if(lk) b.title=lk;
+    const row=el('div','gr-row'); row.appendChild(b);
+    const rb=btn('gr-rowb',m.row==='front'?'1.ª':'2.ª',()=>{ m.row=m.row==='front'?'back':'front'; renderPause(); },{label:UIT.cambiarLinea+': '+CHAR[id].name}); rb.title=UIT.cambiarLinea; row.appendChild(rb);
+    colA.appendChild(row); });
+  wrap.appendChild(colA);
+  // caravana: retratos
+  const colR=el('div','gr-res'); colR.appendChild(el('div','gr-cap',GRUPO.txt('caravana','En la caravana')+' · '+res.length));
+  const grid=el('div','gr-grid');
+  res.forEach(id=>{ const m=G.party[id], lk=GRUPO.guest(id)?GRUPO.lock(id):null;
+    const t=btn('gr-tile'+(sel===id?' on':'')+(sel&&selAct&&!lk?' tgt':'')+(lk?' lock':''),null,()=>pick(id),{label:CHAR[id].name+', nivel '+m.lvl+', '+classOf(id)}); t.dataset.gid=id; t.dataset.nav='1';
+    const hc=headCanvas(id,72,72); t.appendChild(hc); t.appendChild(el('b',null,CHAR[id].name)); t.appendChild(el('small',null,UIT.nivelCorto+' '+m.lvl+' · '+classOf(id))); if(lk) t.title=lk;
+    grid.appendChild(t); });
+  colR.appendChild(grid); wrap.appendChild(colR); main.appendChild(wrap);
+  const ob=act.filter(id=>id!==prot&&!GRUPO.guest(id)&&GRUPO.lock(id)); if(ob.length) main.appendChild(el('p','pz-hint gp-lockhint','Con candado por la historia: '+ob.map(nameOf).join(', ')+'.'));
+}
 function tabGrupo(B){
   const fixed=PZ.mode==='fijo'&&PZ.fixed?PZ.fixed.filter(id=>G.party[id]):null;
   const ids=fixed||partyIds(); const N=5, big=!fixed&&ids.length>N, swap=GRUPO.canSwap(), prot=GRUPO.prot(); const main=el('div','pz-col gp-main');
@@ -24573,39 +24612,34 @@ function tabGrupo(B){
   if(PZ.mode!=='libre'){ const ML={posada:'Posada',campamento:'Campamento',formacion:'Formación',fijo:'Formación',castillo:'Castillo',esfera:'Esfera de guardado'}; cap.appendChild(el('span','gp-mode',ML[PZ.mode]||PZ.mode)); } main.appendChild(cap);
   if(fixed) main.appendChild(el('p','pz-hint gp-lockhint',GRUPO.txt('bloqueado','Quién pelea lo decide la historia; las filas, vos.')));
   else if(PZ.mode==='formacion') main.appendChild(el('p','pz-hint',GRUPO.txt('abrir','Elegí quién pelea y en qué fila.')));
-  if(big&&!swap) main.appendChild(el('p','pz-hint gp-lockhint',GRUPO.fijo()||GRUPO.txt('fijo','En este capítulo, quién pelea lo decide la historia')));
-  else if(big&&PZ.swapSel){ const a=PZ.swapSel, ia=partyIds().indexOf(a); const h=el('div','gp-swaphint'); h.appendChild(el('span',null,'Cambiar a ')); h.appendChild(el('b',null,nameOf(a))); h.appendChild(el('span',null,ia<N?': tocá a quién de la caravana entra en su lugar.':': tocá a quién de los que pelean reemplaza.'));
-    h.appendChild(btn('pz-swapx','Cancelar',()=>{ PZ.swapSel=null; renderPause(); },{label:'Cancelar el cambio'})); main.appendChild(h); }
-  else if(big&&swap) main.appendChild(el('p','pz-hint','Pelean los 5 de arriba. Tocá «Cambiar» en uno y después en otro para intercambiarlos.'));
-  if(big&&swap&&!PZ.swapSel){ const ob=partyIds().slice(0,N).filter(id=>id!==prot&&!GRUPO.guest(id)&&GRUPO.lock(id)); if(ob.length) main.appendChild(el('p','pz-hint gp-lockhint','Con candado por la historia: '+ob.map(nameOf).join(', ')+'.')); }
+  if(big&&!swap) main.appendChild(el('p','pz-hint gp-lockhint',(PZ.mode==='esfera'&&GRUPO.fijo())||GRUPO.txt('candado','El grupo se cambia en posadas, esferas de guardado y puntos clave de la historia.')));
   const grid=el('div','gp-cards');
   const doSwap=(a,b)=>{ const o=partyIds(); const i1=o.indexOf(a), i2=o.indexOf(b); if(i1<0||i2<0) return;
     const cross=(i1<N)!==(i2<N); if(cross){ const la=i1<N?GRUPO.lock(a):(GRUPO.guest(a)?GRUPO.lock(a):null), lb=i2<N?GRUPO.lock(b):(GRUPO.guest(b)?GRUPO.lock(b):null); if(la||lb){ toast(la||lb,2400); return; } } /* v28: candados por historia */
     [o[i1],o[i2]]=[o[i2],o[i1]]; G.order=o; sfx('heal'); };
+  if(swap&&big){ grupoReemplazo(main,doSwap,N,prot); B.appendChild(main); grupoLado(B,big); return; }
   ids.forEach((id,i)=>{ const m=G.party[id], s=stats(m), nx=expInfo(m), [stc,stt]=statusOf(m,s);
     if(big&&i===0) grid.appendChild(el('div','gp-sep fight',GRUPO.txt('en_combate','En combate')+' · '+N));
     if(big&&i===N){ const sep=el('div','gp-sep',GRUPO.txt('caravana','En la caravana')+' · '+(ids.length-N)); grid.appendChild(sep); }
     const bench=big&&i>=N;
-    const c=el('article','gp-card'+(i===0?' lead':'')+(m.row==='front'?' f':' b')+(bench?' bench':'')+(PZ.swapSel===id?' swapsel':'')+(PZ.swapSel&&PZ.swapSel!==id&&((partyIds().indexOf(PZ.swapSel)<N)!==(i<N))?' swaptgt':'')); c.setAttribute('aria-label',CHAR[id].name+', nivel '+m.lvl+', '+stt+(bench?', en la caravana':''));
+    const c=el('article','gp-card'+(i===0?' lead':'')+(m.row==='front'?' f':' b')+(bench?' bench':'')+''); c.setAttribute('aria-label',CHAR[id].name+', nivel '+m.lvl+', '+stt+(bench?', en la caravana':''));
     const pic=btn('gp-pic',null,()=>{ PZ.sel=id; PZ.tab='fichas'; renderPause(true); },{label:'Ver la ficha de '+CHAR[id].name}); { const hc=headCanvas(id,128,60); panimBind(hc,id,'head'); pic.appendChild(hc); } pic.appendChild(el('span','gp-ord',String(i+1))); if(i===0) pic.appendChild(el('span','gp-lead','Líder')); c.appendChild(pic);
     const hd=el('div','gp-hd'); const nm=el('div','gp-nm'); nm.appendChild(el('b',null,CHAR[id].name)); const lv=el('span','gp-lv'); lv.appendChild(el('small',null,UIT.nivelCorto+' ')); lv.appendChild(el('b',null,String(m.lvl))); nm.appendChild(lv); hd.appendChild(nm);
     const sub=el('div','gp-sub'); sub.appendChild(el('span','gp-cls',classOf(id))); sub.appendChild(el('span','gp-st '+stc,stt)); hd.appendChild(sub); c.appendChild(hd);
-    // ▲▼: reordenar. El 5.º lugar se cruza siempre que la historia no fije el grupo (v50.2); el protagonista no baja a la caravana
+    // ▲▼: reordenar. Fuera de posadas y esferas no se cruza el 5.º lugar (candado); el protagonista no baja a la caravana
     const lockDn=big&&i===N-1&&(!swap||!!GRUPO.lock(id)), lockUp=big&&i===N&&(!swap||GRUPO.guest(id)||!!GRUPO.lock(ids[N-1]));
-    const mv=(d)=>{ if((d>0&&lockDn)||(d<0&&lockUp)){ toast((d>0?GRUPO.lock(id):(GRUPO.lock(id)||GRUPO.lock(ids[N-1])))||GRUPO.fijo()||GRUPO.txt('candado','En este tramo, quién pelea lo decide la historia'),2400); return; } const o=partyIds(); const j=i+d; if(j<0||j>=o.length) return; [o[i],o[j]]=[o[j],o[i]]; G.order=o; renderPause(); const f=PZ.body.querySelectorAll(d<0?'.pz-up':'.pz-dn')[j]; const g2=f&&!f.disabled?f:PZ.body.querySelectorAll(d<0?'.pz-dn':'.pz-up')[j]; if(g2) g2.focus({preventScroll:true}); };
+    const mv=(d)=>{ if((d>0&&lockDn)||(d<0&&lockUp)){ toast((d>0?GRUPO.lock(id):(GRUPO.lock(id)||GRUPO.lock(ids[N-1])))||GRUPO.txt('candado','El grupo se cambia en posadas, esferas de guardado y puntos clave de la historia.'),2400); return; } const o=partyIds(); const j=i+d; if(j<0||j>=o.length) return; [o[i],o[j]]=[o[j],o[i]]; G.order=o; renderPause(); const f=PZ.body.querySelectorAll(d<0?'.pz-up':'.pz-dn')[j]; const g2=f&&!f.disabled?f:PZ.body.querySelectorAll(d<0?'.pz-dn':'.pz-up')[j]; if(g2) g2.focus({preventScroll:true}); };
     const ord=el('div','gp-ordb'); const bu=btn('pz-up'+(lockUp?' locked':''),'▲',()=>mv(-1),{disabled:!!fixed||i===0||lockUp,label:'Subir a '+CHAR[id].name}); const bd=btn('pz-dn'+(lockDn?' locked':''),'▼',()=>mv(1),{disabled:!!fixed||i===ids.length-1||lockDn,label:'Bajar a '+CHAR[id].name});
-    if(lockUp||lockDn){ (lockUp?bu:bd).title=(lockDn?GRUPO.lock(id):(GRUPO.lock(id)||GRUPO.lock(ids[N-1])))||GRUPO.fijo()||GRUPO.txt('candado','En este tramo, quién pelea lo decide la historia'); } ord.appendChild(bu); ord.appendChild(bd); c.appendChild(ord);
+    if(lockUp||lockDn){ (lockUp?bu:bd).title=(lockDn?GRUPO.lock(id):(GRUPO.lock(id)||GRUPO.lock(ids[N-1])))||GRUPO.txt('candado','El grupo se cambia en posadas, esferas de guardado y puntos clave de la historia.'); } ord.appendChild(bu); ord.appendChild(bd); c.appendChild(ord);
     const bars=el('div','gp-bars'); bars.appendChild(meter('pv','PV',m.pv,s.pv)); bars.appendChild(meter('pm','PM',m.pm,s.pm));
     const ex=el('div','gp-m ex'); ex.appendChild(el('small',null,'Exp')); const eb=el('span','gp-bar'); const ei=el('i'); ei.style.width=(nx.f*100)+'%'; eb.appendChild(ei); ex.appendChild(eb); ex.appendChild(el('b',null,nx.next==null?UIT.nivelMax:('faltan '+nx.next))); bars.appendChild(ex); c.appendChild(bars);
     const ft=el('div','gp-ft'); const af=bestAff(id); const al=el('span','gp-aff'); al.appendChild(el('i','gp-heart'));
     if(af){ al.appendChild(el('span',null,(nameOf(af.other)||af.other)+' · ')); al.appendChild(el('b',null,af.name)); al.title='Afinidad más alta'; } else al.appendChild(el('span','gp-dim','Sin afinidad todavía')); hd.appendChild(al);
-    // «Cambiar» (posada, campamento, punto de formación, castillo): se toca uno y después el otro
-    if(swap&&big){ const on=PZ.swapSel===id, otro=!!PZ.swapSel&&!on&&((partyIds().indexOf(PZ.swapSel)<N)!==(i<N)); const sw=btn('pz-swap'+(on?' on':'')+(otro?' tgt':''),on?'Cancelar':(otro?(i<N?'Sale este':'Entra este'):GRUPO.txt('cambiar','Cambiar')),()=>{ const a=PZ.swapSel; if(!a||a===id||!otro){ PZ.swapSel=on?null:id; } else { doSwap(a,id); PZ.swapSel=null; } renderPause(); const f=[...PZ.body.querySelectorAll('.gp-card')].find(x=>x.querySelector('.pz-swap.on'))||PZ.body.querySelectorAll('.gp-card')[partyIds().indexOf(id)]; const fb=f&&f.querySelector('.pz-swap'); if(fb) fb.focus({preventScroll:true}); },{label:(on?'Cancelar el cambio de ':'Cambiar a ')+CHAR[id].name,disabled:(id===prot&&!PZ.swapSel)});
-      if(id===prot) sw.title=GRUPO.txt('protagonista','Va siempre en el grupo'); ft.appendChild(sw); }
     const rb=btn('pz-rowb '+(m.row==='front'?'f':'b'),m.row==='front'?UIT.primeraLinea:UIT.segundaLinea,()=>{ m.row=m.row==='front'?'back':'front'; renderPause(); const f=PZ.body.querySelectorAll('.pz-rowb')[i]; if(f) f.focus({preventScroll:true}); },{label:UIT.cambiarLinea+': '+CHAR[id].name});
     rb.title=UIT.cambiarLinea; if(i===0) rb.dataset.focus='1'; ft.appendChild(rb); c.appendChild(ft);
     grid.appendChild(c); });
-  main.appendChild(grid); B.appendChild(main);
+  main.appendChild(grid); B.appendChild(main); grupoLado(B,big); }
+function grupoLado(B,big){
   const side=el('div','pz-col gp-side'); side.appendChild(el('div','pz-cap','Así forman en combate'));
   const pv=el('div','pz-form'); pv.appendChild(sprCanvas('ilian',232,168,2,{draw:formationDraw})); side.appendChild(pv);
   side.appendChild(el('p','pz-hint','La 1.ª línea recibe más golpes; arcos, lanzas y magia rinden igual desde la 2.ª. '+(big?'Pelean los 5 primeros; el resto espera en la caravana.':'Quién entra lo decide cada combate.')+' El primero de la lista encabeza la marcha.'));
@@ -29163,7 +29197,7 @@ LINES.posada = {
   /* ---------- Menú › Grupo (6.1: LINES.grupo.*) ---------- */
   grupo: {
     en_combate:'En combate', caravana:'En la caravana', cambiar:'Cambiar',
-    candado:'En este tramo, quién pelea lo decide la historia',
+    candado:'El grupo se cambia en posadas, esferas de guardado y puntos clave de la historia',
     protagonista:'Va siempre en el grupo',
     fijo:'En este capítulo, quién pelea lo decide la historia',
     suma_caravana:'%s se suma a la caravana'   // %s = nombre del recluta (B lo reemplaza; si no, sin nombre: «Se suma a la caravana»)
@@ -29186,8 +29220,8 @@ LINES.pf = Object.assign({ menu:LINES.posada.formacion.menu, fijo:LINES.posada.f
 
 /* avisos de primera vez (tutAviso): solo los que faltan, sin pisar LINES.tut.caravana */
 if(LINES.tut){
-  if(!LINES.tut.posada) LINES.tut.posada = ['En las posadas se duerme y se guarda la partida.',
-                                            'El grupo se cambia desde el menú (Grupo) cuando quieras, salvo si la historia lo fija. Cargar, se carga en cualquier lado.'];
+  if(!LINES.tut.posada) LINES.tut.posada = ['En las posadas se duerme, se cambia el grupo y se guarda la partida.',
+                                            'Fuera de ellas, el grupo se ordena pero no se cambia. Cargar, se carga en cualquier lado.'];
   if(!LINES.tut.formacion) LINES.tut.formacion = ['Antes de algunas peleas, alguien te para para armar la formación.',
                                                   'Ahí se cambia quién pelea, en qué fila y con qué equipo.'];
 }
@@ -30582,12 +30616,32 @@ try{ const css=`.gp-sep{grid-column:1/-1;display:flex;align-items:center;gap:8px
 .gp-mode{margin-left:8px;padding:1px 8px;border:1px solid rgba(143,208,255,.6);border-radius:9px;color:#cfe6ff;font-size:12px}
 .gp-lockhint{color:#e6cf9a}
 .gp-sep.fight{margin-top:0;color:#f0d79a}
-.gp-card.swaptgt{border-color:rgba(143,208,255,.75);box-shadow:0 0 0 1px rgba(143,208,255,.35)}.gp-card.bench.swaptgt{opacity:1;filter:none}
-.gp-ft .pz-swap.tgt{background:#1f3a55;border-color:#8fd0ff;color:#fff;animation:gpPulse 1.4s ease-in-out infinite}
-@keyframes gpPulse{50%{box-shadow:0 0 0 3px rgba(143,208,255,.35)}}
-@media (prefers-reduced-motion:reduce){.gp-ft .pz-swap.tgt{animation:none}}
-.gp-swaphint{display:flex;align-items:center;flex-wrap:wrap;gap:4px 6px;margin:4px 0 8px;padding:8px 10px;border:1px solid rgba(143,208,255,.6);border-radius:8px;background:rgba(20,36,52,.85);color:#cfe6ff;font-size:14px}.gp-swaphint b{color:#fff}
-.gp-swaphint .pz-swapx{margin-left:auto;min-height:32px;padding:0 10px;border:1px solid #4a6a8a;border-radius:6px;background:#14202c;color:#cfe6ff}
+.gr-hint{display:flex;align-items:center;flex-wrap:wrap;gap:4px 6px;margin:2px 0 10px;padding:8px 12px;border:1px solid rgba(201,163,90,.5);border-radius:8px;background:rgba(30,22,12,.75);color:#e8dcc0;font-size:14px}.gr-hint b{color:#ffe7a8}
+.gr-hint .gr-x{margin-left:auto;min-height:32px;padding:0 10px;border:1px solid #4a6a8a;border-radius:6px;background:#14202c;color:#cfe6ff}
+.gr-wrap{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);gap:14px;align-items:start}
+@media (max-width:720px){.gr-wrap{grid-template-columns:1fr}}
+.gr-cap{margin:0 2px 6px;color:#f0d79a;font:600 13px "Alegreya Sans SC",system-ui,sans-serif;letter-spacing:.04em;border-bottom:1px solid rgba(201,163,90,.4);padding-bottom:3px}
+.gr-row{display:flex;gap:6px;margin-bottom:6px}
+.gr-slot{flex:1;display:flex;align-items:center;gap:10px;min-height:66px;padding:5px 8px;text-align:left;border:1px solid rgba(201,163,90,.45);border-radius:8px;background:linear-gradient(90deg,rgba(48,34,18,.9),rgba(24,18,12,.85));color:#efe4c8;cursor:pointer;position:relative}
+.gr-slot.lead{border-color:#d9b062}
+.gr-pic{flex:none;width:56px;height:56px;border:1px solid rgba(0,0,0,.6);border-radius:6px;overflow:hidden;background:#120c08}.gr-pic canvas{display:block;width:56px;height:56px}
+.gr-tx{display:flex;flex-direction:column;gap:2px;min-width:0;flex:1}.gr-nm b{font-size:15px}.gr-nm small{color:#c9b48a}
+.gr-cls{font-size:12px;color:#c9b48a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gr-pv{display:block;height:5px;border-radius:3px;background:#2a1d12;overflow:hidden;max-width:150px}.gr-pv i{display:block;height:100%;background:linear-gradient(90deg,#4fb06a,#8fe08a)}
+.gr-ord{position:absolute;top:4px;right:8px;font-size:11px;color:#e6cf9a}
+.gr-rowb{flex:none;width:44px;border:1px solid rgba(201,163,90,.45);border-radius:8px;background:#1c140c;color:#e6cf9a;font-size:13px}
+.gr-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px}
+.gr-tile{display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 4px 7px;border:1px solid rgba(201,163,90,.35);border-radius:8px;background:rgba(22,16,10,.85);color:#efe4c8;cursor:pointer;text-align:center}
+.gr-tile canvas{display:block;width:72px;height:72px;border-radius:6px;background:#120c08}
+.gr-tile b{font-size:13px;line-height:1.1}.gr-tile small{font-size:11px;color:#c9b48a;line-height:1.15}
+.gr-slot:hover,.gr-tile:hover,.gr-slot:focus-visible,.gr-tile:focus-visible{border-color:#ffe7a8;outline:none;box-shadow:0 0 0 2px rgba(255,231,168,.35)}
+.gr-slot.on,.gr-tile.on{border-color:#8fd0ff;box-shadow:0 0 0 2px rgba(143,208,255,.6);background:linear-gradient(90deg,rgba(28,48,70,.95),rgba(18,28,40,.9))}
+.gr-tile.on{transform:translateY(-2px)}
+.gr-slot.tgt,.gr-tile.tgt{border-color:rgba(143,208,255,.8);animation:grPulse 1.4s ease-in-out infinite}
+@keyframes grPulse{50%{box-shadow:0 0 0 3px rgba(143,208,255,.3)}}
+.gr-slot.lock,.gr-tile.lock{opacity:.6}.gr-slot.lock .gr-ord::after{content:' · candado'}
+.pick-res .gr-tile:not(.tgt):not(.on){opacity:.55}
+@media (prefers-reduced-motion:reduce){.gr-slot.tgt,.gr-tile.tgt{animation:none}.gr-tile.on{transform:none}}
 .sv-b.sv-save[disabled]{opacity:.45}`; const st=document.createElement('style'); st.id='posadas-css'; st.textContent=css; document.head.appendChild(st); }catch(e){}
 
 return {miniHalo,afterSleep:f=>AFTER.push(f),mojon,REST,PF,restOpen,restSleep,esferaOpen,pfOpen,pfUsed,pfCovered,pickOff,town,zoneEnts,globalItems,drawGlobal,miniDot,lines,speak,PT,ESF,ESFG,CAMPS,PFZ};
