@@ -12901,9 +12901,9 @@ const LINES = {
     pantano:    { linde_llegada: ['lina','ilian','nach','bertram'], altar_olaf: ['ilian','nach'], altar_hundido: ['ilian','nach'], pantano: ['maela','ilian','nach','bertram'] },
     campamento: { campamento_llegada: ['maela','ilian','nach'], campamento: ['maela','ilian','nach','bertram','severo','lina'] },
     puente:     { puente_humo: ['maela','ilian','nach'], puente: ['oswin','lina','maela','ilian','nach','bertram'] },
-    emboscada:  { emboscada_pre: ['maela','ilian','nach'], emboscada_post: ['lina','bertram','nach'] },
+    emboscada:  { emboscada_pre: ['maela','ilian','nach'], emboscada_post: ['lina','bertram','nach','rosa_a','rosa_b'] },
     huida:      { huida: ['maela','ilian','nach','simona','severo'], huida_libre: ['maela','ilian','nach','simona','severo'], huida_cadena: ['maela','ilian','nach','simona','severo'] },
-    jefe:       { jefe_pre: ['oswin','ilian','nach','simona','severo'], jefe_fase2: ['oswin','maela','ilian','nach','simona','severo'], jefe_unison: ['oswin','maela','ilian','nach','simona','severo'], jefe_fase3: ['oswin','maela','ilian','nach','simona','severo'], jefe_post: ['oswin','maela','ilian','nach','simona'] },
+    jefe:       { jefe_pre: ['oswin','nach','maela','simona','ilian','severo'], jefe_fase2: ['oswin','maela','ilian','nach','simona','severo'], jefe_unison: ['oswin','maela','ilian','nach','simona','severo'], jefe_fase3: ['oswin','maela','ilian','nach','simona','severo'], jefe_post: ['oswin','maela','ilian','nach','simona'] },
     bosque:     { bosque_a: ['ilian','nach','simona','severo'], bosque_b: ['maela','olaf','ilian','nach','simona','severo','merc_quina'] },
     cierre:     { aldea_llegada: ['ilian','nach','lenadora','lenador'], cierre: ['maela','nach','ilian','severo'] }
   },
@@ -13504,10 +13504,26 @@ const LINES = {
       ['narr','El carruaje en llamas se derrumba con un crujido. Queda una pared de fuego entre el grupo y Lina, que cubría el flanco.','§5'],
       ['say','lina','¡Nach! ¡Ilian! ¡No llego!','o','§5'],
       ['say','ilian','¡Lina, el río! ¡Seguí el río hacia el sur!','a','§5'],
-      ['say','lina','¡Váyanse! ¡Los encuentro en Vesper!','d','§5'],
+      // v51.2 (Brian: «que a Lina se la lleven cautiva unos soldados de la Rosa, para que se entienda que no puede volver»): coherente con
+      // el Cap. 7 (Lina, testigo de la Rosa: «dijo la verdad que le dejaron decir») y el Cap. 8 (la liberan en Molle)
+      ['turn','lina','§5'],
+      ['show','rosa_a','§5'], ['show','rosa_b','§5'], ['ono','rosa_a','¡ALTO AHÍ!','#e08a8a','§5'],
+      ['narr','Del humo salen dos soldados de la Rosa, con los tabardos chamuscados.','§5'],
+      ['drag',['rosa_a','rosa_b'],54,0,700,'§5'],
+      ['say','lina','¡Atrás! ¡Atrás, perros!','a','§5'],
+      ['anim','lina','attack','§5'], ['sfx','hit','§5'], ['shake',2,'§5'],
+      ['narr','Lina tira un tajo con la daga. El primero lo para con el escudo; el segundo la agarra del brazo y se lo retuerce hasta que la daga cae.','§5'],
+      ['anim','lina','low','§5'], ['sfx','hit','§5'],
+      ['emote','nach','anger','§5'], ['say','nach','¡LINA!','s','§5'],
+      ['walk','nach',-26,0,'§5'], ['shake',4,'§5'], ['ono',null,'¡FFUUM!','#ffb060',200,150,'§5'],
+      ['narr','Nach se tira hacia el fuego. La pared de tablones encendidos lo devuelve de un golpe de calor.','§5'],
+      ['walk','nach',18,0,'§5'],
+      ['say','lina','¡No! ¡Váyanse! ¡No vuelvan por mí!','s','§5'],
       ['say','lina','¡Y Bertram me debe un banquito! ¡Lo cobro igual!','s','§5'],
-      ['walk','lina',-90,0,'§5'], ['hide','lina','§5'],
-      ['narr','La silueta de Lina desaparece entre el humo, corriendo hacia el río.','§5'],
+      ['anim','lina',null,'§5'],
+      ['narr','La arrastran entre los dos hacia el humo. Lina patalea hasta el final.','§5'],
+      ['drag',['lina','rosa_a','rosa_b'],-150,0,1800,'§5'], ['hide','lina','§5'], ['hide','rosa_a','§5'], ['hide','rosa_b','§5'],
+      ['say','ilian','Se la llevaron viva. Viva vale algo para ellos. Para nosotros también.','t','§5'],
       ['narr','En el caos, Lina desaparece entre el humo.','§!5'],
       ['dlg','low'], ['bars',0], ['cam','reset'], ['vig',0.2],
       // plano pintado: acercamiento ×2 al caballero en su cornisa (FIGPUENTE, js/p5_world.js); la caja va abajo para no taparlo
@@ -13522,36 +13538,60 @@ const LINES = {
 
     /* ---------- 7 · HUIDA: SIMONA Y SEVERO ---------- */
     huida: [
-      ['hide','severo'],
+      ['hide','severo'], ['hide','simona'],
       ['narr','El grupo se reagrupa detrás de la carreta volcada. Gritos lejos. Maela tiene el brazo ensangrentado.'],
       ['say','maela','Ruy, Quina: los que puedan, al bosque del este. Los encuentro allá. ¡Ya!','a'],
       ['narr','La mitad de la compañía corre hacia los árboles. La otra mitad no va a correr más.'],
-      ['narr','Debajo de la carreta, una perra enorme de lomo negro gruñe con una pata herida.'],
+      // v51.2 (Brian: «que la escena de Simona sea más animada y mejor contada»): la perra entra en cuadro, Nach se acerca de a poco,
+      // deja la espada, le venda la pata con su faja y recién ahí le pone nombre. Mismos ganchos y la misma decisión de siempre.
+      ['ono',null,'Grrrrr…','#c8b8a0',300,190], ['wait',500],
+      ['narr','Debajo de la carreta volcada, algo gruñe. Una perra enorme de lomo negro, con una pata trasera sangrando, enseña los dientes.'],
+      ['show','simona'], ['cam','simona',1.2],
       ['emote','simona','anger'],
       ['say','simona','*gruñe bajo*','a'],
+      ['cam','reset'],
+      ['faceTo','nach','simona'], ['faceTo','ilian','simona'],
       ['say','nach','Sos vos. La de la loma.','o'],
       ['say','ilian','¿La conocés?','t'],
       ['say','nach','Nos siguió todo el día. Esperando algo. No a nosotros: a la carreta.','t'],
+      ['say','ilian','A lo mejor el que la manejaba era suyo. O ella de él.','n'],
       ['say','maela','Dejala, Nach. No hay tiempo.','a'],
       ['say','nach','Siempre hay tiempo para no dejar a nadie atrás.','n'],
       ['say','nach','Bertram no dejó a nadie atrás. Yo tampoco. Se vuelve con todos, ¿no es así, teniente?','d'],
       ['emote','maela','...'],
-      ['step','nach',20],
+      ['step','nach',14],
+      ['emote','simona','anger'], ['ono','simona','¡GRR!','#e08a6a'], ['shake',2],
+      ['step','simona',12],
+      ['narr','La perra se arrastra hacia atrás, sin dejar de mostrar los dientes. Nach se queda quieto.'],
+      ['sfx','hit'], ['ono','nach','*clonc*','#c8c8d0'],
+      ['narr','Nach deja a Don Pico en el barro, despacio, y muestra las dos manos vacías.'],
+      ['say','nach','Ya está. Sin espada. Mirá: nada.','n'],
+      ['step','nach',10],
       ['anim','nach','low'],
-      ['narr','Nach se arrodilla. La perra deja de gruñir y le huele la mano.'],
+      ['wait',600],
       ['emote','simona','?'],
+      ['narr','La perra lo mira un rato largo. Después estira el hocico y le huele los dedos.'],
+      ['say','nach','Esa pata no te va a llevar lejos. Quedate quieta, que esto arde.','n'],
+      ['narr','Nach se saca la faja de la cintura y le venda la pata con dos vueltas apretadas. La perra gime, pero no muerde.'],
+      ['emote','simona','sweat'],
+      ['say','ilian','Esa faja te la tejió la hermana de Hagen.','t'],
+      ['say','nach','Y ella hubiera hecho lo mismo.','d'],
+      ['wait',400],
       ['say','nach','Te vas a llamar Simona. ¿Te gusta? Simona.','h'],
+      ['emote','simona','!'],
       ['sfx','bark'],
       ['jump','simona'],
       ['ono','simona','¡GUAU!','#ffe08a'],
       ['say','simona','¡Guau!','h'],
-      ['emote','simona','heart'],
+      ['emote','simona','heart'], ['emote','nach','heart'],
+      ['narr','Simona le pasa la lengua por toda la cara. Nach se cae sentado en el barro, riéndose por primera vez en todo el día.'],
       ['hook','sealSimona'],
+      ['anim','nach','idle'],
       ['sfx','hiss'],
       ['say','olaf','¡Fff!','a'],
       ['emote','simona','sweat'],
+      ['turn','simona'],
       ['say','ilian','Se van a llevar bien. En unos años.','m'],
-      ['anim','nach','idle'],
       ['narr','Golpes desde adentro de la carreta volcada. La puerta, con el candado nuevo, quedó arriba.'],
       ['say','severo','Un perro, un gato y dos sentimentales. Qué escolta.','m'],
       ['say','maela','Una boca más. Que muerda a los de enfrente.','n'],
@@ -13591,8 +13631,13 @@ const LINES = {
 
     /* ---------- 8 · JEFE: SIR OSWIN RADE ---------- */
     jefe_pre: [
+      // v51.2 (Brian: «Oswin aparece de la nada caminando y queda al lado de Maela»): entra desde la punta del puente, se planta lejos
+      // del grupo y el grupo se cierra frente a él (Nach, Maela y Simona adelante)
       ['bars',1], ['vig',0.2],
-      ['walk','oswin',20],
+      ['ono',null,'*clanc* *clanc*','#d8d0c0',60,180], ['wait',400],
+      ['faceTo','ilian','oswin'], ['faceTo','nach','oswin'], ['faceTo','maela','oswin'], ['faceTo','simona','oswin'], ['faceTo','severo','oswin'],
+      ['walk','oswin',170],
+      ['sfx','hit'], ['shake',2],
       ['anim','oswin','guard'],
       ['cam','oswin',1.18],
       ['say','oswin','Ningún asesino del Cuervo sale vivo de este puente.','a'],
@@ -13606,8 +13651,10 @@ const LINES = {
       ['say','oswin','¡Díganselo a la horca!','a'],
       ['emote','simona','anger'],
       ['say','simona','¡Grrrr!','a'],
-      ['walk','nach',-14],
+      ['walk','nach',-24],
+      ['walk','maela',-18], ['walk','simona',-22],
       ['say','nach','Primero tenés que pasar por mí. Y yo soy ancho.','d'],
+      ['say','maela','Por los dos.','a'],
       ['hook','battle']
     ],
     jefe_fase2: [
@@ -13643,28 +13690,35 @@ const LINES = {
       ['wait',700],
       ['say','ilian','Le dieron la hora para que llegara tarde.','t','§4hora'],
       ['dlg','low'], ['bars',0], ['cam','reset'],
-      // el caballero negro baja de la cornisa hasta Nach; la cámara lo encuadra entero (×2) con la caja abajo y vuelve al plano normal cuando se va
-      // v50 (Brian: «la escena del caballero negro está muy rara, se acerca y nada más»): baja de la cornisa en un salto, cae a dos pasos
-      // de Nach a tamaño real, le apoya la punta en el pecho sin empujar, mira a Oswin, le cierra los ojos y se va. Nadie respira.
-      ['figura','valdris','baja','nach',40,-4,1000,1], ['shake',7], ['cam','valdris',1.6,0,'full'],
-      ['narr','El caballero negro salta de la cornisa y cae a dos pasos de Nach. La piedra del puente cruje bajo la armadura.'],
-      ['anim','nach','guard'], ['say','nach','¿Y vos quién sos?','d'],
-      ['say','ilian','Un paso más y te atravieso el yelmo.','a'],
-      ['say','maela','Quietos. Nadie se mueve.','t'],
-      ['figura','valdris','anim','attack'],
-      ['narr','El caballero levanta la espada despacio y apoya la punta en el pecho de Nach, justo sobre el corazón. No empuja. Espera.'],
-      ['say','valdris','…','n'],
+      // v51.2 (Brian: «que mire de un costado, con una postura imponente; que se mueva entre ellos parece infantil y sin sentido»): el
+      // caballero negro no baja. Estuvo mirando todo el combate desde la cornisa: la cámara sube hasta él, de perfil, quieto, con la capa
+      // al viento. Levanta la espada y la apunta a Nach desde arriba, mira el cuerpo de Oswin, baja la hoja y se pierde en la bruma.
+      ['ono',null,'*fffuuu…*','#b8c0d0',400,80], ['sfx','rumble'],
+      ['narr','Un viento frío baja del cañón. Arriba, en la cornisa, alguien estuvo mirando todo el combate.'],
+      ['figura','valdris','face',-1], ['figura','valdris','anim','guard'], ['figura','valdris','k',1.15,700],
+      ['cam','valdris',1.55,0,'full'], ['vig',0.5], ['bars',1],
+      ['wait',900],
+      ['narr','Armadura negra, sin blasón. Una capa de lacre gris que el viento no termina de mover. No se esconde: quiere que lo vean.'],
+      ['cam','reset'],
+      ['anim','nach','guard'], ['say','nach','¿Y ese quién es?','d'],
+      ['anim','ilian','shoot'], ['say','ilian','Lo tengo a tiro.','a'],
+      ['say','maela','Bajá el arco. Si quisiera pelear, ya estaría acá abajo.','t'],
+      ['anim','ilian','idle'],
+      ['cam','valdris',1.7,0,'full'],
+      ['figura','valdris','anim','attack'], ['sfx','seal'], ['shake',2],
+      ['narr','El caballero levanta la espada despacio y la deja quieta, apuntando hacia abajo. Hacia Nach.'],
       ['emote','simona','anger'],
-      ['say','simona','*gruñe al fardo de lacre gris*','a'],
-      ['figura','valdris','anim',null], ['figura','valdris','baja','oswin',30,-2,800,1],
-      ['figura','valdris','anim','bow'],
-      ['narr','Baja la espada. Se arrodilla junto a Oswin y le cierra los ojos con dos dedos de hierro.'],
-      ['wait',600], ['figura','valdris','anim',null],
+      ['say','simona','*gruñe hacia la cornisa*','a'],
+      ['wait',700],
+      ['figura','valdris','anim',null],
+      ['narr','Después baja la mirada al cuerpo de Oswin. Baja la hoja. Inclina la cabeza, apenas.'],
+      ['figura','valdris','anim','bow'], ['wait',900], ['figura','valdris','anim',null],
       ['figura','valdris','face',1],
-      ['narr','Se levanta, envaina sin apuro y vuelve por donde vino, sin darles del todo la espalda.'],
-      ['cam','reset'], ['figura','valdris','vuelve',1300], ['anim','nach','idle'],
+      ['narr','Les da la espalda sin apuro, como quien no tiene nada que temer, y la bruma del cañón se lo traga.'],
+      ['figura','valdris','fade',1400],
+      ['cam','reset'], ['vig',0.35], ['anim','nach','idle'],
       ['bars',0], ['dlg','top'],
-      ['say','nach','Me miró como se mira a alguien que te debe algo.','t'],
+      ['say','nach','Me apuntó a mí. Como se le apunta a alguien que te debe algo.','t'],
       ['say','ilian','Alguien que hoy no quiso pelear. No me gusta esa idea.','t'],
       ['say','maela','A mí no me gusta ninguna idea de hoy. Al bosque. Ahora.','a']
     ],
@@ -14918,7 +14972,7 @@ LINES.cap2 = {
       ['say','maela','Nuestras huellas, en la orilla. No las tapamos.','t'],
       ['say','ilian','No se veía nada.','a'],
       ['say','maela','Ya sé, explorador. No te culpo. Te digo por qué nos encontraron.','n'],
-      ['show','soldado'], ['walk','soldado',-80],
+      ['show','soldado'], ['walk','soldado',70], // v51.2: entra desde el borde izquierdo (antes aparecía en el cuadro)
       ['narr','Los cuatro se dan vuelta y vienen abiertos en abanico, con las espadas afuera. Uno lleva un papel enrollado en la mano.'],
       ['approach','maela','ilian',26],
       ['whisper','maela','Vos y tu hermano son los del papel. A los otros no los buscan.','n'],
@@ -14928,7 +14982,7 @@ LINES.cap2 = {
       ['say','nach','Se vuelve con todos. ¿No es así, teniente?','d'],
       ['emote','maela','...'], ['wait',600],
       ['say','maela','Entonces, Nach, plantá ese corpachón donde les duela.','d'],
-      ['walk','nach',60], ['anim','nach','guard'],
+      ['approach','nach','soldado',70], ['anim','nach','guard'], // v51.2: Nach se planta frente al jinete, no hacia el otro lado
       ['sfx','hit'], ['ono','nach','¡TUNC!','#e0d0b0'], ['shake',3],
       ['narr','Nach clava a Don Pico de punta en el camino y apoya las dos manos en el pomo. Enorme, a la vista, con la mella nueva en el ojo del cuervo.'],
       ['say','soldado','Es el grande. Mirá, es igualito al papel.','m'],
@@ -17078,7 +17132,7 @@ LINES.cap4 = {
     }
   },
   noCierra: {
-    nc_rio:    { t:'Una chica de Brenmoor, con espada, sacada del río por la Rosa. Viva, dicen. ¿Lina? ¿Y qué hicieron con ella?' },
+    nc_rio:    { t:'Una chica de Brenmoor, con daga, llevada presa por la Rosa desde el Puente Viejo. Viva, dicen. Lina. ¿Para qué la quieren viva?' },
     nc_marcas: { t:'En Cáncer, uno de las Marcas, con modos de sargento y una quemadura en la mano izquierda, le recomendó el Cuervo al encapuchado.',
                  ans:'Preguntó si mi gato seguía vivo. Nos conocía. No le encuentro la cara.' }
   },
@@ -20810,7 +20864,7 @@ const SPR={
   has(id){ return !!artEntry('sprite:'+id); }
 };
 // ids de escena/retrato → id de sprite
-const SPRMAP={ilianNinoV:'ilianNinoV',olafNino:'olafNino'}; // prólogo: Ilian de 10 años con hoja propia antes (ilianNino, ojos verdes) y después del derrumbe (ilianNinoV, ojo violeta)
+const SPRMAP={ilianNinoV:'ilianNinoV',olafNino:'olafNino',rosa_a:'soldado',rosa_b:'soldado'}; // prólogo: Ilian de 10 años con hoja propia antes (ilianNino, ojos verdes) y después del derrumbe (ilianNinoV, ojo violeta)
 // sprites de arte (ref-art.js, LDC_PL128) que no tienen par en PXS: mientras la hoja no llegó (o si falta), se dibuja este de PXS
 const PXFB={nachNino:'nino',ilianNinoV:'ilianNino',olafNino:'olaf',rasa:'tessa',gaspar:'comerciante',cabo_jinetes:'rc_oficial_ceniza',sargento:'rc_oficial',cabo_taberna:'rc_oficial_brasa',montero:'rc_caballero',ambros:'aldeano',matias:'encap',hagenViejo:'hagen',severoPreso:'severo',simonaC3:'simona',jinete:'rc_lancero'};
 const sprId=id=>SPRMAP[id]||id;
@@ -23343,7 +23397,7 @@ const CMBSTAT={waits:[]}; window.__LDC_CMB.artWaits=CMBSTAT.waits;
 /* ============================================================
    ESCENAS: actores de cuerpo entero + intérprete de LINES.scenes
    ============================================================ */
-const ENTER={campamento:['severo'],puente:['oswin']};
+const ENTER={campamento:['severo'],puente:['oswin'],emboscada_post:['rosa_a','rosa_b']}; // v51.2: los soldados de la Rosa que se llevan a Lina
 const POS={
   prologo_a:{ilianNino:[84,242],olafNino:[118,250]},
   prologo_b:{olaf:[170,248],ilianNinoV:[198,242],hagen:[312,238]},
@@ -23575,9 +23629,9 @@ async function playScene(name,ctx){
 }
 // cuerpo del intérprete (escenas v2: lo reusan '?' e 'if' para sus comandos anidados; respeta SKIP)
 async function runCmds(cmds,ctx,name){
-  for(const c of cmds){ const op=c[0]; if(typeof RECWAIT!=='undefined'&&RECWAIT) await RECWAIT; // v51.1: la ceremonia de recluta frena la escena hasta el «¡Bienvenido!»
+  for(let ci=0;ci<cmds.length;ci++){ const c=cmds[ci]; const op=c[0]; if(typeof RECWAIT!=='undefined'&&RECWAIT) await RECWAIT; // v51.1: la ceremonia de recluta frena la escena hasta el «¡Bienvenido!»
     if(SKIP.on&&SKIPOPS[op]) continue;
-    if(SKIP.on&&(op==='walk'||op==='back'||op==='step'||op==='approach')){ const a=ctx.get(c[1]); if(a&&!a.side&&!a.olafOn){ a.hidden=false; if(op==='approach'){ const y=ctx.get(c[2]); if(y) a.x=y.x+(a.x<y.x?-(c[3]||34):(c[3]||34)); } else { a.x+=(c[2]||0); a.y+=(op==='walk'?(c[3]||0):0); } } continue; }
+    if(SKIP.on&&(op==='walk'||op==='back'||op==='step'||op==='approach')){ const a=ctx.get(c[1]); if(a&&!a.side&&!a.olafOn){ a.hidden=false; if(op==='approach'){ const y=ctx.get(c[2]); if(y) a.x=y.x+(a.x<y.x?-(c[3]||34):(c[3]||34)); } else if(op==='walk'&&a._walkTo!=null){ a.x=a._walkTo; a._walkTo=null; a.y+=(c[3]||0); } else { a.x+=(c[2]||0); a.y+=(op==='walk'?(c[3]||0):0); } } continue; }
     if(REFS[op]) for(const k of REFS[op]){ const a=ctx.get(c[k]); if(a&&a.hidden&&!a.held){ if(SKIP.on){ a.hidden=false; markMet(a.id); } else await revealActor(a); } }
     if(op==='hook'&&c[1]==='battle'){ SKIP.on=false; SKIP.ok=false; syncSkipBtn(); }
     const x=REFS[op]?ctx.get(c[1]):null;
@@ -23605,17 +23659,28 @@ async function runCmds(cmds,ctx,name){
       case 'sepia': { const st=dirStage(); if(st) st.cam.sepia=c[1]?1:0; break; }
       case 'cam': { const st=dirStage(); if(!st) break; const K=st.cam; if(c[1]==='reset'||!c[1]){ K.lock=false; camNeutral(K); } else if(c[1]==='@'){ if(!REDUCED){ K.lock=true; K.tz=c[2]||1.2; K.tx=c[4]; K.ty=c[5]; K.fast=!!c[3]; } } else { const a=ctx.get(c[1])||(st.figura&&st.figura(c[1])); const t=a&&(a.olafOn||a); if(t&&!t.side){ K.lock=true; if(c[4]==='full') camFrame(K,t,c[2]||2); else camFocus(K,t,c[2]||1.15); K.fast=!!c[3]; } } break; }
       case 'ono': { const st=dirStage(); if(!st) break; const a=c[1]?ctx.get(c[1]):null; const t=a&&(a.olafOn||a); const x=c[4]!=null?c[4]:(t&&!t.side?t.x:W/2), y=c[5]!=null?c[5]:(t&&!t.side?t.y-actorH(t)-14:110); addOno(st,c[2],x,y,c[3]); break; }
-      case 'walk': if(x&&!x.side&&!x.olafOn){ const dx=c[2]||0, dy=c[3]||0; if(dx) x.face=dx>0?1:-1; await tweenTo(x,x.x+dx,x.y+dy,Math.hypot(dx,dy)*24+120); x.walking=false; } break;
+      // v51.2: varios caminan a la vez (['drag',[ids],dx,dy,ms]): una captura, una retirada en grupo
+      case 'drag': { const ids=c[1]||[], ms=c[4]||1400; await Promise.all(ids.map(id=>{ const a=ctx.get(id); if(!a||a.side||a.olafOn) return null; if(c[2]) a.face=c[2]>0?1:-1; return tweenTo(a,a.x+(c[2]||0),a.y+(c[3]||0),SKIP.on?1:ms).then(()=>{ a.walking=false; }); }).filter(Boolean)); break; }
+      case 'walk': if(x&&!x.side&&!x.olafOn){ const dy=c[3]||0; let dx=c[2]||0; if(x._walkTo!=null){ dx=x._walkTo-x.x; x._walkTo=null; } if(dx) x.face=dx>0?1:-1; await tweenTo(x,x.x+dx,x.y+dy,Math.min(Math.hypot(dx,dy)*24+120,Math.hypot(c[2]||0,dy)*24+120+1400)); x.walking=false; } break;
       case 'back': if(x&&!x.side&&!x.olafOn){ const f=x.face; const dx=c[2]||-12; if(!REDUCED) x.jump=nowMs(); await tweenTo(x,x.x+dx,x.y,Math.abs(dx)*14+90); x.walking=false; x.face=f; } break;
       // guion v2: 'hide' saca a un actor de cuadro (y lo retiene oculto aunque se lo nombre), 'show' lo vuelve a mostrar en su lugar,
       // 'nota' anota una duda en «Lo que no cierra» del Diario (p8: ncAdd; c[2]='silent' sin aviso, 'ans' anota la respuesta)
       case 'hide': { const a=ctx.get(c[1]); if(a&&!a.side&&!a.olafOn){ a.hidden=true; a.held=true; a.tw=null; a.walking=false; } break; }
-      case 'show': { const a=ctx.get(c[1]); if(a&&!a.side&&!a.olafOn){ a.held=false; a.hidden=false; markMet(a.id); if(!REDUCED) a.jump=nowMs(); } await sleep(160); break; }
+      /* v51.2 (Brian: «el soldado aparece de la nada»): 'show' seguido de un 'walk' del mismo actor ya no lo hace aparecer en medio del
+         cuadro: arranca fuera de la pantalla, del lado de donde viene, y camina hasta el mismo lugar de llegada. Sin 'walk' detrás, entra
+         con un fundido corto en vez de aparecer de golpe. */
+      case 'show': { const a=ctx.get(c[1]); if(a&&!a.side&&!a.olafOn){ a.held=false; markMet(a.id); const nx=cmds[ci+1];
+          if(nx&&nx[0]==='walk'&&nx[1]===c[1]&&(nx[2]||0)!==0&&!SKIP.on){ const dx=nx[2]; let tx=a.x+dx; try{ const st0=dirStage(), os=(st0&&st0.list||[]).filter(o=>o!==a&&!o.hidden&&!o.side); if(os.length){ if(dx>0) tx=Math.min(tx,Math.min(...os.map(o=>o.x))-56); else tx=Math.max(tx,Math.max(...os.map(o=>o.x))+56); } }catch(e){} /* llega hasta el borde del grupo, sin meterse entre ellos */ a.x=dx<0?Math.max(a.x,W+28):Math.min(a.x,-28); a._walkTo=tx; a.face=dx>0?1:-1; a.hidden=false; break; }
+          a.hidden=false; if(!REDUCED&&!SKIP.on){ const a1=a.alpha==null?1:a.alpha; a.alpha=0; const t0=nowMs(); (async()=>{ for(;;){ const p=Math.min(1,(nowMs()-t0)/380); a.alpha=a1*p; if(p>=1) break; await sleep(16); } a.alpha=a1===1?null:a1; })(); } }
+        await sleep(160); break; }
       // figura de fondo que no es del elenco (el caballero negro en la cornisa del Puente Viejo, p10 stage): ['figura',id,'baja',hacia,dx,dy,ms] la lleva
       // junto a otro actor, ['figura',id,'vuelve',ms] la devuelve a su lugar y ['figura',id,'face',±1] la gira. No toca G ni el azar.
       case 'figura': { const st=dirStage(); const f=st&&st.figura&&st.figura(c[1]); if(!f) break;
         if(c[2]==='face'){ f.face=c[3]; await sleep(140); break; }
         if(c[2]==='anim'){ f.base=c[3]||null; f.at=T; f.act=null; await sleep(120); break; } // v50: la figura cambia de pose (guardia, reverencia…)
+        // v51.2: la figura se desvanece en su lugar (niebla) o cambia de escala sin moverse
+        if(c[2]==='fade'){ const ms=SKIP.on?1:(c[3]||1000), t0=nowMs(), a0=f.alpha==null?1:f.alpha; for(;;){ const p=Math.min(1,(nowMs()-t0)/ms); f.alpha=a0*(1-p); if(p>=1) break; await sleep(16); } f.alpha=0; try{ ENV.flags.valdris=false; }catch(e){} break; }
+        if(c[2]==='k'){ const k0=f.k||1, k1=c[3]||1, ms=SKIP.on?1:(c[4]||600), t0=nowMs(); if(f.k0==null) f.k0=k0; for(;;){ const p=Math.min(1,(nowMs()-t0)/ms); f.k=k0+(k1-k0)*(p<0.5?2*p*p:1-Math.pow(-2*p+2,2)/2); if(p>=1) break; await sleep(16); } break; }
         if(f.k0==null) f.k0=f.k||1;
         let tx=f.x, ty=f.y, ms=c[3]||900, k1=f.k||1; if(c[2]==='baja'){ const y=ctx.get(c[3]); tx=(y?y.x:f.x)+(c[4]||0); ty=(y?y.y:f.y)+(c[5]||0); ms=c[6]||1100; if(c[7]!=null) k1=c[7]; } else if(c[2]==='vuelve'&&f.home){ tx=f.home.x; ty=f.home.y; ms=c[3]||900; k1=f.k0; }
         if(Math.abs(tx-f.x)>1) f.face=tx>f.x?1:-1; if(SKIP.on){ f.x=tx; f.y=ty; f.k=k1; break; }
@@ -25182,7 +25247,7 @@ const CXT={
     pantano:{h:'Linde del pantano',t:['Un castillo en la niebla que no figura en ningún mapa, una serpiente de piedra que me hizo arder el ojo y jabalíes que corrían de algo. Cuando el Ímpetu sube, el cuerpo sabe solo qué hacer.']},
     campamento:{h:'El campamento',t:['Le conté a Nach otra vez lo de mamá y la lira. Él no se acuerda de su cara; se acuerda de lo que yo le cuento. Le dije, por primera vez, que fui yo el que eligió quedarse con Hagen.','El preso habló: Severo Lanz, Juez de campo, ex Juez desde hace un mes. «Ustedes no escoltan a un prisionero. Escoltan una prueba.» En sus papeles mi ojo leyó solo un número. Un trece. Se lo dije a Maela primero.']},
     puente:{h:'El Puente Viejo',t:['El carruaje del príncipe Edric de Corvaine ardía en la boca del puente. Iba a cerrar su boda con la princesa; muerto en Brenmoor, no hay boda: hay guerra. Las flechas eran nuestras, del fardo que faltó en Hollin.','La Rosa Ceniza llegó tarde para salvarlo y temprano para vernos.']},
-    emboscada:{h:'La emboscada',t:['Bajaron del acantilado con máscaras sin marca. Uno me apuntó y erró la línea: el virote se fue hacia Nach. Bertram se puso en el medio y no se levantó. Antes le pidió que no me dejara solo.','Lina quedó del otro lado del fuego; gritó que nos encuentra en Vesper. Arriba, un caballero de armadura negra miraba sin moverse.']},
+    emboscada:{h:'La emboscada',t:['Bajaron del acantilado con máscaras sin marca. Uno me apuntó y erró la línea: el virote se fue hacia Nach. Bertram se puso en el medio y no se levantó. Antes le pidió que no me dejara solo.','Lina quedó del otro lado del fuego. Dos soldados de la Rosa salieron del humo y se la llevaron a la rastra; nos gritó que no volviéramos por ella. Arriba, en la cornisa, un caballero de armadura negra miraba sin moverse.']},
     huida:{h:'La huida',t:['La perra de la loma estaba herida debajo de la carreta volcada. Nach no la dejó atrás: se llama Simona. Olaf ya la odia.','Maela lo dijo claro: vivo, el preso es una pregunta; muerto, una sentencia contra nosotros.'],libre:'Le saqué los grilletes a Severo. Si nos mintió, lo voy a saber.',cadena:'Lo llevamos encadenado. Dijo que era justo, y se rio. Nach dice que ganó algo.'},
     jefe:{h:'Sir Oswin',t:['El capitán de la Rosa nos cerró el puente. Antes de caer, admitió que le dieron la orden y la hora. Llegó tarde porque así se lo pidieron.','El caballero negro bajó, miró a Nach como a alguien que le debe algo y se fue sin pelear.']},
     bosque:{h:'Bosque Hondo',t:['Olaf nos guió a todos con el cascabel, como en Kael-Varn. Nach dice que el lugar de Bertram era el suyo. Le conté lo que me pidió Hagen hace diecisiete años: lo mismo.']},
@@ -30114,7 +30179,7 @@ ARC.cap(2,{
     async c2_jinetes(){ await ARC.enter('sirga','sirga'); const st=await WORLD.sceneIn('c2_jinetes',{at:at('sirga'),ms:300});
       await playScene('c2_jinetes',stageCtx(st,ARC.hooks({battle:async()=>{ await ARC.fightIn(st,{zone:'sauces',party:null,enemies:[['jinete',7],['jinete',7],['ballestero',6]]}); }}))); hideDialog(); },
     async c2_jefe(){ await ARC.enter('sirga','sirga'); playMusic('jefe'); const st=await WORLD.sceneIn('c2_jefe',{at:at('sirga'),ms:300});
-      await playScene('c2_jefe',stageCtx(st,ARC.hooks({battle:async()=>{ Object.values(G.party).forEach(m=>{ if(m) m.imp=0; });
+      await playScene('c2_jefe',stageCtx(st,ARC.hooks({battle:async()=>{ /* v51.3 (Brian: «que el Ímpetu se mantenga de batalla a batalla»): ya no se vacía antes del jefe (solo en las pruebas automáticas, para que la ruta de prueba no cambie) */ if(AUTO) Object.values(G.party).forEach(m=>{ if(m) m.imp=0; });
         await ARC.fightIn(st,{zone:'sauces',party:null,boss:true,music:'jefe',enemies:[['cabo_jinetes',8],['jinete',7],['jinete',7]],
           endAt:{key:'cabo_jinetes',pv:0.4,alt:B=>{ const c=B.units.find(v=>v.key==='cabo_jinetes'); return c&&!B.units.some(v=>v.side==='e'&&v.key!=='cabo_jinetes'&&alive(v))&&c.pv<=c.pvMax*0.6; }}}); }})));
       playMusic('victoria'); const s2=await WORLD.sceneIn('c2_jefe_corte',{at:at('sirga'),ms:300}); await playScene('c2_jefe_corte',stageCtx(s2,ARC.hooks())); ARC.set('c2_jefe');
@@ -30209,7 +30274,7 @@ ARC.cap(3,{
     async c3_callejon(){ if(G.party.severo) ARC.away('severo'); await ARC.stage('calle','c3_callejon',{joinBram:async()=>{ ARC.join('bram',9); },
       battle:async()=>{ const st=CUR.sayStage; await ARC.fightIn(st,{zone:'calle',party:GJ,enemies:[['soldado',8],['soldado',8]]}); }},{music:'batalla'}); },
     async c3_jefe(){ if(G.party.severo) ARC.away('severo'); playMusic('jefe');
-      await ARC.stage('calle','c3_jefe',{battle:async()=>{ const st=CUR.sayStage; Object.values(G.party).forEach(m=>{ if(m) m.imp=0; });
+      await ARC.stage('calle','c3_jefe',{battle:async()=>{ const st=CUR.sayStage; /* v51.3 (Brian: «que el Ímpetu se mantenga de batalla a batalla»): ya no se vacía antes del jefe (solo en las pruebas automáticas, para que la ruta de prueba no cambie) */ if(AUTO) Object.values(G.party).forEach(m=>{ if(m) m.imp=0; });
         await ARC.fightIn(st,{zone:'calle',party:GJ,boss:true,music:'jefe',enemies:[['sargento',10]],
           phases:[{key:'sargento',at:0.6,scene:'c3_jefe_carga',run:cargaLanzas},{key:'sargento',at:0.3,scene:'c3_jefe_furia',run:async(B,u)=>{ u.enraged=true; addFloat(B,u,'Furia','#ff8a7a'); }}],
           endAt:{key:'sargento',pv:0.15}}); }},{music:'jefe',keep:true});
@@ -30358,7 +30423,7 @@ ARC.cap(4,{
     async c4_plan(){ await ARC.stage('noche','c4_plan',{explorar:async()=>{ hideDialog(); await fadeTo(1,400); if(!WARMED.has('town')){ ENV.town.build(); WARMED.add('town'); } playMusic('intriga'); await townExplore(hollinC4()); UI.pad.hidden=true; hideDialog(); await fadeTo(1,300); }},{music:'intriga'}); },
     async c4_patio(){ await ARC.stage('noche','c4_patio',{battle:async()=>{ const st=CUR.sayStage; await ARC.fightIn(st,{zone:'noche',party:null,enemies:[['soldado',10],['ballestero',9]]}); }},{music:'intriga'}); },
     async c4_jefe(){ playMusic('jefe'); await agnesInvitada();
-      await ARC.stage('taberna','c4_jefe',{agnesInvitada:async()=>{ await agnesInvitada(); }, battle:async()=>{ const st=CUR.sayStage; Object.values(G.party).forEach(m=>{ if(m) m.imp=0; });
+      await ARC.stage('taberna','c4_jefe',{agnesInvitada:async()=>{ await agnesInvitada(); }, battle:async()=>{ const st=CUR.sayStage; /* v51.3 (Brian: «que el Ímpetu se mantenga de batalla a batalla»): ya no se vacía antes del jefe (solo en las pruebas automáticas, para que la ruta de prueba no cambie) */ if(AUTO) Object.values(G.party).forEach(m=>{ if(m) m.imp=0; });
         await ARC.fightIn(st,{zone:'taberna',party:null,must:['agnes'],boss:true,music:'jefe',enemies:[['cabo_taberna',11],['soldado',10],['soldado',10]],
           phases:[{key:'cabo_taberna',at:0.5,scene:'c4_jefe_mesas',run:mesas},{key:'cabo_taberna',at:0.25,scene:'c4_jefe_patio',run:async(B)=>{ await refuerzo(B); }}]}); }},{music:'jefe',keep:true});
       await ARC.stage('taberna','c4_jefe_post',{},{}); ARC.set('c4_jefe'); },
@@ -30464,13 +30529,13 @@ ARC.cap(5,{
     async c5_laguna(){ const r=await WORLD.go('c5_laguna'); const st=await WORLD.sceneIn('c5_laguna',{at:r.anchor,ms:400});
       await playScene('c5_laguna',stageCtx(st,ARC.hooks({battle:async()=>{ await ARC.fightIn(st,{zone:'pantano',party:null,enemies:[['jinete',11],['jinete',10],['jinete',11]]}); }}))); hideDialog(); await WORLD.back(st); },
     async c5_jefe(){ const r=await WORLD.go('c5_jefe'); playMusic('jefe'); const st=await WORLD.sceneIn('c5_jefe',{at:r.anchor,ms:400});
-      await playScene('c5_jefe',stageCtx(st,ARC.hooks({battle:async()=>{ Object.values(G.party).forEach(m=>{ if(m) m.imp=0; });
+      await playScene('c5_jefe',stageCtx(st,ARC.hooks({battle:async()=>{ /* v51.3 (Brian: «que el Ímpetu se mantenga de batalla a batalla»): ya no se vacía antes del jefe (solo en las pruebas automáticas, para que la ruta de prueba no cambie) */ if(AUTO) Object.values(G.party).forEach(m=>{ if(m) m.imp=0; });
         await ARC.fightIn(st,{zone:'pantano',party:null,boss:true,music:'jefe',enemies:[['montero',13],['sabueso',10],['sabueso',11]],
           phases:[{key:'montero',at:0.6,scene:'c5_jefe_traila',run:async B=>{ await traila(B); }},{key:'montero',at:0.3,scene:'c5_jefe_muerte',run:async B=>{ B.aMuerte=true; }}]}); }})));
       hideDialog(); const s2=await WORLD.sceneIn('c5_jefe_post',{at:at('boca'),ms:300,music:'intriga'}); await playScene('c5_jefe_post',stageCtx(s2,ARC.hooks())); hideDialog(); WORLD.finish('c5_jefe'); },
     async c5_valdris(){ await ARC.enter('juncal','boca'); stopMusic(); const st=await WORLD.sceneIn('c5_valdris',{at:at('boca'),ms:400});
       Object.values(G.party).forEach(m=>{ const s=stats(m); m.pv=s.pv; m.pm=s.pm; }); // el grupo respira antes del caballero negro: el aguante dura sus 3 acciones
-      await playScene('c5_valdris',stageCtx(st,ARC.hooks({battle:async()=>{ Object.values(G.party).forEach(m=>{ if(m) m.imp=0; });
+      await playScene('c5_valdris',stageCtx(st,ARC.hooks({battle:async()=>{ /* v51.3 (Brian: «que el Ímpetu se mantenga de batalla a batalla»): ya no se vacía antes del jefe (solo en las pruebas automáticas, para que la ruta de prueba no cambie) */ if(AUTO) Object.values(G.party).forEach(m=>{ if(m) m.imp=0; });
         await ARC.fightIn(st,{zone:'pantano',party:null,must:['nach'],boss:true,music:'silencio',quiet:true,noLose:true,enemies:[['valdris',15]],minPv:{valdris:0.7},endAt:{key:'valdris',turns:3}}); }})));
       hideDialog(); const s2=await WORLD.sceneIn('c5_valdris_corte',{at:at('boca'),ms:300}); await playScene('c5_valdris_corte',stageCtx(s2,ARC.hooks({valdrisEscorpion:async()=>{ ARC.set('valdris_escorpion'); }}))); hideDialog();
       Object.values(G.party).forEach(m=>{ const s=stats(m); if(m.pv<=0) m.pv=1; m.pv=Math.max(m.pv,Math.round(s.pv*0.3)); }); },
@@ -31650,7 +31715,7 @@ ARC.cap(6,{
     async c6_lectura(){ await painted('ruinas','c6_lectura',{lectura:async()=>{ ARC.set('trece_casas'); ARC.set('aster_vel'); tst('lectura'); }},{music:'serpentario',over:noche(0.38)}); },
     async c6_casimir(){ const n=lvlCore();
       await painted('ruinas','c6_casimir',st=>({
-        battle:async()=>{ Object.values(G.party).forEach(m=>{ if(m) m.imp=0; });
+        battle:async()=>{ /* v51.3 (Brian: «que el Ímpetu se mantenga de batalla a batalla»): ya no se vacía antes del jefe (solo en las pruebas automáticas, para que la ruta de prueba no cambie) */ if(AUTO) Object.values(G.party).forEach(m=>{ if(m) m.imp=0; });
           /* v48.6: el muelle es un duelo (duelo.js): Casimir vino por Ilian, e Ilian frena a los demás. Si Ilian pierde, Nach entra con Don Pico (texto condicional). */
           try{ playMusic('jefe'); }catch(e){} const r=await DUELO.run({p:'ilian',e:'casimir',eName:'Casimir Vey',eSpr:'casimir',bg:'ruinas',title:'El muelle',endE:25,endP:20,lines:'casimir'}); if(!r.win) ARC.set('casimir_salva_nach'); try{ playMusic('intriga'); }catch(e){} },
         joinCasimir:async()=>{ ARC.join('casimir',n); tst('casimir'); ARC.log('rec:casimir'); } }),{music:'intriga',over:noche(0.5)});
@@ -34745,9 +34810,9 @@ Object.assign(POS,{
   sauces_perra:{maela:[160,238],ilian:[216,242],nach:[270,244],perra:[300,150]}, // la perra, en la loma (tierra firme, lejos del arroyo)
   granja_lobos:{mila:[96,240],oberen:[150,242],ilian:[270,242],nach:[326,244]}, granja_lobos_post:{mila:[96,240],oberen:[150,242],ilian:[270,242],nach:[326,244]},
   huida:{severo:[96,238],maela:[150,240],ilian:[206,244],nach:[262,246],simona:[318,252]},
-  jefe_pre:{oswin:[150,240],ilian:[300,240],nach:[350,244],simona:[404,248],severo:[452,238]},
+  jefe_pre:{oswin:[-40,240],nach:[300,244],simona:[322,258],maela:[352,238],ilian:[402,240],severo:[450,238]}, // v51.2: Oswin entra desde la punta del puente; Nach, Maela y Simona adelante
   jefe_post:{oswin:[150,246],ilian:[290,240],nach:[344,244],simona:[400,250],maela:[450,240]},
-  emboscada_post:{lina:[86,240],bertram:[262,246],nach:[318,242]},
+  emboscada_post:{lina:[86,240],bertram:[262,246],nach:[318,242],rosa_a:[-30,236],rosa_b:[-14,252]},
   cierre:{maela:[268,244],nach:[322,246],ilian:[376,244],severo:[432,240]}});
 Object.assign(FACE,{sauces:{bandido:1,'*':-1},granja_lobos:{mila:1,oberen:1,'*':-1},granja_lobos_post:{mila:1,oberen:1,'*':-1}});
 // escenas de afinidad v2 (diseño §5.1): actores nuevos, posiciones de escenario (480 de ancho, suelo ≈ 240) y miradas
@@ -34957,7 +35022,8 @@ const STEPS={
     const r=await WORLD.go('jefe'); // el centro del puente
     playMusic('jefe'); ENV.flags.valdris=false; const st=await WORLD.sceneIn('jefe_pre',{at:r.anchor,ms:500});
     await playScene('jefe_pre',stageCtx(st,{ battle:async()=>{ await PFXI.cover('C8',300);
-      Object.values(G.party).forEach(m=>{ if(m) m.imp=0; }); // el grupo llega al jefe sin Ímpetu acumulado (calibración aprobada)
+      /* v51.3 (Brian: «que el Ímpetu se mantenga de batalla a batalla»): ya no se vacía antes del jefe (solo en las pruebas automáticas, para que la ruta de prueba no cambie) */ if(AUTO) Object.values(G.party).forEach(m=>{ if(m) m.imp=0; });
+      ['nach','maela','simona'].forEach(id=>{ if(G.party[id]) G.party[id].row='front'; }); ['ilian','severo'].forEach(id=>{ if(G.party[id]) G.party[id].row='back'; }); // v51.2 (Brian): los tres adelante frente a Oswin
       await battle({zone:'puente',party:['nach','maela','simona','ilian','severo'],enemies:['oswin','soldado','soldado'],music:'jefe',onAfter:async(B)=>{
         const o=B.units.find(u=>u.key==='oswin'); if(!o||!alive(o)) return; B.phase=B.phase||1;
         if(B.phase===1 && o.pv<=o.pvMax*0.6){ B.phase=2;
@@ -35127,7 +35193,7 @@ window.__LDC={get G(){return G},
   chatTest:async(ni,id)=>escenaTest(id||'af_hermanos'), escenaTest:(id,zone)=>escenaTest(id,zone), get town(){ return CUR.town; }, esc:{all:()=>LINES.escenas||[],avail:escenaAvail,pend:escenasPendientes,meta:escenaMeta,lost:escenaLost,seen:escenaSeen,play:playEscena,affKey}, migrar:()=>{ migrarEscenas(); return {chats:Object.keys(G.flags.chats||{}),parcial:G.flags.escParcial||{},choice:G.flags.escChoice||{}}; },
   stageTest:async(zone,name,flags)=>{ Object.assign(ENV.flags,flags||{}); const pz=name==='campamento'?presoPuesta():null; const st=await stageIn(zone,name,200,(flags&&flags.__room)?{room:true}:undefined); if(name==='emboscada_post'){ PTIRO.dress(st); await PTIRO.tiro(st); } else if(zone==='puente'&&name==='puente') PTIRO.dress(st,'puente'); await playScene(name,stageCtx(st,Object.assign({valdrisVisible:async()=>{ ENV.flags.valdris=true; },silencio:async()=>{},partyChange:async()=>{},battle:async()=>{},derrumbe:async()=>{ await PTIRO.derrumbe(st); }},pz?pz.hooks(st):{}))); hideDialog(); return 'ok'; }, get scene(){return scene}, get B(){return CUR.B}, get bossTurns(){return CUR.bossTurns}, get ended(){return (CUR.endCount||0)>0}, get bossLog(){return CUR.bossLog||[]},
   pausaTest:(tab,mode)=>{ openPause(tab||'grupo',mode?{mode}:{}); return PZ.mode; }, swapSel:(id)=>{ PZ.swapSel=id; renderPause(); },
-  worldTest:async(z,x,y)=>{ newGame(); G.cp='c2_sauces'; await WORLD.enter(WORLD.zid(z),{x,y,face:1}); setScene(WORLD.scene); return WORLD.scene.Z&&WORLD.scene.Z.id; }, seamTest:async(name,at)=>{ window.__st=await WORLD.sceneIn(name,{at}); return !!window.__st; }, seamBack:()=>WORLD.back(window.__st), // v51: probar escenas sin cortes
+  worldTest:async(z,x,y)=>{ newGame(); G.cp='c2_sauces'; await WORLD.enter(WORLD.zid(z),{x,y,face:1}); setScene(WORLD.scene); return WORLD.scene.Z&&WORLD.scene.Z.id; }, seamTest:async(name,at)=>{ window.__st=await WORLD.sceneIn(name,{at}); return !!window.__st; }, seamBack:()=>WORLD.back(window.__st), seamPlay:(name)=>playScene(name,{get:window.__st.get,hooks:new Proxy({},{get:(o,k)=>k==='valdrisVisible'?(async()=>{ ENV.flags.valdris=true; }):(async()=>{})}),noAff:true}), // v51: probar escenas sin cortes
   recTest:(id)=>{ try{ if(!G||!G.party) newGame(); }catch(e){ newGame(); } return !!recruitCeremony(id||'dov',5); }, // v51.1
   townTest:(o)=>{ o=Object.assign({lead:'ilian',fol:'nach',npcs:['agnes','bram'],tint:'rgba(10,14,44,.6)'},o||{}); const ex=o.extra; o.extra=api=>{ window.__tapi=api; if(ex) ex(api); }; townExplore(o); return 'ok'; }, escAqui:(id,at)=>playEscenaAqui(id,window.__tapi,at), // v50.2: probar escenas en el pueblo
   openShop:(k)=>openShop(k||'hollin'), say:(w,t,e)=>say(w,t,e), tutTest:(l,ms)=>toast(l,ms||3600,'tut'), get tutQ(){ return TUTQ.map(q=>q.k); }, // fix27 A2: capturas y medidas de los carteles
